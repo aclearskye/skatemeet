@@ -1,3 +1,4 @@
+import { C, F } from "@/lib/theme";
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 
@@ -10,29 +11,30 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
     <View style={styles.container}>
       <Image
         source={require("/Users/moose/Developer/Play/skatemeet/assets/images/logo_L.png")}
-        //TODO: Fix this
         style={styles.logo}
       />
-      <Text style={styles.title}>{title}</Text>
+      {title ? <Text style={styles.title}>{title}</Text> : null}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    display: "flex",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
   title: {
-    fontSize: 30,
-    fontWeight: "bold",
+    fontFamily: F.heading,
+    fontSize: 28,
+    color: C.text,
+    letterSpacing: 2,
   },
   logo: {
     width: 100,
-    height: 100,
+    height: 40,
     resizeMode: "contain",
   },
 });

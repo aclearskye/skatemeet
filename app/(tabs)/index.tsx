@@ -1,41 +1,36 @@
 import Header from "@/components/ui/Header";
-import { linkTo } from "expo-router/build/global-state/routing";
-import { Button, StyleSheet, View } from "react-native";
+import { C, F } from "@/lib/theme";
+import { StyleSheet, Text, View } from "react-native";
 
 export default function Index() {
   return (
-    <>
+    <View style={styles.container}>
       <View style={styles.headerContainer}>
         <Header />
       </View>
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Go to Login"
-          onPress={() => {
-            linkTo("/Login");
-          }}
-        />
-        <Button
-          title="Go to Sign Up"
-          onPress={() => {
-            linkTo("/SignUp");
-          }}
-        />
+      <View style={styles.body}>
+        <Text style={styles.placeholder}>YOUR FEED WILL APPEAR HERE.</Text>
       </View>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: C.bg },
   headerContainer: {
-    paddingTop: 100,
-    alignItems: "center",
+    paddingTop: 60,
+    borderBottomWidth: 2,
+    borderBottomColor: C.border,
   },
-  buttonContainer: {
-    display: "flex",
+  body: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    flex: 1,
-    gap: 20,
+  },
+  placeholder: {
+    color: C.muted,
+    fontFamily: F.mono,
+    fontSize: 11,
+    letterSpacing: 2,
   },
 });

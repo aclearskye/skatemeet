@@ -1,14 +1,31 @@
-import { AuthContext } from "@/lib/context/use-auth-context";
+import { AuthContext, Profile } from "@/lib/context/use-auth-context";
 import { supabase } from "@/lib/supabaseClient";
 import type { Session } from "@supabase/supabase-js";
-import { PropsWithChildren, useEffect, useState } from "react";
+import { AppState, AppStateStatus } from "react-native";
+import { PropsWithChildren, useCallback, useEffect, useRef, useState } from "react";
 
 export default function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | undefined | null>();
-  const [profile, setProfile] = useState<any>();
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoadingAuthContext, setisLoadingAuthContext] =
     useState<boolean>(true);
-  // Fetch the session once, and subscribe to auth state changes
+  const sessionRef = useRef<Session | null | undefined>(session);
+  sessionRef.current = session;
+
+  const fetchProfile = useCallback(async (activeSession?: Session | null) => {
+    const s = activeSession !== undefined ? activeSession : sessionRef.current;
+    if (s) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("profile_id", s.user.id)
+        .single();
+      setProfile(data as Profile | null);
+    } else {
+      setProfile(null);
+    }
+  }, []);
+
   useEffect(() => {
     const fetchSession = async () => {
       setisLoadingAuthContext(true);
@@ -28,7 +45,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed:", { event: _event, session });
+      setisLoadingAuthContext(true);
       setSession(session);
     });
 
@@ -38,22 +55,28 @@ export default function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const load = async () => {
       setisLoadingAuthContext(true);
-      if (session) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("profile_id", session.user.id)
-          .single();
-        setProfile(data);
-      } else {
-        setProfile(null);
-      }
+      await fetchProfile(session);
       setisLoadingAuthContext(false);
     };
-    fetchProfile();
-  }, [session]);
+    load();
+  }, [session, fetchProfile]);
+
+  // Re-fetch profile whenever the app comes back to the foreground
+  useEffect(() => {
+    const handleAppStateChange = (nextState: AppStateStatus) => {
+      if (nextState === "active") {
+        fetchProfile();
+      }
+    };
+    const sub = AppState.addEventListener("change", handleAppStateChange);
+    return () => sub.remove();
+  }, [fetchProfile]);
+
+  const refreshProfile = useCallback(async () => {
+    await fetchProfile();
+  }, [fetchProfile]);
 
   return (
     <AuthContext.Provider
@@ -62,6 +85,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         isLoadingAuthContext,
         profile,
         isLoggedIn: session !== undefined && session !== null,
+        refreshProfile,
       }}
     >
       {children}
