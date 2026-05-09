@@ -10,16 +10,30 @@ const OVERPASS_MIRRORS = [
   "https://overpass.private.coffee/api/interpreter",
   "https://overpass-api.de/api/interpreter",
 ];
+const NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse";
 
 function buildOverpassQuery(lat: number, lng: number, radius: number): string {
+  const around = `(around:${radius},${lat},${lng})`;
   return `
-[out:json][timeout:15];
+[out:json][timeout:25];
 (
-  node["shop"="skateboard"](around:${radius},${lat},${lng});
-  way["shop"="skateboard"](around:${radius},${lat},${lng});
+  node["sport"="skateboard"]${around};
+  way["sport"="skateboard"]${around};
+  relation["sport"="skateboard"]${around};
+  node["skate"="diy"]${around};
+  way["skate"="diy"]${around};
+  node["shop"="skateboard"]${around};
+  way["shop"="skateboard"]${around};
 );
 out center;
   `.trim();
+}
+
+function deriveSpotType(tags: Record<string, string>): "park" | "diy" | "street" | "shop" {
+  if (tags["skate"] === "diy") return "diy";
+  if (tags["shop"] === "skateboard") return "shop";
+  if (tags["sport"] === "skateboard") return "park";
+  return "street";
 }
 
 function formatAddress(tags: Record<string, string>): string {
@@ -29,6 +43,21 @@ function formatAddress(tags: Record<string, string>): string {
     tags["addr:city"],
   ].filter(Boolean);
   return parts.length > 0 ? parts.join(", ") : tags["addr:full"] ?? "";
+}
+
+async function nearestRoad(lat: number, lng: number): Promise<string | null> {
+  try {
+    const url = `${NOMINATIM_URL}?lat=${lat}&lon=${lng}&format=json&zoom=16`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "SkateMeet/1.0 (skatemeet-app)" },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const addr = data?.address ?? {};
+    return addr.road ?? addr.pedestrian ?? addr.path ?? addr.footway ?? null;
+  } catch {
+    return null;
+  }
 }
 
 serve(async (req) => {
@@ -66,25 +95,50 @@ serve(async (req) => {
     }
     if (!osm) throw new Error(`All Overpass mirrors failed. Last: ${lastErr}`);
 
-    const results = (osm.elements ?? [])
-      .filter((el: any) => el.tags?.name)
-      .map((el: any) => {
-        // Ways have a `center` object; nodes have direct lat/lon
+    // Filter to elements with usable coordinates
+    const elements = (osm.elements ?? []).filter((el: any) => {
+      const coordLat = el.type === "way" ? el.center?.lat : el.lat;
+      const coordLng = el.type === "way" ? el.center?.lon : el.lon;
+      return coordLat != null && coordLng != null;
+    });
+
+    // Resolve names — geocode unnamed elements in parallel
+    const resolved = await Promise.all(
+      elements.map(async (el: any) => {
         const coordLat = el.type === "way" ? el.center?.lat : el.lat;
         const coordLng = el.type === "way" ? el.center?.lon : el.lon;
+        const spotType = deriveSpotType(el.tags);
+
+        const suffix =
+          spotType === "diy" ? "DIY Spot"
+          : spotType === "shop" ? "Skate Shop"
+          : spotType === "park" ? "Skate Park"
+          : "Skate Spot";
+
+        let name: string;
+        if (el.tags.name) {
+          name = el.tags.name;
+        } else if (el.tags["addr:street"]) {
+          name = `${el.tags["addr:street"]} ${suffix}`;
+        } else {
+          const road = await nearestRoad(coordLat, coordLng);
+          name = road ? `${road} ${suffix}` : suffix;
+        }
+
         return {
-          place_id: `osm-${el.type}-${el.id}`,
-          name: el.tags.name,
+          place_id: `osm-spot-${el.type}-${el.id}`,
+          name,
           address: formatAddress(el.tags),
-          rating: null,
+          spot_type: spotType,
           coordinates: { lat: coordLat, lng: coordLng },
         };
       })
-      // Deduplicate by name+coords in case node and way overlap
-      .filter(
-        (store: any, index: number, arr: any[]) =>
-          arr.findIndex((s) => s.place_id === store.place_id) === index
-      );
+    );
+
+    // Deduplicate
+    const results = resolved.filter(
+      (spot, index, arr) => arr.findIndex((s) => s.place_id === spot.place_id) === index
+    );
 
     return new Response(JSON.stringify(results), {
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },

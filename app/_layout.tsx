@@ -51,7 +51,7 @@ const RootNavigation = () => {
       router.replace("/(onboarding)");
     } else if (profile && !inOnboardingGroup && !profile.onboarding_completed) {
       router.replace("/(onboarding)");
-    } else if (session && profile?.onboarding_completed && (inOnboardingGroup || segments[0] === undefined)) {
+    } else if (session && profile?.onboarding_completed && (inOnboardingGroup || inPublicScreen || segments[0] === undefined)) {
       router.replace("/(tabs)");
     }
 

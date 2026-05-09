@@ -58,6 +58,13 @@
         {
           "locationWhenInUsePermission": "SkateMeet uses your location to show nearby skate stores."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "SkateMeet uses your photos to add spot images.",
+          "cameraPermission": "SkateMeet uses your camera to photograph spots."
+        }
       ]
     ],
     "experiments": {
