@@ -1,3 +1,4 @@
+import { sanitizeDisplayName, sanitizeUsername } from "@/lib/auth/sanitizeUsername";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { supabase } from "@/lib/supabaseClient";
 import { C, F, R } from "@/lib/theme";
@@ -74,6 +75,8 @@ export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [displayNameError, setDisplayNameError] = useState<string | null>(null);
   const [data, setData] = useState<OnboardingData>({
     firstName: "",
     lastName: "",
@@ -85,9 +88,33 @@ export default function Onboarding() {
     bio: "",
   });
 
+  const handleUsernameChange = (raw: string) => {
+    // Strip disallowed characters as the user types; validate inline
+    const { value, error: err } = sanitizeUsername(raw);
+    setData((d) => ({ ...d, username: value }));
+    // Only show the error once they've typed enough to have an opinion
+    setUsernameError(raw.length >= 3 ? err : null);
+  };
+
+  const handleDisplayNameChange = (raw: string) => {
+    const { value, error: err } = sanitizeDisplayName(raw);
+    setData((d) => ({ ...d, displayName: value }));
+    setDisplayNameError(raw.length >= 2 ? err : null);
+  };
+
   const canAdvance = () => {
-    if (step === 0) return data.firstName.trim().length > 0 && data.lastName.trim().length > 0 && data.username.trim().length > 0;
-    if (step === 1) return data.displayName.trim().length > 0;
+    if (step === 0) {
+      const usernameOk = sanitizeUsername(data.username).error === null;
+      return (
+        data.firstName.trim().length > 0 &&
+        data.lastName.trim().length > 0 &&
+        usernameOk
+      );
+    }
+    if (step === 1) {
+      return sanitizeDisplayName(data.displayName).error === null &&
+        data.displayName.trim().length > 0;
+    }
     if (step === 2) return data.disciplines.length > 0;
     if (step === 3) return data.skillLevel.length > 0;
     return true;
@@ -103,6 +130,21 @@ export default function Onboarding() {
 
   const handleSubmit = async () => {
     if (!session?.user) return;
+
+    const usernameResult = sanitizeUsername(data.username);
+    const displayNameResult = sanitizeDisplayName(data.displayName);
+
+    if (usernameResult.error) {
+      setUsernameError(usernameResult.error);
+      setStep(0);
+      return;
+    }
+    if (displayNameResult.error) {
+      setDisplayNameError(displayNameResult.error);
+      setStep(1);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     const { error: updateError } = await supabase
@@ -110,8 +152,8 @@ export default function Onboarding() {
       .update({
         first_name: data.firstName.trim(),
         last_name: data.lastName.trim(),
-        username: data.username.trim(),
-        display_name: data.displayName.trim() || null,
+        username: usernameResult.value,
+        display_name: displayNameResult.value || null,
         disciplines: data.disciplines.length > 0 ? data.disciplines : null,
         skill_level: data.skillLevel || null,
         city: data.city.trim() || null,
@@ -234,7 +276,12 @@ export default function Onboarding() {
                   />
                 </View>
               </View>
-              <View style={styles.field}>
+              <View
+                style={[
+                  styles.field,
+                  usernameError ? styles.fieldError : undefined,
+                ]}
+              >
                 <Text style={styles.atSign}>@</Text>
                 <TextInput
                   style={[styles.fieldInput, { flex: 1 }]}
@@ -245,9 +292,12 @@ export default function Onboarding() {
                   autoComplete="off"
                   textContentType="none"
                   value={data.username}
-                  onChangeText={(v) => setData((d) => ({ ...d, username: v }))}
+                  onChangeText={handleUsernameChange}
                 />
               </View>
+              {usernameError ? (
+                <Text style={styles.fieldErrorText}>{usernameError}</Text>
+              ) : null}
             </View>
           )}
 
@@ -259,15 +309,21 @@ export default function Onboarding() {
                 This is how the community will know you.
               </Text>
               <TextInput
-                style={styles.bigInput}
+                style={[
+                  styles.bigInput,
+                  displayNameError ? styles.bigInputError : undefined,
+                ]}
                 placeholder="e.g. GrindKing99"
                 placeholderTextColor={C.muted}
                 autoFocus
                 autoCapitalize="none"
                 autoCorrect={false}
                 value={data.displayName}
-                onChangeText={(v) => setData((d) => ({ ...d, displayName: v }))}
+                onChangeText={handleDisplayNameChange}
               />
+              {displayNameError ? (
+                <Text style={styles.fieldErrorText}>{displayNameError}</Text>
+              ) : null}
               <Text style={styles.fieldNote}>
                 Different from your username — this is your public skate alias.
               </Text>
@@ -526,6 +582,9 @@ const styles = StyleSheet.create({
     fontFamily: F.bodyBold,
     fontSize: 22,
   },
+  bigInputError: {
+    borderBottomColor: C.error,
+  },
   fieldNote: {
     color: C.muted,
     fontFamily: F.monoRegular,
@@ -624,7 +683,17 @@ const styles = StyleSheet.create({
     borderBottomColor: C.border,
     paddingHorizontal: 4,
     height: 52,
-    marginBottom: 20,
+    marginBottom: 4,
+  },
+  fieldError: {
+    borderBottomColor: C.error,
+  },
+  fieldErrorText: {
+    color: C.error,
+    fontFamily: F.monoRegular,
+    fontSize: 11,
+    marginBottom: 16,
+    letterSpacing: 0.3,
   },
   fieldInput: {
     color: C.text,

@@ -16,6 +16,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const SignUp = () => {
   const router = useRouter();
   const { refreshProfile } = useAuthContext();
@@ -25,13 +27,18 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [confirmFocused, setConfirmFocused] = useState(false);
 
   const handleSignUp = async () => {
-    if (!email || !password) {
+    if (!email || !password || !confirmPassword) {
       setError("All fields are required");
+      return;
+    }
+    if (!EMAIL_REGEX.test(email)) {
+      setError("Please enter a valid email address");
       return;
     }
     if (password.length < 6) {
@@ -45,13 +52,46 @@ const SignUp = () => {
     setLoading(true);
     setError(null);
     try {
-      await createUser(email, password);
-      await refreshProfile();
+      const result = await createUser(email, password);
+      if (result.needsEmailConfirmation) {
+        setEmailSent(true);
+      } else {
+        await refreshProfile();
+      }
     } catch (e: any) {
       setError(e.message || "Error creating account");
+    } finally {
       setLoading(false);
     }
   };
+
+  if (emailSent) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+        <View style={styles.confirmContainer}>
+          <View style={styles.logoMark}>
+            <Text style={styles.logoMarkText}>SK</Text>
+          </View>
+          <Text style={styles.heading}>CHECK YOUR INBOX</Text>
+          <Text style={styles.confirmText}>
+            We've sent a confirmation link to{"\n"}
+            <Text style={{ color: C.primary }}>{email}</Text>
+          </Text>
+          <Text style={styles.confirmHint}>
+            Open the link in that email to activate your account, then come back
+            and sign in.
+          </Text>
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={() => router.push("/Login")}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryBtnText}>GO TO SIGN IN</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
@@ -102,6 +142,8 @@ const SignUp = () => {
                 placeholderTextColor={C.muted}
                 autoCapitalize="none"
                 keyboardType="email-address"
+                autoComplete="email"
+                textContentType="emailAddress"
                 value={email}
                 onChangeText={setEmail}
                 onFocus={() => setEmailFocused(true)}
@@ -121,6 +163,8 @@ const SignUp = () => {
                 placeholder="Password"
                 placeholderTextColor={C.muted}
                 secureTextEntry={!showPassword}
+                autoComplete="new-password"
+                textContentType="newPassword"
                 value={password}
                 onChangeText={setPassword}
                 onFocus={() => setPasswordFocused(true)}
@@ -150,6 +194,8 @@ const SignUp = () => {
                 placeholder="Confirm password"
                 placeholderTextColor={C.muted}
                 secureTextEntry={!showPassword}
+                autoComplete="new-password"
+                textContentType="newPassword"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 onFocus={() => setConfirmFocused(true)}
@@ -326,5 +372,26 @@ const styles = StyleSheet.create({
     color: C.primary,
     fontFamily: F.bodyBold,
     fontSize: 14,
+  },
+  confirmContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 32,
+    gap: 16,
+  },
+  confirmText: {
+    color: C.text,
+    fontFamily: F.body,
+    fontSize: 16,
+    textAlign: "center",
+    lineHeight: 24,
+  },
+  confirmHint: {
+    color: C.muted,
+    fontFamily: F.body,
+    fontSize: 13,
+    textAlign: "center",
+    lineHeight: 20,
   },
 });

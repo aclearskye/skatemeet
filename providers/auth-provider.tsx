@@ -7,7 +7,7 @@ import { PropsWithChildren, useCallback, useEffect, useRef, useState } from "rea
 export default function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | undefined | null>();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [isLoadingAuthContext, setisLoadingAuthContext] =
+  const [isLoadingAuthContext, setIsLoadingAuthContext] =
     useState<boolean>(true);
   const sessionRef = useRef<Session | null | undefined>(session);
   sessionRef.current = session;
@@ -15,12 +15,17 @@ export default function AuthProvider({ children }: PropsWithChildren) {
   const fetchProfile = useCallback(async (activeSession?: Session | null) => {
     const s = activeSession !== undefined ? activeSession : sessionRef.current;
     if (s) {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("profile_id", s.user.id)
         .single();
-      setProfile(data as Profile | null);
+      if (error) {
+        console.error("Error fetching profile:", error);
+        setProfile(null);
+      } else {
+        setProfile(data as Profile | null);
+      }
     } else {
       setProfile(null);
     }
@@ -28,7 +33,6 @@ export default function AuthProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     const fetchSession = async () => {
-      setisLoadingAuthContext(true);
       const {
         data: { session },
         error,
@@ -36,8 +40,8 @@ export default function AuthProvider({ children }: PropsWithChildren) {
       if (error) {
         console.error("Error fetching session:", error);
       }
+      // Don't set loading false here — the profile effect owns that transition
       setSession(session);
-      setisLoadingAuthContext(false);
     };
 
     fetchSession();
@@ -45,7 +49,8 @@ export default function AuthProvider({ children }: PropsWithChildren) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setisLoadingAuthContext(true);
+      // Signal loading so the UI doesn't flash a stale profile between auth events
+      setIsLoadingAuthContext(true);
       setSession(session);
     });
 
@@ -54,16 +59,16 @@ export default function AuthProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
+  // Single source of truth for the loading → profile fetch → done cycle
   useEffect(() => {
     const load = async () => {
-      setisLoadingAuthContext(true);
+      setIsLoadingAuthContext(true);
       await fetchProfile(session);
-      setisLoadingAuthContext(false);
+      setIsLoadingAuthContext(false);
     };
     load();
   }, [session, fetchProfile]);
 
-  // Re-fetch profile whenever the app comes back to the foreground
   useEffect(() => {
     const handleAppStateChange = (nextState: AppStateStatus) => {
       if (nextState === "active") {
