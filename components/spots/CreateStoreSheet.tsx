@@ -1,5 +1,5 @@
 import { useAuthContext } from "@/lib/context/use-auth-context";
-import { createSpot, SkateSpot, SpotType, uploadSpotPhoto } from "@/lib/spots/skateSpots";
+import { createShop, uploadShopPhoto, UserShop } from "@/lib/stores/skateStores";
 import { C, F } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -20,33 +20,21 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onSpotCreated: (spot: SkateSpot) => void;
+  onShopCreated: (shop: UserShop) => void;
   initialCoordinates: { latitude: number; longitude: number };
-  lockedType?: SpotType;
 };
 
-const SPOT_TYPES: { key: SpotType; label: string }[] = [
-  { key: "street", label: "STREET" },
-  { key: "diy", label: "DIY" },
-  { key: "park", label: "PARK" },
-  { key: "indoor", label: "INDOOR" },
-];
-
-const DIFFICULTY_LABELS = ["", "MELLOW", "MELLOW", "MEDIUM", "GNARLY", "GNARLY"];
-
-export function CreateSpotSheet({ visible, onClose, onSpotCreated, initialCoordinates, lockedType }: Props) {
+export function CreateStoreSheet({ visible, onClose, onShopCreated, initialCoordinates }: Props) {
   const insets = useSafeAreaInsets();
   const { session } = useAuthContext();
 
-  const isDiy = lockedType === "diy";
-  const accent = isDiy ? C.tertiary : C.primary;
-  const onAccent = isDiy ? C.onTertiary : C.onPrimary;
-
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
-  const [spotType, setSpotType] = useState<SpotType>(lockedType ?? "street");
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
+  const [website, setWebsite] = useState("");
+  const [openingHours, setOpeningHours] = useState("");
   const [description, setDescription] = useState("");
-  const [difficulty, setDifficulty] = useState<number | null>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -54,9 +42,11 @@ export function CreateSpotSheet({ visible, onClose, onSpotCreated, initialCoordi
   function reset() {
     setStep(1);
     setName("");
-    setSpotType(lockedType ?? "street");
+    setAddress("");
+    setPhone("");
+    setWebsite("");
+    setOpeningHours("");
     setDescription("");
-    setDifficulty(null);
     setPhotoUri(null);
     setIsSubmitting(false);
     setErrorMsg(null);
@@ -84,29 +74,33 @@ export function CreateSpotSheet({ visible, onClose, onSpotCreated, initialCoordi
     try {
       let photo_url: string | undefined;
       if (photoUri) {
-        photo_url = await uploadSpotPhoto(session.user.id, photoUri);
+        photo_url = await uploadShopPhoto(session.user.id, photoUri);
       }
-      const spot = await createSpot(
+      const shop = await createShop(
         {
           name: name.trim(),
-          type: lockedType ?? spotType,
-          description: description.trim() || undefined,
+          address: address.trim(),
           latitude: initialCoordinates.latitude,
           longitude: initialCoordinates.longitude,
+          phone: phone.trim() || undefined,
+          website: website.trim() || undefined,
+          opening_hours: openingHours.trim() || undefined,
+          description: description.trim() || undefined,
           photo_url,
-          difficulty: difficulty ?? undefined,
         },
         session.user.id
       );
-      onSpotCreated(spot);
+      onShopCreated(shop);
       reset();
       onClose();
     } catch (e: any) {
-      setErrorMsg(e.message ?? "Failed to create spot. Please try again.");
+      setErrorMsg(e.message ?? "Failed to create store. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   }
+
+  const step1Valid = name.trim().length > 0;
 
   return (
     <Modal
@@ -117,7 +111,7 @@ export function CreateSpotSheet({ visible, onClose, onSpotCreated, initialCoordi
     >
       <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
         <View style={styles.header}>
-          <Text style={styles.title}>{isDiy ? "ADD DIY SPOT" : "ADD SPOT"}</Text>
+          <Text style={styles.title}>ADD STORE</Text>
           <TouchableOpacity onPress={handleClose} style={styles.closeBtn} hitSlop={8}>
             <Ionicons name="close" size={22} color={C.muted} />
           </TouchableOpacity>
@@ -125,7 +119,7 @@ export function CreateSpotSheet({ visible, onClose, onSpotCreated, initialCoordi
 
         <View style={styles.stepRow}>
           {[1, 2, 3].map((s) => (
-            <View key={s} style={[styles.stepDot, s <= step && { backgroundColor: accent }]} />
+            <View key={s} style={[styles.stepDot, s <= step && styles.stepDotActive]} />
           ))}
           <Text style={styles.stepLabel}>STEP {step} OF 3</Text>
         </View>
@@ -133,10 +127,10 @@ export function CreateSpotSheet({ visible, onClose, onSpotCreated, initialCoordi
         <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
           {step === 1 && (
             <View style={styles.section}>
-              <Text style={styles.fieldLabel}>SPOT NAME</Text>
+              <Text style={styles.fieldLabel}>STORE NAME</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. Southbank Ledges"
+                placeholder="e.g. Element Skate Shop"
                 placeholderTextColor={C.muted}
                 value={name}
                 onChangeText={setName}
@@ -144,62 +138,66 @@ export function CreateSpotSheet({ visible, onClose, onSpotCreated, initialCoordi
                 returnKeyType="next"
                 autoFocus
               />
-              {!lockedType && (
-                <>
-                  <Text style={[styles.fieldLabel, { marginTop: 24 }]}>SPOT TYPE</Text>
-                  <View style={styles.typeRow}>
-                    {SPOT_TYPES.map(({ key, label }) => (
-                      <TouchableOpacity
-                        key={key}
-                        style={[styles.typeChip, spotType === key && { backgroundColor: accent, borderColor: accent }]}
-                        onPress={() => setSpotType(key)}
-                        activeOpacity={0.75}
-                      >
-                        <Text style={[styles.typeChipText, spotType === key && { color: onAccent }]}>
-                          {label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </>
-              )}
+              <Text style={[styles.fieldLabel, { marginTop: 24 }]}>ADDRESS</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Street address"
+                placeholderTextColor={C.muted}
+                value={address}
+                onChangeText={setAddress}
+                maxLength={200}
+                returnKeyType="next"
+              />
             </View>
           )}
 
           {step === 2 && (
             <View style={styles.section}>
-              <Text style={styles.fieldLabel}>DESCRIPTION</Text>
+              <Text style={styles.fieldLabel}>PHONE (OPTIONAL)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="+1 555 000 0000"
+                placeholderTextColor={C.muted}
+                value={phone}
+                onChangeText={setPhone}
+                maxLength={30}
+                keyboardType="phone-pad"
+                returnKeyType="next"
+              />
+              <Text style={[styles.fieldLabel, { marginTop: 24 }]}>WEBSITE (OPTIONAL)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="https://…"
+                placeholderTextColor={C.muted}
+                value={website}
+                onChangeText={setWebsite}
+                maxLength={200}
+                keyboardType="url"
+                autoCapitalize="none"
+                returnKeyType="next"
+              />
+              <Text style={[styles.fieldLabel, { marginTop: 24 }]}>OPENING HOURS (OPTIONAL)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. Mon–Fri 10–6, Sat 11–5"
+                placeholderTextColor={C.muted}
+                value={openingHours}
+                onChangeText={setOpeningHours}
+                maxLength={100}
+                returnKeyType="next"
+              />
+              <Text style={[styles.fieldLabel, { marginTop: 24 }]}>DESCRIPTION (OPTIONAL)</Text>
               <TextInput
                 style={[styles.input, styles.inputMultiline]}
-                placeholder="What makes this spot special? Any obstacles or access notes?"
+                placeholder="What's special about this shop?"
                 placeholderTextColor={C.muted}
                 value={description}
                 onChangeText={setDescription}
                 maxLength={400}
                 multiline
-                numberOfLines={4}
+                numberOfLines={3}
                 textAlignVertical="top"
               />
-              <Text style={[styles.fieldLabel, { marginTop: 24 }]}>DIFFICULTY</Text>
-              <View style={styles.starsRow}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <TouchableOpacity
-                    key={star}
-                    onPress={() => setDifficulty(difficulty === star ? null : star)}
-                    style={styles.starBtn}
-                    hitSlop={4}
-                  >
-                    <Ionicons
-                      name={difficulty != null && star <= difficulty ? "star" : "star-outline"}
-                      size={28}
-                      color={difficulty != null && star <= difficulty ? accent : C.border}
-                    />
-                  </TouchableOpacity>
-                ))}
-                {difficulty != null && (
-                  <Text style={[styles.difficultyLabel, { color: accent }]}>{DIFFICULTY_LABELS[difficulty]}</Text>
-                )}
-              </View>
             </View>
           )}
 
@@ -236,24 +234,24 @@ export function CreateSpotSheet({ visible, onClose, onSpotCreated, initialCoordi
           )}
           {step < 3 ? (
             <TouchableOpacity
-              style={[styles.primaryBtn, { backgroundColor: accent }, step === 1 && !name.trim() && styles.primaryBtnDisabled]}
-              disabled={step === 1 && !name.trim()}
+              style={[styles.primaryBtn, step === 1 && !step1Valid && styles.primaryBtnDisabled]}
+              disabled={step === 1 && !step1Valid}
               onPress={() => setStep((s) => s + 1)}
               activeOpacity={0.85}
             >
-              <Text style={[styles.primaryBtnText, { color: onAccent }]}>NEXT</Text>
+              <Text style={styles.primaryBtnText}>NEXT</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={[styles.primaryBtn, { backgroundColor: accent }, isSubmitting && styles.primaryBtnDisabled]}
+              style={[styles.primaryBtn, isSubmitting && styles.primaryBtnDisabled]}
               disabled={isSubmitting}
               onPress={handleSubmit}
               activeOpacity={0.85}
             >
               {isSubmitting ? (
-                <ActivityIndicator size="small" color={onAccent} />
+                <ActivityIndicator size="small" color={C.onSecondary} />
               ) : (
-                <Text style={[styles.primaryBtnText, { color: onAccent }]}>SUBMIT SPOT</Text>
+                <Text style={styles.primaryBtnText}>SUBMIT STORE</Text>
               )}
             </TouchableOpacity>
           )}
@@ -264,10 +262,7 @@ export function CreateSpotSheet({ visible, onClose, onSpotCreated, initialCoordi
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: C.bg,
-  },
+  container: { flex: 1, backgroundColor: C.bg },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -284,9 +279,7 @@ const styles = StyleSheet.create({
     color: C.text,
     letterSpacing: 1,
   },
-  closeBtn: {
-    padding: 4,
-  },
+  closeBtn: { padding: 4 },
   stepRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -296,14 +289,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: C.border,
   },
-  stepDot: {
-    width: 8,
-    height: 8,
-    backgroundColor: C.border,
-  },
-  stepDotActive: {
-    backgroundColor: C.primary,
-  },
+  stepDot: { width: 8, height: 8, backgroundColor: C.border },
+  stepDotActive: { backgroundColor: C.secondary },
   stepLabel: {
     fontFamily: F.mono,
     fontSize: 10,
@@ -311,12 +298,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginLeft: 6,
   },
-  body: {
-    flex: 1,
-  },
-  section: {
-    padding: 20,
-  },
+  body: { flex: 1 },
+  section: { padding: 20 },
   fieldLabel: {
     fontFamily: F.mono,
     fontSize: 10,
@@ -334,50 +317,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  inputMultiline: {
-    minHeight: 100,
-    paddingTop: 12,
-  },
-  typeRow: {
-    flexDirection: "row",
-    gap: 8,
-    flexWrap: "wrap",
-  },
-  typeChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderWidth: 2,
-    borderColor: C.border,
-    backgroundColor: C.surface,
-  },
-  typeChipActive: {
-    backgroundColor: C.primary,
-    borderColor: C.primary,
-  },
-  typeChipText: {
-    fontFamily: F.mono,
-    fontSize: 11,
-    letterSpacing: 1,
-    color: C.muted,
-  },
-  typeChipTextActive: {
-    color: C.onPrimary,
-  },
-  starsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  starBtn: {
-    padding: 4,
-  },
-  difficultyLabel: {
-    fontFamily: F.mono,
-    fontSize: 10,
-    color: C.primary,
-    letterSpacing: 1,
-    marginLeft: 8,
-  },
+  inputMultiline: { minHeight: 80, paddingTop: 12 },
   photoBtn: {
     borderWidth: 2,
     borderColor: C.border,
@@ -394,18 +334,9 @@ const styles = StyleSheet.create({
     color: C.muted,
     letterSpacing: 1,
   },
-  photoPreviewWrap: {
-    position: "relative",
-  },
-  photoPreview: {
-    width: "100%",
-    aspectRatio: 16 / 9,
-  },
-  removePhotoBtn: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-  },
+  photoPreviewWrap: { position: "relative" },
+  photoPreview: { width: "100%", aspectRatio: 16 / 9 },
+  removePhotoBtn: { position: "absolute", top: 8, right: 8 },
   errorBanner: {
     marginTop: 16,
     backgroundColor: C.errorContainer,
@@ -413,11 +344,7 @@ const styles = StyleSheet.create({
     borderColor: C.errorBorder,
     padding: 12,
   },
-  errorText: {
-    fontFamily: F.body,
-    fontSize: 13,
-    color: C.error,
-  },
+  errorText: { fontFamily: F.body, fontSize: 13, color: C.error },
   footer: {
     flexDirection: "row",
     gap: 10,
@@ -441,19 +368,17 @@ const styles = StyleSheet.create({
   },
   primaryBtn: {
     flex: 2,
-    backgroundColor: C.primary,
+    backgroundColor: C.secondary,
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
     minHeight: 48,
   },
-  primaryBtnDisabled: {
-    opacity: 0.4,
-  },
+  primaryBtnDisabled: { opacity: 0.4 },
   primaryBtnText: {
     fontFamily: F.mono,
     fontSize: 12,
-    color: C.onPrimary,
+    color: C.onSecondary,
     letterSpacing: 1,
   },
 });

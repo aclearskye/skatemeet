@@ -26,6 +26,7 @@ export type OsmSpot = {
   address: string;
   spot_type: "park" | "diy" | "street";
   coordinates: { lat: number; lng: number };
+  upvote_count: number;
 };
 
 export type OsmShop = {
@@ -36,23 +37,7 @@ export type OsmShop = {
   website: string | null;
   opening_hours: string | null;
   coordinates: { lat: number; lng: number };
-};
-
-export type UserShop = {
-  shop_id: string;
-  profile_id: string;
-  name: string;
-  address: string;
-  phone: string | null;
-  website: string | null;
-  opening_hours: string | null;
-  description: string | null;
-  photo_url: string | null;
-  latitude: number;
-  longitude: number;
-  is_verified: boolean;
-  created_at: string;
-  updated_at: string;
+  upvote_count: number;
 };
 
 export type CreateSpotPayload = {
@@ -94,7 +79,7 @@ export function regionToBoundingBox(
 export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[]> {
   const { data, error } = await supabase
     .from("osm_spots")
-    .select("place_id, name, address, spot_type, latitude, longitude")
+    .select("place_id, name, address, spot_type, latitude, longitude, upvote_count")
     .gte("latitude", bbox.minLat)
     .lte("latitude", bbox.maxLat)
     .gte("longitude", bbox.minLng)
@@ -106,6 +91,7 @@ export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[
     address: row.address,
     spot_type: row.spot_type as OsmSpot["spot_type"],
     coordinates: { lat: row.latitude, lng: row.longitude },
+    upvote_count: row.upvote_count as number,
   }));
 }
 
@@ -114,7 +100,7 @@ export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[
 export async function fetchOsmShopsInBounds(bbox: BoundingBox): Promise<OsmShop[]> {
   const { data, error } = await supabase
     .from("osm_shops")
-    .select("place_id, name, address, phone, website, opening_hours, latitude, longitude")
+    .select("place_id, name, address, phone, website, opening_hours, latitude, longitude, upvote_count")
     .gte("latitude", bbox.minLat)
     .lte("latitude", bbox.maxLat)
     .gte("longitude", bbox.minLng)
@@ -128,6 +114,7 @@ export async function fetchOsmShopsInBounds(bbox: BoundingBox): Promise<OsmShop[
     website: row.website,
     opening_hours: row.opening_hours,
     coordinates: { lat: row.latitude, lng: row.longitude },
+    upvote_count: row.upvote_count as number,
   }));
 }
 
@@ -180,22 +167,199 @@ export async function uploadSpotPhoto(
 // ── Voting ────────────────────────────────────────────────────────────────────
 
 export async function toggleSpotVote(
-  spotId: string,
+  spotId: string | null,
+  osmPlaceId: string | null,
   userId: string
 ): Promise<{ upvote_count: number; user_has_voted: boolean }> {
-  // Try to insert; if unique violation (23505) the user already voted → delete instead
-  const { error: insertError } = await supabase
+  const payload = spotId
+    ? { spot_id: spotId, profile_id: userId }
+    : { osm_place_id: osmPlaceId, profile_id: userId };
+
+  const { error: insertError } = await supabase.from("spot_votes").insert(payload);
+
+  let userHasVoted = true;
+
+  if (insertError) {
+    if (insertError.code === "23505") {
+      const base = supabase.from("spot_votes").delete().eq("profile_id", userId);
+      const { error: deleteError } = spotId
+        ? await base.eq("spot_id", spotId)
+        : await base.eq("osm_place_id", osmPlaceId!);
+      if (deleteError) throw deleteError;
+      userHasVoted = false;
+    } else {
+      throw insertError;
+    }
+  }
+
+  const table = spotId ? "user_spots" : "osm_spots";
+  const col = spotId ? "spot_id" : "place_id";
+  const val = spotId ?? osmPlaceId!;
+  const { data, error } = await supabase
+    .from(table)
+    .select("upvote_count")
+    .eq(col, val)
+    .single();
+  if (error) throw error;
+  return { upvote_count: (data as any).upvote_count, user_has_voted: userHasVoted };
+}
+
+export async function getUserVoteStatus(
+  spotId: string | null,
+  osmPlaceId: string | null,
+  userId: string
+): Promise<boolean> {
+  const base = supabase
     .from("spot_votes")
-    .insert({ spot_id: spotId, profile_id: userId });
+    .select("*", { count: "exact", head: true })
+    .eq("profile_id", userId);
+  const { count, error } = spotId
+    ? await base.eq("spot_id", spotId)
+    : await base.eq("osm_place_id", osmPlaceId!);
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
+export async function getSpotVoteCount(
+  spotId: string | null,
+  osmPlaceId: string | null
+): Promise<number> {
+  const table = spotId ? "user_spots" : "osm_spots";
+  const col = spotId ? "spot_id" : "place_id";
+  const val = spotId ?? osmPlaceId!;
+  const { data, error } = await supabase
+    .from(table)
+    .select("upvote_count")
+    .eq(col, val)
+    .single();
+  if (error) throw error;
+  return (data as any).upvote_count as number;
+}
+
+// ── Spot Cards ────────────────────────────────────────────────────────────────
+
+export type SpotCard = {
+  card_id: string; profile_id: string;
+  spot_id: string | null; osm_place_id: string | null;
+  heading: string; rating: number | null; comment: string;
+  upvote_count: number; is_verified: boolean; created_at: string;
+};
+
+export type SpotCardWithProfile = SpotCard & {
+  profiles: { username: string; display_name: string | null };
+};
+
+export type CreateSpotCardPayload = {
+  spot_id: string | null; osm_place_id: string | null;
+  heading: string; rating: number | null; comment: string;
+};
+
+export async function fetchSpotCards(
+  spotId: string | null,
+  osmPlaceId: string | null
+): Promise<SpotCardWithProfile[]> {
+  const { data, error } = await supabase
+    .from("spot_cards")
+    .select("*, profiles(username, display_name)")
+    .eq(spotId ? "spot_id" : "osm_place_id", spotId ?? osmPlaceId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as SpotCardWithProfile[];
+}
+
+export async function fetchSpotAverageRating(
+  spotId: string | null,
+  osmPlaceId: string | null
+): Promise<{ average: number | null; count: number }> {
+  const { data, error } = await supabase
+    .from("spot_cards")
+    .select("rating")
+    .eq(spotId ? "spot_id" : "osm_place_id", spotId ?? osmPlaceId)
+    .eq("is_verified", true)
+    .not("rating", "is", null);
+  if (error) throw error;
+  const rows = (data ?? []) as { rating: number }[];
+  if (rows.length === 0) return { average: null, count: 0 };
+  const sum = rows.reduce((acc, r) => acc + r.rating, 0);
+  return { average: Math.round((sum / rows.length) * 10) / 10, count: rows.length };
+}
+
+export async function createSpotCard(
+  payload: CreateSpotCardPayload,
+  userId: string
+): Promise<SpotCard> {
+  const { data, error } = await supabase
+    .from("spot_cards")
+    .insert({ ...payload, profile_id: userId })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as SpotCard;
+}
+
+// ── Spot Favourites ───────────────────────────────────────────────────────────
+
+export async function getSpotFavouriteStatus(
+  spotId: string | null,
+  osmPlaceId: string | null,
+  userId: string
+): Promise<boolean> {
+  const filter = spotId ? { spot_id: spotId } : { osm_place_id: osmPlaceId };
+  const { count, error } = await supabase
+    .from("spot_favourites")
+    .select("*", { count: "exact", head: true })
+    .eq("profile_id", userId)
+    .match(filter);
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
+export async function toggleSpotFavourite(
+  spotId: string | null,
+  osmPlaceId: string | null,
+  userId: string
+): Promise<boolean> {
+  const payload = spotId
+    ? { profile_id: userId, spot_id: spotId }
+    : { profile_id: userId, osm_place_id: osmPlaceId };
+
+  const { error: insertError } = await supabase.from("spot_favourites").insert(payload);
+
+  if (insertError) {
+    if (insertError.code === "23505") {
+      const base = supabase
+        .from("spot_favourites")
+        .delete()
+        .eq("profile_id", userId);
+      const { error: deleteError } = spotId
+        ? await base.eq("spot_id", spotId)
+        : await base.eq("osm_place_id", osmPlaceId!);
+      if (deleteError) throw deleteError;
+      return false;
+    }
+    throw insertError;
+  }
+  return true;
+}
+
+// ── Spot Card Votes ───────────────────────────────────────────────────────────
+
+export async function toggleSpotCardVote(
+  cardId: string,
+  userId: string
+): Promise<{ upvote_count: number; user_has_voted: boolean }> {
+  const { error: insertError } = await supabase
+    .from("spot_card_votes")
+    .insert({ card_id: cardId, profile_id: userId });
 
   let userHasVoted = true;
 
   if (insertError) {
     if (insertError.code === "23505") {
       const { error: deleteError } = await supabase
-        .from("spot_votes")
+        .from("spot_card_votes")
         .delete()
-        .eq("spot_id", spotId)
+        .eq("card_id", cardId)
         .eq("profile_id", userId);
       if (deleteError) throw deleteError;
       userHasVoted = false;
@@ -204,26 +368,29 @@ export async function toggleSpotVote(
     }
   }
 
-  // Trigger keeps upvote_count in sync; just read the updated value
   const { data, error: readError } = await supabase
-    .from("user_spots")
+    .from("spot_cards")
     .select("upvote_count")
-    .eq("spot_id", spotId)
+    .eq("card_id", cardId)
     .single();
   if (readError) throw readError;
 
   return { upvote_count: (data as any).upvote_count, user_has_voted: userHasVoted };
 }
 
-export async function getUserVoteStatus(
-  spotId: string,
+export async function getSpotCardVoteStatuses(
+  cardIds: string[],
   userId: string
-): Promise<boolean> {
-  const { count, error } = await supabase
-    .from("spot_votes")
-    .select("*", { count: "exact", head: true })
-    .eq("spot_id", spotId)
-    .eq("profile_id", userId);
+): Promise<Record<string, boolean>> {
+  const { data, error } = await supabase
+    .from("spot_card_votes")
+    .select("card_id")
+    .eq("profile_id", userId)
+    .in("card_id", cardIds);
   if (error) throw error;
-  return (count ?? 0) > 0;
+  const result: Record<string, boolean> = {};
+  for (const row of data ?? []) {
+    result[(row as any).card_id] = true;
+  }
+  return result;
 }

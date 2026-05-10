@@ -1,7 +1,7 @@
 import { CreateSpotSheet } from "@/components/spots/CreateSpotSheet";
-import { SpotDetailSheet } from "@/components/spots/SpotDetailSheet";
+import { CreateStoreSheet } from "@/components/spots/CreateStoreSheet";
+import { MapPreviewCard, PreviewItem } from "@/components/map/MapPreviewCard";
 import { useAuthContext } from "@/lib/context/use-auth-context";
-import { fetchNearbySkateStores, SkateStore } from "@/lib/stores/skateStores";
 import {
   fetchOsmShopsInBounds,
   fetchOsmSpotsInBounds,
@@ -11,6 +11,7 @@ import {
   regionToBoundingBox,
   SkateSpot,
 } from "@/lib/spots/skateSpots";
+import { fetchUserShopsInBounds, UserShop } from "@/lib/stores/skateStores";
 import { C, F, R } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
@@ -24,11 +25,63 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Callout, Marker, Region } from "react-native-maps";
+import MapView, { Marker, Region } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Status = "idle" | "loading" | "denied" | "error" | "ready";
 type FilterKey = "spots" | "diys" | "stores";
+type PinCategory = "spot" | "diy" | "store";
+
+function SpotMarker({ isDiy = false, selected = false }: { isDiy?: boolean; selected?: boolean }) {
+  const accent = isDiy ? C.tertiary : C.primary;
+  const onAccent = isDiy ? C.onTertiary : C.onPrimary;
+  return (
+    <View style={[
+      mStyles.square,
+      selected
+        ? { backgroundColor: accent }
+        : { backgroundColor: C.surfaceHigh, borderWidth: 2, borderColor: accent },
+    ]}>
+      <Ionicons
+        name={isDiy ? "construct-sharp" : "location-sharp"}
+        size={18}
+        color={selected ? onAccent : accent}
+      />
+    </View>
+  );
+}
+
+function StoreMarker({ selected = false }: { selected?: boolean }) {
+  return (
+    <View style={[
+      mStyles.square,
+      selected
+        ? { backgroundColor: C.secondary }
+        : { backgroundColor: C.surfaceHigh, borderWidth: 2, borderColor: C.secondary },
+    ]}>
+      <Ionicons name="home-sharp" size={18} color={selected ? C.onSecondary : C.secondary} />
+    </View>
+  );
+}
+
+const mStyles = StyleSheet.create({
+  square: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
+  pendingPin: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#ffffff",
+    backgroundColor: C.surfaceHigh,
+  },
+  pendingPinText: {
+    color: "#ffffff",
+    fontSize: 20,
+    fontWeight: "700",
+    lineHeight: 22,
+  },
+});
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "spots", label: "Skate Spots" },
@@ -36,7 +89,6 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "stores", label: "Skate Stores" },
 ];
 
-const STORE_DEBOUNCE_MS = 800;
 const SPOTS_DEBOUNCE_MS = 1000;
 
 const DARK_MAP_STYLE = [
@@ -74,31 +126,24 @@ export default function MapScreen() {
     new Set<FilterKey>(["spots", "diys", "stores"])
   );
 
-  const [stores, setStores] = useState<SkateStore[]>([]);
   const [osmShops, setOsmShops] = useState<OsmShop[]>([]);
   const [osmSpots, setOsmSpots] = useState<OsmSpot[]>([]);
   const [userSpots, setUserSpots] = useState<SkateSpot[]>([]);
+  const [userShops, setUserShops] = useState<UserShop[]>([]);
 
-  const [selectedUserSpot, setSelectedUserSpot] = useState<SkateSpot | null>(null);
-  const [selectedOsmSpot, setSelectedOsmSpot] = useState<OsmSpot | null>(null);
+  const [previewItem, setPreviewItem] = useState<PreviewItem | null>(null);
+  const lastMarkerPressAt = useRef(0);
 
   const [isPickingLocation, setIsPickingLocation] = useState(false);
   const [pendingPin, setPendingPin] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [pinCategory, setPinCategory] = useState<PinCategory | null>(null);
   const [showCreateSheet, setShowCreateSheet] = useState(false);
+  const [showCreateStoreSheet, setShowCreateStoreSheet] = useState(false);
 
-  const storeDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const spotsDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Loaders ────────────────────────────────────────────────────────────────
-
-  const loadStores = useCallback(async (lat: number, lng: number) => {
-    try {
-      const results = await fetchNearbySkateStores({ lat, lng });
-      setStores(results);
-    } catch {
-      setErrorMsg("Could not load nearby stores.");
-    }
-  }, []);
 
   const loadOsmSpots = useCallback(async (region: Region) => {
     try {
@@ -108,12 +153,14 @@ export default function MapScreen() {
         region.latitudeDelta,
         region.longitudeDelta
       );
-      const [spots, shops] = await Promise.all([
+      const [spots, shops, uShops] = await Promise.all([
         fetchOsmSpotsInBounds(bbox),
         fetchOsmShopsInBounds(bbox),
+        fetchUserShopsInBounds(bbox),
       ]);
       setOsmSpots(spots);
       setOsmShops(shops);
+      setUserShops(uShops);
     } catch {
       // OSM data is best-effort; don't surface an error banner
     }
@@ -161,29 +208,23 @@ export default function MapScreen() {
       setStatus("ready");
 
       await Promise.all([
-        loadStores(latitude, longitude),
         loadOsmSpots(region),
         loadUserSpots(region),
       ]);
     })();
-  }, [loadStores, loadOsmSpots, loadUserSpots]);
+  }, [loadOsmSpots, loadUserSpots]);
 
   // ── Region change ──────────────────────────────────────────────────────────
 
   const handleRegionChangeComplete = useCallback(
     (region: Region) => {
-      if (storeDebounce.current) clearTimeout(storeDebounce.current);
-      storeDebounce.current = setTimeout(() => {
-        loadStores(region.latitude, region.longitude);
-      }, STORE_DEBOUNCE_MS);
-
       if (spotsDebounce.current) clearTimeout(spotsDebounce.current);
       spotsDebounce.current = setTimeout(() => {
         loadOsmSpots(region);
         loadUserSpots(region);
       }, SPOTS_DEBOUNCE_MS);
     },
-    [loadStores, loadOsmSpots, loadUserSpots]
+    [loadOsmSpots, loadUserSpots]
   );
 
   // ── Filter toggle ──────────────────────────────────────────────────────────
@@ -200,15 +241,6 @@ export default function MapScreen() {
   // ── Visible markers ────────────────────────────────────────────────────────
 
   const searchLower = search.toLowerCase();
-
-  const visibleStores = activeFilters.has("stores")
-    ? stores.filter(
-        (s) =>
-          search === "" ||
-          s.name.toLowerCase().includes(searchLower) ||
-          s.address.toLowerCase().includes(searchLower)
-      )
-    : [];
 
   const visibleOsmShops = activeFilters.has("stores")
     ? osmShops.filter(
@@ -235,7 +267,6 @@ export default function MapScreen() {
   });
 
   const nothingVisible =
-    visibleStores.length === 0 &&
     visibleOsmShops.length === 0 &&
     visibleOsmSpots.length === 0 &&
     visibleUserSpots.length === 0;
@@ -275,32 +306,13 @@ export default function MapScreen() {
           onPress={
             isPickingLocation
               ? (e) => setPendingPin(e.nativeEvent.coordinate)
-              : undefined
+              : () => {
+                  if (Date.now() - lastMarkerPressAt.current > 150) {
+                    setPreviewItem(null);
+                  }
+                }
           }
         >
-          {/* Stores */}
-          {visibleStores.map((store) => (
-            <Marker
-              key={store.place_id}
-              coordinate={{
-                latitude: store.coordinates.lat,
-                longitude: store.coordinates.lng,
-              }}
-              title={store.name}
-              pinColor={C.primary}
-            >
-              <Callout>
-                <View style={styles.callout}>
-                  <Text style={styles.calloutName}>{store.name}</Text>
-                  <Text style={styles.calloutAddress}>{store.address}</Text>
-                  {store.rating != null && (
-                    <Text style={styles.calloutRating}>★ {store.rating.toFixed(1)}</Text>
-                  )}
-                </View>
-              </Callout>
-            </Marker>
-          ))}
-
           {/* OSM shops */}
           {visibleOsmShops.map((shop) => (
             <Marker
@@ -309,15 +321,32 @@ export default function MapScreen() {
                 latitude: shop.coordinates.lat,
                 longitude: shop.coordinates.lng,
               }}
-              title={shop.name}
-              pinColor={C.primary}
+              anchor={{ x: 0.5, y: 0.5 }}
+              onPress={() => { lastMarkerPressAt.current = Date.now(); setPreviewItem({ kind: "osm-shop", data: shop }); }}
             >
-              <Callout>
-                <View style={styles.callout}>
-                  <Text style={styles.calloutName}>{shop.name}</Text>
-                  <Text style={styles.calloutAddress}>{shop.address}</Text>
-                </View>
-              </Callout>
+              <StoreMarker
+                selected={
+                  previewItem?.kind === "osm-shop" &&
+                  previewItem.data.place_id === shop.place_id
+                }
+              />
+            </Marker>
+          ))}
+
+          {/* User shops */}
+          {activeFilters.has("stores") && userShops.map((shop) => (
+            <Marker
+              key={shop.shop_id}
+              coordinate={{ latitude: shop.latitude, longitude: shop.longitude }}
+              anchor={{ x: 0.5, y: 0.5 }}
+              onPress={() => { lastMarkerPressAt.current = Date.now(); setPreviewItem({ kind: "user-shop", data: shop }); }}
+            >
+              <StoreMarker
+                selected={
+                  previewItem?.kind === "user-shop" &&
+                  previewItem.data.shop_id === shop.shop_id
+                }
+              />
             </Marker>
           ))}
 
@@ -329,9 +358,17 @@ export default function MapScreen() {
                 latitude: spot.coordinates.lat,
                 longitude: spot.coordinates.lng,
               }}
-              pinColor={C.secondary}
-              onPress={() => setSelectedOsmSpot(spot)}
-            />
+              anchor={{ x: 0.5, y: 0.5 }}
+              onPress={() => { lastMarkerPressAt.current = Date.now(); setPreviewItem({ kind: "osm-spot", data: spot }); }}
+            >
+              <SpotMarker
+                isDiy={spot.spot_type === "diy"}
+                selected={
+                  previewItem?.kind === "osm-spot" &&
+                  previewItem.data.place_id === spot.place_id
+                }
+              />
+            </Marker>
           ))}
 
           {/* User spots */}
@@ -339,14 +376,26 @@ export default function MapScreen() {
             <Marker
               key={spot.spot_id}
               coordinate={{ latitude: spot.latitude, longitude: spot.longitude }}
-              pinColor={spot.is_verified ? C.primary : C.muted}
-              onPress={() => setSelectedUserSpot(spot)}
-            />
+              anchor={{ x: 0.5, y: 0.5 }}
+              onPress={() => { lastMarkerPressAt.current = Date.now(); setPreviewItem({ kind: "user-spot", data: spot }); }}
+            >
+              <SpotMarker
+                isDiy={spot.type === "diy"}
+                selected={
+                  previewItem?.kind === "user-spot" &&
+                  previewItem.data.spot_id === spot.spot_id
+                }
+              />
+            </Marker>
           ))}
 
           {/* Pending location pin */}
           {pendingPin && (
-            <Marker coordinate={pendingPin} pinColor={C.primaryBright} />
+            <Marker coordinate={pendingPin} anchor={{ x: 0.5, y: 0.5 }}>
+              <View style={mStyles.pendingPin}>
+                <Text style={mStyles.pendingPinText}>?</Text>
+              </View>
+            </Marker>
           )}
         </MapView>
       )}
@@ -373,14 +422,16 @@ export default function MapScreen() {
         >
           {FILTERS.map(({ key, label }) => {
             const active = activeFilters.has(key);
+            const accentBg = key === "stores" ? C.secondary : key === "diys" ? C.tertiary : C.primary;
+            const accentText = key === "stores" ? C.onSecondary : key === "diys" ? C.onTertiary : C.onPrimary;
             return (
               <TouchableOpacity
                 key={key}
-                style={[styles.chip, active && styles.chipActive]}
+                style={[styles.chip, active && { backgroundColor: accentBg, borderColor: accentBg }]}
                 onPress={() => toggleFilter(key)}
                 activeOpacity={0.75}
               >
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                <Text style={[styles.chipText, active && { color: accentText }]}>
                   {label}
                 </Text>
               </TouchableOpacity>
@@ -393,7 +444,7 @@ export default function MapScreen() {
       {session && !isPickingLocation && (
         <TouchableOpacity
           style={[styles.fab, { bottom: insets.bottom + 16 }]}
-          onPress={() => setIsPickingLocation(true)}
+          onPress={() => { setIsPickingLocation(true); setPreviewItem(null); }}
           activeOpacity={0.85}
         >
           <Ionicons name="add" size={28} color={C.onPrimary} />
@@ -421,7 +472,7 @@ export default function MapScreen() {
                 style={styles.confirmPickBtn}
                 onPress={() => {
                   setIsPickingLocation(false);
-                  setShowCreateSheet(true);
+                  setShowCategoryPicker(true);
                 }}
               >
                 <Text style={styles.confirmPickText}>CONFIRM</Text>
@@ -448,6 +499,45 @@ export default function MapScreen() {
         </View>
       )}
 
+      {/* Category picker overlay */}
+      {showCategoryPicker && (
+        <View style={[styles.categoryPicker, { bottom: insets.bottom + 16 }]}>
+          <Text style={styles.categoryTitle}>WHAT ARE YOU ADDING?</Text>
+          <View style={styles.categoryOptions}>
+            <TouchableOpacity
+              style={[styles.categoryOption, { borderColor: C.primary }]}
+              onPress={() => { setPinCategory("spot"); setShowCategoryPicker(false); setShowCreateSheet(true); }}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="location-sharp" size={22} color={C.primary} />
+              <Text style={[styles.categoryOptionText, { color: C.primary }]}>SKATE SPOT</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.categoryOption, { borderColor: C.tertiary }]}
+              onPress={() => { setPinCategory("diy"); setShowCategoryPicker(false); setShowCreateSheet(true); }}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="construct-sharp" size={22} color={C.tertiary} />
+              <Text style={[styles.categoryOptionText, { color: C.tertiary }]}>DIY SPOT</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.categoryOption, { borderColor: C.secondary }]}
+              onPress={() => { setPinCategory("store"); setShowCategoryPicker(false); setShowCreateStoreSheet(true); }}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="home-sharp" size={22} color={C.secondary} />
+              <Text style={[styles.categoryOptionText, { color: C.secondary }]}>SKATE STORE</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity
+            style={styles.categoryCancel}
+            onPress={() => { setShowCategoryPicker(false); setPendingPin(null); setPinCategory(null); }}
+          >
+            <Text style={styles.categoryCancelText}>CANCEL</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Create spot sheet */}
       {pendingPin && (
         <CreateSpotSheet
@@ -455,30 +545,43 @@ export default function MapScreen() {
           onClose={() => {
             setShowCreateSheet(false);
             setPendingPin(null);
+            setPinCategory(null);
           }}
           onSpotCreated={(spot) => {
             setUserSpots((prev) => [spot, ...prev]);
             setPendingPin(null);
+            setPinCategory(null);
+          }}
+          initialCoordinates={pendingPin}
+          lockedType={pinCategory === "diy" ? "diy" : undefined}
+        />
+      )}
+
+      {/* Create store sheet */}
+      {pendingPin && (
+        <CreateStoreSheet
+          visible={showCreateStoreSheet}
+          onClose={() => {
+            setShowCreateStoreSheet(false);
+            setPendingPin(null);
+            setPinCategory(null);
+          }}
+          onShopCreated={(shop) => {
+            setUserShops((prev) => [shop, ...prev]);
+            setPendingPin(null);
+            setPinCategory(null);
           }}
           initialCoordinates={pendingPin}
         />
       )}
 
-      {/* Spot detail sheet */}
-      <SpotDetailSheet
-        spot={selectedUserSpot ?? selectedOsmSpot}
-        spotKind={selectedUserSpot ? "user" : selectedOsmSpot ? "osm" : null}
-        onClose={() => {
-          setSelectedUserSpot(null);
-          setSelectedOsmSpot(null);
-        }}
-        onSpotUpdated={(updated) => {
-          setUserSpots((prev) =>
-            prev.map((s) => (s.spot_id === updated.spot_id ? updated : s))
-          );
-          setSelectedUserSpot(updated);
-        }}
-      />
+      {/* Map preview card */}
+      {previewItem && !isPickingLocation && (
+        <MapPreviewCard
+          item={previewItem}
+          onDismiss={() => setPreviewItem(null)}
+        />
+      )}
     </View>
   );
 }
@@ -557,22 +660,6 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   chipTextActive: { color: C.onPrimary },
-
-  // Callout (stores)
-  callout: { width: 200, padding: 4 },
-  calloutName: { fontFamily: F.bodyBold, fontSize: 14 },
-  calloutAddress: {
-    color: "#6b7280",
-    fontFamily: F.body,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  calloutRating: {
-    color: C.secondary,
-    fontFamily: F.mono,
-    fontSize: 12,
-    marginTop: 4,
-  },
 
   // FAB
   fab: {
@@ -661,6 +748,54 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   errorBannerDismiss: { color: C.error, fontFamily: F.mono, fontSize: 12 },
+  // Category picker
+  categoryPicker: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    backgroundColor: C.bgLow,
+    borderWidth: 2,
+    borderColor: C.border,
+    padding: 16,
+    gap: 12,
+  },
+  categoryTitle: {
+    fontFamily: F.mono,
+    fontSize: 10,
+    color: C.muted,
+    letterSpacing: 2,
+    textAlign: "center",
+  },
+  categoryOptions: {
+    gap: 8,
+  },
+  categoryOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderWidth: 2,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: C.surface,
+  },
+  categoryOptionText: {
+    fontFamily: F.mono,
+    fontSize: 12,
+    letterSpacing: 1,
+  },
+  categoryCancel: {
+    borderWidth: 2,
+    borderColor: C.border,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  categoryCancelText: {
+    fontFamily: F.mono,
+    fontSize: 11,
+    color: C.muted,
+    letterSpacing: 1,
+  },
+
   emptyBanner: {
     position: "absolute",
     bottom: 20,

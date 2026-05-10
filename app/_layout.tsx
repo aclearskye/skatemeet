@@ -68,6 +68,8 @@ const RootNavigation = () => {
       <Stack.Screen name="Login" />
       <Stack.Screen name="SignUp" />
       <Stack.Screen name="(onboarding)" />
+      <Stack.Screen name="spot-detail" />
+      <Stack.Screen name="store-detail" />
     </Stack>
   );
 };
