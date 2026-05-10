@@ -84,3 +84,16 @@ export const SP = {
 };
 
 export const R = 0; // border radius — always 0 per design system
+
+const AVATAR_PALETTE: [bg: string, text: string][] = [
+  [C.primary, C.onPrimary],
+  [C.secondary, C.onSecondary],
+  [C.tertiary, C.onTertiary],
+];
+
+export function avatarColor(seed: string | null | undefined): [bg: string, text: string] {
+  let hash = 0;
+  const s = seed ?? "";
+  for (let i = 0; i < s.length; i++) hash = (hash * 31 + s.charCodeAt(i)) | 0;
+  return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
+}

@@ -1,5 +1,7 @@
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import AuthProvider from "@/providers/auth-provider";
+import { DrawerProvider } from "@/lib/context/drawer-context";
+import DrawerMenu from "@/components/ui/DrawerMenu";
 import {
   Anton_400Regular,
 } from "@expo-google-fonts/anton";
@@ -70,6 +72,7 @@ const RootNavigation = () => {
       <Stack.Screen name="(onboarding)" />
       <Stack.Screen name="spot-detail" />
       <Stack.Screen name="store-detail" />
+      <Stack.Screen name="user/[userId]" />
     </Stack>
   );
 };
@@ -77,7 +80,12 @@ const RootNavigation = () => {
 export default function Layout() {
   return (
     <AuthProvider>
-      <RootNavigation />
+      <DrawerProvider>
+        <View style={{ flex: 1, backgroundColor: C.bg }}>
+          <RootNavigation />
+          <DrawerMenu />
+        </View>
+      </DrawerProvider>
     </AuthProvider>
   );
 }

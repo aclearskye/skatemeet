@@ -1,3 +1,4 @@
+import BurgerButton from "@/components/ui/BurgerButton";
 import { CreateSpotSheet } from "@/components/spots/CreateSpotSheet";
 import { CreateStoreSheet } from "@/components/spots/CreateStoreSheet";
 import { MapPreviewCard, MapPreviewCardSkeleton, PreviewItem, SkeletonKind } from "@/components/map/MapPreviewCard";
@@ -91,7 +92,11 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "stores", label: "Skate Stores" },
 ];
 
-const SPOTS_DEBOUNCE_MS = 1000;
+const SPOTS_DEBOUNCE_MS = 1750;
+const SCAN_MIN_MS = 1500;
+const SEARCH_DEBOUNCE_MS = 350;
+// Beyond this delta (~55 km viewport), skip fetching to avoid loading the entire world
+const MAX_DELTA = 0.5;
 
 const DARK_MAP_STYLE = [
   { elementType: "geometry", stylers: [{ color: "#212121" }] },
@@ -147,8 +152,21 @@ export default function MapScreen() {
   const [pinCategory, setPinCategory] = useState<PinCategory | null>(null);
   const [showCreateSheet, setShowCreateSheet] = useState(false);
   const [showCreateStoreSheet, setShowCreateStoreSheet] = useState(false);
+  const [dismissedEmpty, setDismissedEmpty] = useState(false);
+  const [markersLoading, setMarkersLoading] = useState(false);
+  const [scanningMinimum, setScanningMinimum] = useState(false);
+  const scanningMinRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [tooZoomedOut, setTooZoomedOut] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const spotsDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (searchDebounce.current) clearTimeout(searchDebounce.current);
+    searchDebounce.current = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
+    return () => { if (searchDebounce.current) clearTimeout(searchDebounce.current); };
+  }, [search]);
 
   // ── Dismiss helper — cancels any in-flight preview fetch ──────────────────
 
@@ -280,6 +298,19 @@ export default function MapScreen() {
     }
   }, []);
 
+  const loadMarkers = useCallback(async (region: Region) => {
+    setDismissedEmpty(false);
+    setMarkersLoading(true);
+    if (scanningMinRef.current) clearTimeout(scanningMinRef.current);
+    setScanningMinimum(true);
+    scanningMinRef.current = setTimeout(() => setScanningMinimum(false), SCAN_MIN_MS);
+    try {
+      await Promise.all([loadOsmSpots(region), loadUserSpots(region)]);
+    } finally {
+      setMarkersLoading(false);
+    }
+  }, [loadOsmSpots, loadUserSpots]);
+
   // ── Initial location ───────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -304,26 +335,30 @@ export default function MapScreen() {
       };
 
       setInitialRegion(region);
+      setMarkersLoading(true);
       setStatus("ready");
 
-      await Promise.all([
-        loadOsmSpots(region),
-        loadUserSpots(region),
-      ]);
+      await loadMarkers(region);
     })();
-  }, [loadOsmSpots, loadUserSpots]);
+  }, [loadMarkers]);
 
   // ── Region change ──────────────────────────────────────────────────────────
 
   const handleRegionChangeComplete = useCallback(
     (region: Region) => {
       if (spotsDebounce.current) clearTimeout(spotsDebounce.current);
+
+      if (region.latitudeDelta > MAX_DELTA || region.longitudeDelta > MAX_DELTA) {
+        setTooZoomedOut(true);
+        return;
+      }
+
+      setTooZoomedOut(false);
       spotsDebounce.current = setTimeout(() => {
-        loadOsmSpots(region);
-        loadUserSpots(region);
+        loadMarkers(region);
       }, SPOTS_DEBOUNCE_MS);
     },
-    [loadOsmSpots, loadUserSpots]
+    [loadMarkers]
   );
 
   // ── Filter toggle ──────────────────────────────────────────────────────────
@@ -339,7 +374,7 @@ export default function MapScreen() {
 
   // ── Visible markers ────────────────────────────────────────────────────────
 
-  const searchLower = search.toLowerCase();
+  const searchLower = debouncedSearch.toLowerCase();
 
   const visibleOsmShops = activeFilters.has("stores")
     ? osmShops.filter(
@@ -504,17 +539,20 @@ export default function MapScreen() {
 
       {/* Search + filter overlay */}
       <View style={[styles.overlay, { top: insets.top + 12 }]}>
-        <View style={styles.searchRow}>
-          <Ionicons name="search-outline" size={16} color={C.muted} style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search spots, DIYs, stores…"
-            placeholderTextColor={C.muted}
-            value={search}
-            onChangeText={setSearch}
-            returnKeyType="search"
-            clearButtonMode="while-editing"
-          />
+        <View style={styles.searchAndMenu}>
+          <View style={[styles.searchRow, { flex: 1 }]}>
+            <Ionicons name="search-outline" size={16} color={C.muted} style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search spots, DIYs, stores…"
+              placeholderTextColor={C.muted}
+              value={search}
+              onChangeText={setSearch}
+              returnKeyType="search"
+              clearButtonMode="while-editing"
+            />
+          </View>
+          <BurgerButton />
         </View>
 
         <ScrollView
@@ -594,10 +632,27 @@ export default function MapScreen() {
         </View>
       )}
 
-      {/* Empty state */}
-      {nothingVisible && status === "ready" && !errorMsg && !isPickingLocation && (
-        <View style={styles.emptyBanner}>
-          <Text style={styles.emptyText}>NOTHING FOUND NEARBY.</Text>
+      {/* Notification bar — zoomed out / loading / empty */}
+      {status === "ready" && !errorMsg && !isPickingLocation && (
+        tooZoomedOut || markersLoading || scanningMinimum || (nothingVisible && !dismissedEmpty)
+      ) && (
+        <View style={[styles.emptyBanner, { top: insets.top + 100 }]}>
+          <Text style={styles.emptyText}>
+            {tooZoomedOut
+              ? "ZOOM IN TO SEE SPOTS"
+              : markersLoading || scanningMinimum
+              ? "SCANNING NEARBY…"
+              : "NOTHING FOUND NEARBY."}
+          </Text>
+          {!tooZoomedOut && !(markersLoading || scanningMinimum) ? (
+            <TouchableOpacity onPress={() => setDismissedEmpty(true)} style={styles.emptyDismiss}>
+              <Text style={styles.emptyDismissText}>✕</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.emptyDismiss} pointerEvents="none">
+              <Text style={[styles.emptyDismissText, { opacity: 0 }]}>✕</Text>
+            </View>
+          )}
         </View>
       )}
 
@@ -728,8 +783,13 @@ const styles = StyleSheet.create({
   // Overlay
   overlay: {
     position: "absolute",
-    left: 12,
-    right: 12,
+    left: 16,
+    right: 16,
+    gap: 8,
+  },
+  searchAndMenu: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   searchRow: {
@@ -739,7 +799,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: C.border,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    height: 40,
   },
   searchIcon: { marginRight: 8 },
   searchInput: {
@@ -904,20 +964,30 @@ const styles = StyleSheet.create({
 
   emptyBanner: {
     position: "absolute",
-    bottom: 20,
     left: 16,
     right: 16,
     backgroundColor: C.surfaceHigh,
     borderRadius: R,
     borderWidth: 2,
     borderColor: C.border,
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
   },
   emptyText: {
     color: C.muted,
     fontFamily: F.mono,
     fontSize: 10,
     letterSpacing: 2,
+  },
+  emptyDismiss: {
+    padding: 4,
+  },
+  emptyDismissText: {
+    color: C.muted,
+    fontFamily: F.mono,
+    fontSize: 12,
   },
 });

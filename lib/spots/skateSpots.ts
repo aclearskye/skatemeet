@@ -83,7 +83,8 @@ export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[
     .gte("latitude", bbox.minLat)
     .lte("latitude", bbox.maxLat)
     .gte("longitude", bbox.minLng)
-    .lte("longitude", bbox.maxLng);
+    .lte("longitude", bbox.maxLng)
+    .limit(150);
   if (error) throw error;
   return (data ?? []).map((row: any) => ({
     place_id: row.place_id,
@@ -104,7 +105,8 @@ export async function fetchOsmShopsInBounds(bbox: BoundingBox): Promise<OsmShop[
     .gte("latitude", bbox.minLat)
     .lte("latitude", bbox.maxLat)
     .gte("longitude", bbox.minLng)
-    .lte("longitude", bbox.maxLng);
+    .lte("longitude", bbox.maxLng)
+    .limit(150);
   if (error) throw error;
   return (data ?? []).map((row: any) => ({
     place_id: row.place_id,
@@ -127,7 +129,8 @@ export async function fetchSpotsInBounds(bbox: BoundingBox): Promise<SkateSpot[]
     .gte("latitude", bbox.minLat)
     .lte("latitude", bbox.maxLat)
     .gte("longitude", bbox.minLng)
-    .lte("longitude", bbox.maxLng);
+    .lte("longitude", bbox.maxLng)
+    .limit(150);
   if (error) throw error;
   return data as SkateSpot[];
 }

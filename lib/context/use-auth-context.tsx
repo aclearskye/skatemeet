@@ -17,6 +17,8 @@ export type Profile = {
   skill_level: string | null;
   city: string | null;
   bio: string | null;
+  pronouns: string | null;
+  avatar_url: string | null;
 };
 
 export type AuthData = {

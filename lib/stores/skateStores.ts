@@ -46,7 +46,8 @@ export async function fetchUserShopsInBounds(bbox: BoundingBox): Promise<UserSho
     .gte("latitude", bbox.minLat)
     .lte("latitude", bbox.maxLat)
     .gte("longitude", bbox.minLng)
-    .lte("longitude", bbox.maxLng);
+    .lte("longitude", bbox.maxLng)
+    .limit(150);
   if (error) throw error;
   return (data ?? []) as UserShop[];
 }
