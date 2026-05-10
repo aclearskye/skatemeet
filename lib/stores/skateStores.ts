@@ -238,6 +238,22 @@ export async function toggleCardVote(
 
 // ── Store Votes ───────────────────────────────────────────────────────────────
 
+export async function getStoreVoteCount(
+  shopId: string | null,
+  osmPlaceId: string | null
+): Promise<number> {
+  const table = shopId ? "user_shops" : "osm_shops";
+  const col = shopId ? "shop_id" : "place_id";
+  const val = shopId ?? osmPlaceId!;
+  const { data, error } = await supabase
+    .from(table)
+    .select("upvote_count")
+    .eq(col, val)
+    .single();
+  if (error) throw error;
+  return (data as any).upvote_count as number;
+}
+
 export async function getStoreVoteStatus(
   shopId: string | null,
   osmPlaceId: string | null,

@@ -4,6 +4,7 @@ import {
   fetchStoreCards,
   fetchStoreAverageRating,
   getStoreFavouriteStatus,
+  getStoreVoteCount,
   getStoreVoteStatus,
   toggleStoreFavourite,
   toggleStoreVote,
@@ -50,7 +51,7 @@ function StoreCardItem({ card, isVoted, onUpvote }: StoreCardItemProps) {
         <Text style={cardStyles.heading}>{card.heading}</Text>
         {!card.is_verified && (
           <View style={cardStyles.needsVotesBadge}>
-            <Text style={cardStyles.needsVotesText}>{card.upvote_count}/3</Text>
+            <Text style={cardStyles.needsVotesText}>NEEDS VOTES {card.upvote_count}/3</Text>
           </View>
         )}
       </View>
@@ -228,15 +229,21 @@ export default function StoreDetailScreen() {
   const [showAddCard, setShowAddCard] = useState(false);
 
   useEffect(() => {
-    getStoreVoteStatus(shopId, osmPlaceId, session!.user.id)
+    if (!session) return;
+
+    getStoreVoteStatus(shopId, osmPlaceId, session.user.id)
       .then(setUserHasVoted)
       .catch(() => {})
       .finally(() => setIsLoadingVote(false));
 
+    getStoreVoteCount(shopId, osmPlaceId)
+      .then(setLocalVoteCount)
+      .catch(() => {});
+
     Promise.all([
       fetchStoreCards(shopId, osmPlaceId),
       fetchStoreAverageRating(shopId, osmPlaceId),
-      getStoreFavouriteStatus(shopId, osmPlaceId, session!.user.id),
+      getStoreFavouriteStatus(shopId, osmPlaceId, session.user.id),
     ])
       .then(([fetchedCards, rating, fav]) => {
         setCards(fetchedCards);
@@ -245,7 +252,7 @@ export default function StoreDetailScreen() {
         if (fetchedCards.length > 0) {
           getCardVoteStatuses(
             fetchedCards.map((c) => c.card_id),
-            session!.user.id
+            session.user.id
           )
             .then(setCardVotes)
             .catch(() => {});
@@ -256,11 +263,11 @@ export default function StoreDetailScreen() {
   }, []);
 
   async function handleFavourite() {
-    if (isTogglingFav) return;
+    if (isTogglingFav || !session) return;
     setIsTogglingFav(true);
     setIsFavourited((prev) => !prev);
     try {
-      const newState = await toggleStoreFavourite(shopId, osmPlaceId, session!.user.id);
+      const newState = await toggleStoreFavourite(shopId, osmPlaceId, session.user.id);
       setIsFavourited(newState);
     } catch {
       setIsFavourited((prev) => !prev);
@@ -270,10 +277,10 @@ export default function StoreDetailScreen() {
   }
 
   async function handleVote() {
-    if (isVoting) return;
+    if (isVoting || !session) return;
     setIsVoting(true);
     try {
-      const result = await toggleStoreVote(shopId, osmPlaceId, session!.user.id);
+      const result = await toggleStoreVote(shopId, osmPlaceId, session.user.id);
       setUserHasVoted(result.user_has_voted);
       setLocalVoteCount(result.upvote_count);
     } catch {
@@ -293,6 +300,7 @@ export default function StoreDetailScreen() {
   }
 
   async function handleCardUpvote(cardId: string) {
+    if (!session) return;
     const optimistic = !cardVotes[cardId];
     setCardVotes((prev) => ({ ...prev, [cardId]: optimistic }));
     setCards((prev) =>
@@ -303,7 +311,7 @@ export default function StoreDetailScreen() {
       })
     );
     try {
-      await toggleCardVote(cardId, session!.user.id);
+      await toggleCardVote(cardId, session.user.id);
     } catch {
       setCardVotes((prev) => ({ ...prev, [cardId]: !optimistic }));
     }

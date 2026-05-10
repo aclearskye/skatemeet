@@ -4,6 +4,7 @@ import {
   fetchSpotCards,
   getSpotCardVoteStatuses,
   getSpotFavouriteStatus,
+  getSpotVoteCount,
   getUserVoteStatus,
   OsmSpot,
   SkateSpot,
@@ -232,6 +233,10 @@ export default function SpotDetailScreen() {
       .then(setUserHasVoted)
       .catch(() => {})
       .finally(() => setIsLoadingVote(false));
+
+    getSpotVoteCount(spotId, osmPlaceId)
+      .then(setLocalVoteCount)
+      .catch(() => {});
 
     Promise.all([
       fetchSpotCards(spotId, osmPlaceId),

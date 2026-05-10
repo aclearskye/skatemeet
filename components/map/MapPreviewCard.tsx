@@ -1,10 +1,13 @@
-import { OsmShop, OsmSpot, SkateSpot } from "@/lib/spots/skateSpots";
-import { SkateStore, UserShop } from "@/lib/stores/skateStores";
+import { OsmShop, OsmSpot, SkateSpot, toggleSpotVote } from "@/lib/spots/skateSpots";
+import { toggleStoreVote, UserShop } from "@/lib/stores/skateStores";
+import { useAuthContext } from "@/lib/context/use-auth-context";
 import { C, F } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
 import {
+  Animated,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -15,13 +18,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export type PreviewItem =
   | { kind: "user-spot"; data: SkateSpot }
   | { kind: "osm-spot"; data: OsmSpot }
-  | { kind: "skate-store"; data: SkateStore }
   | { kind: "osm-shop"; data: OsmShop }
   | { kind: "user-shop"; data: UserShop };
 
 type Props = {
   item: PreviewItem;
   onDismiss: () => void;
+  initialHasVoted: boolean | null;
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -31,9 +34,58 @@ const TYPE_LABELS: Record<string, string> = {
   indoor: "INDOOR",
 };
 
-export function MapPreviewCard({ item, onDismiss }: Props) {
+export type SkeletonKind = "spot" | "diy" | "store";
+
+export function MapPreviewCardSkeleton({ onDismiss, kind }: { onDismiss: () => void; kind: SkeletonKind }) {
+  const insets = useSafeAreaInsets();
+  const pulse = useRef(new Animated.Value(0.5)).current;
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 750, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0.5, duration: 750, useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
+
+  const isStore = kind === "store";
+  const isDiy = kind === "diy";
+
+  return (
+    <View style={[styles.wrapper, { bottom: insets.bottom + 64 + 12 }]}>
+      <View style={styles.card}>
+        <TouchableOpacity style={styles.dismissBtn} onPress={onDismiss} hitSlop={12}>
+          <Ionicons name="close" size={16} color={C.muted} />
+        </TouchableOpacity>
+        <Animated.View style={[styles.topRow, { opacity: pulse }]}>
+          <View style={[styles.thumbImg, styles.skeletonBlock]} />
+          <View style={styles.info}>
+            <View style={[styles.skeletonBlock, { width: "65%", height: 18 }]} />
+            <View style={styles.badgeRow}>
+              <View style={[styles.skeletonBlock, { width: 56, height: 20 }]} />
+              <View style={[styles.skeletonBlock, { width: 44, height: 20 }]} />
+            </View>
+            <View style={[styles.skeletonBlock, { width: "45%", height: 10 }]} />
+          </View>
+        </Animated.View>
+        <View style={[styles.cta, isDiy && styles.ctaDiy, isStore && styles.ctaStore]}>
+          <Text style={[styles.ctaText, isDiy && styles.ctaTextDiy, isStore && styles.ctaTextStore]}>
+            {isStore ? "VIEW STORE" : "SKATE HERE"}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+export function MapPreviewCard({ item, onDismiss, initialHasVoted }: Props) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { session } = useAuthContext();
+  const userId = session?.user.id ?? null;
 
   const isSpot = item.kind === "user-spot" || item.kind === "osm-spot";
 
@@ -41,11 +93,11 @@ export function MapPreviewCard({ item, onDismiss }: Props) {
   let photoUrl: string | null = null;
   let typeLabel = "";
   let isVerified = false;
-  let rating: number | null = null;
   let upvoteCount: number | null = null;
   let subtitle = "";
   let isOsm = false;
   let isDiy = false;
+  let isStore = false;
 
   if (item.kind === "user-spot") {
     const s = item.data;
@@ -63,12 +115,6 @@ export function MapPreviewCard({ item, onDismiss }: Props) {
     isOsm = true;
     isDiy = s.spot_type === "diy";
     upvoteCount = s.upvote_count;
-  } else if (item.kind === "skate-store") {
-    const s = item.data;
-    name = s.name;
-    subtitle = s.address;
-    rating = s.rating;
-    typeLabel = "SKATE SHOP";
   } else if (item.kind === "osm-shop") {
     const s = item.data;
     name = s.name;
@@ -76,12 +122,41 @@ export function MapPreviewCard({ item, onDismiss }: Props) {
     typeLabel = "SKATE SHOP";
     isOsm = true;
     upvoteCount = s.upvote_count;
+    isStore = true;
   } else {
     const s = item.data;
     name = s.name;
     subtitle = s.address;
     typeLabel = "SKATE SHOP";
     upvoteCount = s.upvote_count;
+    isStore = true;
+  }
+
+  const spotId = item.kind === "user-spot" ? item.data.spot_id : null;
+  const osmSpotId = item.kind === "osm-spot" ? item.data.place_id : null;
+  const shopId = item.kind === "user-shop" ? item.data.shop_id : null;
+  const osmShopId = item.kind === "osm-shop" ? item.data.place_id : null;
+
+  const [hasVoted, setHasVoted] = useState<boolean | null>(initialHasVoted);
+  const [localCount, setLocalCount] = useState(upvoteCount);
+
+  useEffect(() => { setLocalCount(upvoteCount); }, [upvoteCount]);
+
+  async function handleUpvote() {
+    if (!userId || hasVoted === null) return;
+    const wasVoted = hasVoted;
+    setHasVoted(!wasVoted);
+    setLocalCount((prev) => (prev ?? 0) + (wasVoted ? -1 : 1));
+    try {
+      const result = (spotId || osmSpotId)
+        ? await toggleSpotVote(spotId, osmSpotId, userId)
+        : await toggleStoreVote(shopId, osmShopId, userId);
+      setHasVoted(result.user_has_voted);
+      setLocalCount(result.upvote_count);
+    } catch {
+      setHasVoted(wasVoted);
+      setLocalCount((prev) => (prev ?? 0) + (wasVoted ? 1 : -1));
+    }
   }
 
   function handleNavigate() {
@@ -134,7 +209,7 @@ export function MapPreviewCard({ item, onDismiss }: Props) {
               )}
             </View>
 
-            {/* Badges */}
+            {/* Badges + upvote pill */}
             <View style={styles.badgeRow}>
               <View style={styles.typeBadge}>
                 <Text style={styles.typeBadgeText}>{typeLabel}</Text>
@@ -144,6 +219,34 @@ export function MapPreviewCard({ item, onDismiss }: Props) {
                   <Text style={styles.osmBadgeText}>OSM</Text>
                 </View>
               )}
+              {localCount != null && hasVoted !== null && (
+                <TouchableOpacity
+                  style={[
+                    styles.upvotePill,
+                    hasVoted && (isDiy ? styles.upvotePillDiy : isStore ? styles.upvotePillStore : styles.upvotePillFilled),
+                    !hasVoted && (isDiy ? styles.upvotePillOutlineDiy : isStore ? styles.upvotePillOutlineStore : styles.upvotePillOutline),
+                  ]}
+                  onPress={handleUpvote}
+                  activeOpacity={0.7}
+                  hitSlop={8}
+                >
+                  <Ionicons
+                    name="arrow-up"
+                    size={11}
+                    color={hasVoted
+                      ? (isDiy ? C.onTertiary : isStore ? C.onSecondary : C.onPrimary)
+                      : (isDiy ? C.tertiary : isStore ? C.secondary : C.primary)
+                    }
+                  />
+                  <Text style={[
+                    styles.upvotePillText,
+                    hasVoted && (isDiy ? styles.upvotePillTextDiy : isStore ? styles.upvotePillTextStore : null),
+                    !hasVoted && (isDiy ? styles.upvotePillTextOutlineDiy : isStore ? styles.upvotePillTextOutlineStore : styles.upvotePillTextOutline),
+                  ]}>
+                    {localCount}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             {/* Subtitle (address) */}
@@ -151,31 +254,8 @@ export function MapPreviewCard({ item, onDismiss }: Props) {
               <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
             )}
 
-            {/* Rating (stores) */}
-            {rating != null && (
-              <View style={styles.ratingRow}>
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Ionicons
-                    key={i}
-                    name={i <= Math.round(rating!) ? "star" : "star-outline"}
-                    size={11}
-                    color={i <= Math.round(rating!) ? C.secondary : C.border}
-                  />
-                ))}
-                <Text style={styles.ratingTextStore}>{rating.toFixed(1)}</Text>
-              </View>
-            )}
-
-            {/* Upvotes (user spots) */}
-            {upvoteCount != null && (
-              <View style={styles.ratingRow}>
-                <Ionicons name="arrow-up-circle" size={12} color={isDiy ? C.tertiary : C.primary} />
-                <Text style={[styles.ratingText, isDiy && styles.ratingTextDiy]}>
-                  {upvoteCount} {upvoteCount === 1 ? "SKATER" : "SKATERS"}
-                </Text>
-              </View>
-            )}
           </View>
+
         </TouchableOpacity>
 
         {/* CTA */}
@@ -215,6 +295,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 12,
     gap: 12,
+    position: "relative",
   },
   thumb: {
     width: 88,
@@ -233,7 +314,6 @@ const styles = StyleSheet.create({
   info: {
     flex: 1,
     gap: 5,
-    paddingRight: 24,
     justifyContent: "center",
   },
   nameRow: {
@@ -263,7 +343,9 @@ const styles = StyleSheet.create({
   },
   badgeRow: {
     flexDirection: "row",
+    alignItems: "center",
     gap: 6,
+    justifyContent: "space-between",
   },
   typeBadge: {
     paddingHorizontal: 8,
@@ -302,20 +384,64 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 3,
   },
-  ratingText: {
-    fontFamily: F.mono,
-    fontSize: 10,
-    color: C.primary,
-    marginLeft: 2,
-  },
-  ratingTextDiy: {
-    color: C.tertiary,
-  },
   ratingTextStore: {
     fontFamily: F.mono,
     fontSize: 10,
     color: C.secondary,
     marginLeft: 2,
+  },
+  upvotePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginLeft: "auto",
+  },
+  upvotePillFilled: {
+    backgroundColor: C.primary,
+  },
+  upvotePillDiy: {
+    backgroundColor: C.tertiary,
+  },
+  upvotePillStore: {
+    backgroundColor: C.secondary,
+  },
+  upvotePillOutline: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: C.primary,
+  },
+  upvotePillOutlineDiy: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: C.tertiary,
+  },
+  upvotePillOutlineStore: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: C.secondary,
+  },
+  upvotePillText: {
+    fontFamily: F.mono,
+    fontSize: 10,
+    letterSpacing: 0.5,
+    color: C.onPrimary,
+  },
+  upvotePillTextDiy: {
+    color: C.onTertiary,
+  },
+  upvotePillTextStore: {
+    color: C.onSecondary,
+  },
+  upvotePillTextOutline: {
+    color: C.primary,
+  },
+  upvotePillTextOutlineDiy: {
+    color: C.tertiary,
+  },
+  upvotePillTextOutlineStore: {
+    color: C.secondary,
   },
   cta: {
     backgroundColor: C.primary,
@@ -339,5 +465,24 @@ const styles = StyleSheet.create({
   },
   ctaTextStore: {
     color: C.onSecondary,
+  },
+  skeletonBlock: {
+    backgroundColor: C.surfaceHigh,
+  },
+  skeletonCta: {
+    backgroundColor: C.surfaceHigh,
+    paddingVertical: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  skeletonCtaInner: {
+    width: 88,
+    height: 12,
+    backgroundColor: C.surfaceBright,
+  },
+  skeletonPillInner: {
+    width: 29,
+    height: 11,
+    backgroundColor: C.surfaceHighest,
   },
 });

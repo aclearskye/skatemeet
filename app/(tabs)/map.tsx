@@ -1,17 +1,19 @@
 import { CreateSpotSheet } from "@/components/spots/CreateSpotSheet";
 import { CreateStoreSheet } from "@/components/spots/CreateStoreSheet";
-import { MapPreviewCard, PreviewItem } from "@/components/map/MapPreviewCard";
+import { MapPreviewCard, MapPreviewCardSkeleton, PreviewItem, SkeletonKind } from "@/components/map/MapPreviewCard";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import {
   fetchOsmShopsInBounds,
   fetchOsmSpotsInBounds,
   fetchSpotsInBounds,
+  getSpotVoteCount,
+  getUserVoteStatus,
   OsmShop,
   OsmSpot,
   regionToBoundingBox,
   SkateSpot,
 } from "@/lib/spots/skateSpots";
-import { fetchUserShopsInBounds, UserShop } from "@/lib/stores/skateStores";
+import { fetchUserShopsInBounds, getStoreVoteCount, getStoreVoteStatus, UserShop } from "@/lib/stores/skateStores";
 import { C, F, R } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
@@ -117,6 +119,7 @@ const DARK_MAP_STYLE = [
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const { session } = useAuthContext();
+  const userId = session?.user.id ?? null;
 
   const [status, setStatus] = useState<Status>("loading");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -132,7 +135,11 @@ export default function MapScreen() {
   const [userShops, setUserShops] = useState<UserShop[]>([]);
 
   const [previewItem, setPreviewItem] = useState<PreviewItem | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewKind, setPreviewKind] = useState<SkeletonKind>("spot");
+  const [initialHasVoted, setInitialHasVoted] = useState<boolean | null>(null);
   const lastMarkerPressAt = useRef(0);
+  const previewRequestId = useRef(0);
 
   const [isPickingLocation, setIsPickingLocation] = useState(false);
   const [pendingPin, setPendingPin] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -142,6 +149,98 @@ export default function MapScreen() {
   const [showCreateStoreSheet, setShowCreateStoreSheet] = useState(false);
 
   const spotsDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Dismiss helper — cancels any in-flight preview fetch ──────────────────
+
+  const dismissPreview = useCallback(() => {
+    previewRequestId.current++;
+    setPreviewItem(null);
+    setPreviewLoading(false);
+  }, []);
+
+  // ── Marker selection: show skeleton, fetch count + vote status, then card ─
+
+  const handleMarkerSelect = useCallback(async (item: PreviewItem) => {
+    lastMarkerPressAt.current = Date.now();
+
+    const requestId = ++previewRequestId.current;
+    setPreviewItem(null);
+    setPreviewLoading(true);
+    setPreviewKind(
+      item.kind === "osm-shop" || item.kind === "user-shop"
+        ? "store"
+        : (item.kind === "user-spot" && item.data.type === "diy") ||
+          (item.kind === "osm-spot" && item.data.spot_type === "diy")
+        ? "diy"
+        : "spot"
+    );
+
+    try {
+      let enriched: PreviewItem;
+      let voted: boolean | null = null;
+
+      if (item.kind === "user-spot") {
+        if (userId) {
+          const [count, status] = await Promise.all([
+            getSpotVoteCount(item.data.spot_id, null),
+            getUserVoteStatus(item.data.spot_id, null, userId),
+          ]);
+          enriched = { kind: "user-spot", data: { ...item.data, upvote_count: count } };
+          voted = status;
+        } else {
+          const count = await getSpotVoteCount(item.data.spot_id, null);
+          enriched = { kind: "user-spot", data: { ...item.data, upvote_count: count } };
+        }
+      } else if (item.kind === "osm-spot") {
+        if (userId) {
+          const [count, status] = await Promise.all([
+            getSpotVoteCount(null, item.data.place_id),
+            getUserVoteStatus(null, item.data.place_id, userId),
+          ]);
+          enriched = { kind: "osm-spot", data: { ...item.data, upvote_count: count } };
+          voted = status;
+        } else {
+          const count = await getSpotVoteCount(null, item.data.place_id);
+          enriched = { kind: "osm-spot", data: { ...item.data, upvote_count: count } };
+        }
+      } else if (item.kind === "osm-shop") {
+        if (userId) {
+          const [count, status] = await Promise.all([
+            getStoreVoteCount(null, item.data.place_id),
+            getStoreVoteStatus(null, item.data.place_id, userId),
+          ]);
+          enriched = { kind: "osm-shop", data: { ...item.data, upvote_count: count } };
+          voted = status;
+        } else {
+          const count = await getStoreVoteCount(null, item.data.place_id);
+          enriched = { kind: "osm-shop", data: { ...item.data, upvote_count: count } };
+        }
+      } else {
+        // user-shop
+        if (userId) {
+          const [count, status] = await Promise.all([
+            getStoreVoteCount(item.data.shop_id, null),
+            getStoreVoteStatus(item.data.shop_id, null, userId),
+          ]);
+          enriched = { kind: "user-shop", data: { ...item.data, upvote_count: count } };
+          voted = status;
+        } else {
+          const count = await getStoreVoteCount(item.data.shop_id, null);
+          enriched = { kind: "user-shop", data: { ...item.data, upvote_count: count } };
+        }
+      }
+
+      if (previewRequestId.current !== requestId) return;
+      setPreviewItem(enriched!);
+      setInitialHasVoted(voted);
+      setPreviewLoading(false);
+    } catch {
+      if (previewRequestId.current !== requestId) return;
+      setPreviewItem(item);
+      setInitialHasVoted(userId ? false : null);
+      setPreviewLoading(false);
+    }
+  }, [userId]);
 
   // ── Loaders ────────────────────────────────────────────────────────────────
 
@@ -266,10 +365,13 @@ export default function MapScreen() {
     return typeMatch && (search === "" || s.name.toLowerCase().includes(searchLower));
   });
 
+  const visibleUserShops = activeFilters.has("stores") ? userShops : [];
+
   const nothingVisible =
     visibleOsmShops.length === 0 &&
     visibleOsmSpots.length === 0 &&
-    visibleUserSpots.length === 0;
+    visibleUserSpots.length === 0 &&
+    visibleUserShops.length === 0;
 
   // ── Loading / error screens ────────────────────────────────────────────────
 
@@ -308,7 +410,7 @@ export default function MapScreen() {
               ? (e) => setPendingPin(e.nativeEvent.coordinate)
               : () => {
                   if (Date.now() - lastMarkerPressAt.current > 150) {
-                    setPreviewItem(null);
+                    dismissPreview();
                   }
                 }
           }
@@ -322,7 +424,7 @@ export default function MapScreen() {
                 longitude: shop.coordinates.lng,
               }}
               anchor={{ x: 0.5, y: 0.5 }}
-              onPress={() => { lastMarkerPressAt.current = Date.now(); setPreviewItem({ kind: "osm-shop", data: shop }); }}
+              onPress={() => handleMarkerSelect({ kind: "osm-shop", data: shop })}
             >
               <StoreMarker
                 selected={
@@ -339,7 +441,7 @@ export default function MapScreen() {
               key={shop.shop_id}
               coordinate={{ latitude: shop.latitude, longitude: shop.longitude }}
               anchor={{ x: 0.5, y: 0.5 }}
-              onPress={() => { lastMarkerPressAt.current = Date.now(); setPreviewItem({ kind: "user-shop", data: shop }); }}
+              onPress={() => handleMarkerSelect({ kind: "user-shop", data: shop })}
             >
               <StoreMarker
                 selected={
@@ -359,7 +461,7 @@ export default function MapScreen() {
                 longitude: spot.coordinates.lng,
               }}
               anchor={{ x: 0.5, y: 0.5 }}
-              onPress={() => { lastMarkerPressAt.current = Date.now(); setPreviewItem({ kind: "osm-spot", data: spot }); }}
+              onPress={() => handleMarkerSelect({ kind: "osm-spot", data: spot })}
             >
               <SpotMarker
                 isDiy={spot.spot_type === "diy"}
@@ -377,7 +479,7 @@ export default function MapScreen() {
               key={spot.spot_id}
               coordinate={{ latitude: spot.latitude, longitude: spot.longitude }}
               anchor={{ x: 0.5, y: 0.5 }}
-              onPress={() => { lastMarkerPressAt.current = Date.now(); setPreviewItem({ kind: "user-spot", data: spot }); }}
+              onPress={() => handleMarkerSelect({ kind: "user-spot", data: spot })}
             >
               <SpotMarker
                 isDiy={spot.type === "diy"}
@@ -444,7 +546,7 @@ export default function MapScreen() {
       {session && !isPickingLocation && (
         <TouchableOpacity
           style={[styles.fab, { bottom: insets.bottom + 16 }]}
-          onPress={() => { setIsPickingLocation(true); setPreviewItem(null); }}
+          onPress={() => { setIsPickingLocation(true); dismissPreview(); }}
           activeOpacity={0.85}
         >
           <Ionicons name="add" size={28} color={C.onPrimary} />
@@ -576,10 +678,14 @@ export default function MapScreen() {
       )}
 
       {/* Map preview card */}
-      {previewItem && !isPickingLocation && (
+      {previewLoading && !isPickingLocation && (
+        <MapPreviewCardSkeleton onDismiss={dismissPreview} kind={previewKind} />
+      )}
+      {previewItem && !previewLoading && !isPickingLocation && (
         <MapPreviewCard
           item={previewItem}
-          onDismiss={() => setPreviewItem(null)}
+          onDismiss={dismissPreview}
+          initialHasVoted={initialHasVoted}
         />
       )}
     </View>
