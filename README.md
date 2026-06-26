@@ -1,6 +1,8 @@
 # Welcome to Skatemeet 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+<img width="960" height="540" alt="SK8:MEET" src="https://github.com/user-attachments/assets/f6fff77c-3345-42ba-9166-186ac23734e9" />
+
 
 ## Get started
 
