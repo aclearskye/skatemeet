@@ -1,5 +1,5 @@
 import { useAuthContext } from "@/lib/context/use-auth-context";
-import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 type CardBase = { card_id: string; upvote_count: number; is_verified: boolean };
 
@@ -38,131 +38,173 @@ export function useReviewableEntity<TCard extends CardBase, TCardWithProfile ext
   osmPlaceId: string | null,
   initialVoteCount: number,
   adapter: ReviewableEntityAdapter<TCard, TCardWithProfile>,
+  queryKeyBase: readonly unknown[],
   onVoteToggled?: (result: { upvote_count: number; user_has_voted: boolean }) => void
 ) {
   const { session } = useAuthContext();
+  const queryClient = useQueryClient();
+  const userId = session?.user.id;
 
-  const [userHasVoted, setUserHasVoted] = useState(false);
-  const [localVoteCount, setLocalVoteCount] = useState(initialVoteCount);
-  const [isVoting, setIsVoting] = useState(false);
-  const [isLoadingVote, setIsLoadingVote] = useState(true);
+  // ── Queries ──────────────────────────────────────────────────────────────
 
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [isTogglingFav, setIsTogglingFav] = useState(false);
-  const [cards, setCards] = useState<TCardWithProfile[]>([]);
-  const [isLoadingCards, setIsLoadingCards] = useState(true);
-  const [avgRating, setAvgRating] = useState<{ average: number | null; count: number }>({
-    average: null,
-    count: 0,
+  const { data: userHasVoted = false, isLoading: isLoadingVote } = useQuery({
+    queryKey: [...queryKeyBase, "voteStatus"],
+    queryFn: () => adapter.getVoteStatus(entityId, osmPlaceId, userId!),
+    enabled: !!userId,
   });
-  const [cardVotes, setCardVotes] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    if (!session) return;
+  const { data: localVoteCount = initialVoteCount } = useQuery({
+    queryKey: [...queryKeyBase, "voteCount"],
+    queryFn: () => adapter.getVoteCount(entityId, osmPlaceId),
+    initialData: initialVoteCount,
+  });
 
-    adapter
-      .getVoteStatus(entityId, osmPlaceId, session.user.id)
-      .then(setUserHasVoted)
-      .catch(() => {})
-      .finally(() => setIsLoadingVote(false));
+  const { data: cards = [], isLoading: isLoadingCards } = useQuery({
+    queryKey: [...queryKeyBase, "cards"],
+    queryFn: () => adapter.fetchCards(entityId, osmPlaceId),
+  });
 
-    adapter
-      .getVoteCount(entityId, osmPlaceId)
-      .then(setLocalVoteCount)
-      .catch(() => {});
+  const { data: avgRating = { average: null, count: 0 } } = useQuery({
+    queryKey: [...queryKeyBase, "rating"],
+    queryFn: () => adapter.fetchAverageRating(entityId, osmPlaceId),
+  });
 
-    Promise.all([
-      adapter.fetchCards(entityId, osmPlaceId),
-      adapter.fetchAverageRating(entityId, osmPlaceId),
-      adapter.getFavoriteStatus(entityId, osmPlaceId, session.user.id),
-    ])
-      .then(([fetchedCards, rating, fav]) => {
-        setCards(fetchedCards);
-        setAvgRating(rating);
-        setIsFavorited(fav);
-        if (fetchedCards.length > 0) {
-          adapter
-            .getCardVoteStatuses(fetchedCards.map((c) => c.card_id), session.user.id)
-            .then(setCardVotes)
-            .catch(() => {});
-        }
-      })
-      .catch(() => {})
-      .finally(() => setIsLoadingCards(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { data: isFavorited = false } = useQuery({
+    queryKey: [...queryKeyBase, "favorite"],
+    queryFn: () => adapter.getFavoriteStatus(entityId, osmPlaceId, userId!),
+    enabled: !!userId,
+  });
 
-  async function handleVote() {
-    if (!session || isVoting) return;
-    setIsVoting(true);
-    try {
-      const result = await adapter.toggleVote(entityId, osmPlaceId, session.user.id);
-      setUserHasVoted(result.user_has_voted);
-      setLocalVoteCount(result.upvote_count);
+  const cardIds = cards.map((c) => c.card_id);
+  const { data: cardVotes = {} } = useQuery({
+    queryKey: [...queryKeyBase, "cardVotes"],
+    queryFn: () => adapter.getCardVoteStatuses(cardIds, userId!),
+    enabled: !!userId && cardIds.length > 0,
+  });
+
+  // ── Mutations ─────────────────────────────────────────────────────────────
+
+  const voteMutation = useMutation({
+    mutationFn: () => adapter.toggleVote(entityId, osmPlaceId, userId!),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: [...queryKeyBase, "voteStatus"] });
+      await queryClient.cancelQueries({ queryKey: [...queryKeyBase, "voteCount"] });
+      const prevStatus = queryClient.getQueryData<boolean>([...queryKeyBase, "voteStatus"]);
+      const prevCount = queryClient.getQueryData<number>([...queryKeyBase, "voteCount"]);
+      queryClient.setQueryData([...queryKeyBase, "voteStatus"], !prevStatus);
+      queryClient.setQueryData(
+        [...queryKeyBase, "voteCount"],
+        (prevCount ?? initialVoteCount) + (!prevStatus ? 1 : -1)
+      );
+      return { prevStatus, prevCount };
+    },
+    onSuccess: (result) => {
       onVoteToggled?.(result);
-    } catch {
-    } finally {
-      setIsVoting(false);
-    }
+    },
+    onError: (_err, _vars, context) => {
+      queryClient.setQueryData([...queryKeyBase, "voteStatus"], context?.prevStatus);
+      queryClient.setQueryData([...queryKeyBase, "voteCount"], context?.prevCount);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "voteStatus"] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "voteCount"] });
+    },
+  });
+
+  const favoriteMutation = useMutation({
+    mutationFn: () => adapter.toggleFavorite(entityId, osmPlaceId, userId!),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: [...queryKeyBase, "favorite"] });
+      const prev = queryClient.getQueryData<boolean>([...queryKeyBase, "favorite"]);
+      queryClient.setQueryData([...queryKeyBase, "favorite"], !prev);
+      return { prev };
+    },
+    onSuccess: (newState) => {
+      queryClient.setQueryData([...queryKeyBase, "favorite"], newState);
+    },
+    onError: (_err, _vars, context) => {
+      queryClient.setQueryData([...queryKeyBase, "favorite"], context?.prev);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "favorite"] });
+    },
+  });
+
+  const cardUpvoteMutation = useMutation({
+    mutationFn: (cardId: string) => adapter.toggleCardVote(cardId, userId!),
+    onMutate: async (cardId) => {
+      await queryClient.cancelQueries({ queryKey: [...queryKeyBase, "cards"] });
+      await queryClient.cancelQueries({ queryKey: [...queryKeyBase, "cardVotes"] });
+      const prevCards = queryClient.getQueryData<TCardWithProfile[]>([...queryKeyBase, "cards"]);
+      const prevCardVotes = queryClient.getQueryData<Record<string, boolean>>([
+        ...queryKeyBase,
+        "cardVotes",
+      ]);
+      const optimistic = !(prevCardVotes?.[cardId] ?? false);
+      queryClient.setQueryData(
+        [...queryKeyBase, "cardVotes"],
+        (old: Record<string, boolean> | undefined) => ({ ...(old ?? {}), [cardId]: optimistic })
+      );
+      queryClient.setQueryData(
+        [...queryKeyBase, "cards"],
+        (old: TCardWithProfile[] | undefined) =>
+          (old ?? []).map((c) => {
+            if (c.card_id !== cardId) return c;
+            const newCount = c.upvote_count + (optimistic ? 1 : -1);
+            return { ...c, upvote_count: newCount, is_verified: newCount >= 3 };
+          })
+      );
+      return { prevCards, prevCardVotes };
+    },
+    onError: (_err, _cardId, context) => {
+      queryClient.setQueryData([...queryKeyBase, "cards"], context?.prevCards);
+      queryClient.setQueryData([...queryKeyBase, "cardVotes"], context?.prevCardVotes);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "cards"] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "cardVotes"] });
+    },
+  });
+
+  const createCardMutation = useMutation({
+    mutationFn: (payload: CardPayload) =>
+      adapter.createCard(entityId, osmPlaceId, payload, userId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "cards"] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "cardVotes"] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "rating"] });
+    },
+  });
+
+  // ── Wrapped handlers (same external API as before) ────────────────────────
+
+  function handleVote() {
+    if (!userId || voteMutation.isPending) return;
+    voteMutation.mutate();
   }
 
-  async function handleFavorite() {
-    if (isTogglingFav || !session) return;
-    setIsTogglingFav(true);
-    setIsFavorited((prev) => !prev);
-    try {
-      const newState = await adapter.toggleFavorite(entityId, osmPlaceId, session.user.id);
-      setIsFavorited(newState);
-    } catch {
-      setIsFavorited((prev) => !prev);
-    } finally {
-      setIsTogglingFav(false);
-    }
+  function handleFavorite() {
+    if (!userId || favoriteMutation.isPending) return;
+    favoriteMutation.mutate();
   }
 
-  async function handleCardUpvote(cardId: string) {
-    if (!session) return;
-    const optimistic = !cardVotes[cardId];
-    setCardVotes((prev) => ({ ...prev, [cardId]: optimistic }));
-    setCards((prev) =>
-      prev.map((c) => {
-        if (c.card_id !== cardId) return c;
-        const newCount = c.upvote_count + (optimistic ? 1 : -1);
-        return { ...c, upvote_count: newCount, is_verified: newCount >= 3 };
-      })
-    );
-    try {
-      await adapter.toggleCardVote(cardId, session.user.id);
-    } catch {
-      setCardVotes((prev) => ({ ...prev, [cardId]: !optimistic }));
-    }
-  }
-
-  function handleCardCreated(card: TCard) {
-    const cardWithProfile = {
-      ...card,
-      profiles: { username: session!.user.email ?? "you", display_name: null },
-    } as unknown as TCardWithProfile;
-    setCards((prev) => [cardWithProfile, ...prev]);
-    adapter
-      .fetchAverageRating(entityId, osmPlaceId)
-      .then(setAvgRating)
-      .catch(() => {});
+  function handleCardUpvote(cardId: string) {
+    if (!userId) return;
+    cardUpvoteMutation.mutate(cardId);
   }
 
   async function handleCardSubmit(payload: CardPayload) {
-    const card = await adapter.createCard(entityId, osmPlaceId, payload, session!.user.id);
-    handleCardCreated(card);
+    await createCardMutation.mutateAsync(payload);
   }
 
   return {
     userHasVoted,
     localVoteCount,
-    isVoting,
+    isVoting: voteMutation.isPending,
     isLoadingVote,
     handleVote,
     isFavorited,
-    isTogglingFav,
+    isTogglingFav: favoriteMutation.isPending,
     handleFavorite,
     cards,
     isLoadingCards,
