@@ -4,6 +4,7 @@ import { toggleStoreVote, UserStore } from "@/lib/stores/skateStores";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { C, F } from "@/lib/theme";
 import { TYPE_LABELS } from "@/utils/constants";
+import { exhaustiveCheck } from "@/utils/typeGuards";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
@@ -95,37 +96,48 @@ export function MapPreviewCard({ item, onDismiss, initialHasVoted }: Props) {
   let isDiy = false;
   let isStore = false;
 
-  if (item.kind === "user-spot") {
-    const s = item.data;
-    name = s.name;
-    photoUrl = s.photo_url;
-    typeLabel = TYPE_LABELS[s.type] ?? s.type.toUpperCase();
-    isVerified = s.is_verified;
-    upvoteCount = s.upvote_count;
-    isDiy = s.type === "diy";
-  } else if (item.kind === "osm-spot") {
-    const s = item.data;
-    name = s.name;
-    typeLabel = TYPE_LABELS[s.spot_type] ?? s.spot_type.toUpperCase();
-    subtitle = s.address;
-    isOsm = true;
-    isDiy = s.spot_type === "diy";
-    upvoteCount = s.upvote_count;
-  } else if (item.kind === "osm-store") {
-    const s = item.data;
-    name = s.name;
-    subtitle = s.address;
-    typeLabel = "SKATE STORE";
-    isOsm = true;
-    upvoteCount = s.upvote_count;
-    isStore = true;
-  } else {
-    const s = item.data;
-    name = s.name;
-    subtitle = s.address;
-    typeLabel = "SKATE STORE";
-    upvoteCount = s.upvote_count;
-    isStore = true;
+  switch (item.kind) {
+    case "user-spot": {
+      const s = item.data;
+      name = s.name;
+      photoUrl = s.photo_url;
+      typeLabel = TYPE_LABELS[s.type] ?? s.type.toUpperCase();
+      isVerified = s.is_verified;
+      upvoteCount = s.upvote_count;
+      isDiy = s.type === "diy";
+      break;
+    }
+    case "osm-spot": {
+      const s = item.data;
+      name = s.name;
+      typeLabel = TYPE_LABELS[s.spot_type] ?? s.spot_type.toUpperCase();
+      subtitle = s.address;
+      isOsm = true;
+      isDiy = s.spot_type === "diy";
+      upvoteCount = s.upvote_count;
+      break;
+    }
+    case "osm-store": {
+      const s = item.data;
+      name = s.name;
+      subtitle = s.address;
+      typeLabel = "SKATE STORE";
+      isOsm = true;
+      upvoteCount = s.upvote_count;
+      isStore = true;
+      break;
+    }
+    case "user-store": {
+      const s = item.data;
+      name = s.name;
+      subtitle = s.address;
+      typeLabel = "SKATE STORE";
+      upvoteCount = s.upvote_count;
+      isStore = true;
+      break;
+    }
+    default:
+      exhaustiveCheck(item);
   }
 
   const spotId = item.kind === "user-spot" ? item.data.spot_id : null;
