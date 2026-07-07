@@ -1,56 +1,79 @@
 import { loadOsmMarkers, loadUserMarkers } from "@/lib/map/mapData";
-import { OsmSpot, OsmStore, SkateSpot } from "@/lib/spots/skateSpots";
+import { BoundingBox, OsmSpot, OsmStore, regionToBoundingBox, SkateSpot } from "@/lib/spots/skateSpots";
 import { UserStore } from "@/lib/stores/skateStores";
 import { MAX_DELTA, SCAN_MIN_MS, SPOTS_DEBOUNCE_MS } from "@/utils/constants";
+import { queryKeys } from "@/utils/queryKeys";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Location from "expo-location";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Region } from "react-native-maps";
 
 type Status = "loading" | "denied" | "ready";
 
+function regionToBbox(region: Region): BoundingBox {
+  return regionToBoundingBox(
+    region.latitude,
+    region.longitude,
+    region.latitudeDelta,
+    region.longitudeDelta
+  );
+}
+
 export function useMapRegionData() {
   const [status, setStatus] = useState<Status>("loading");
   const [initialRegion, setInitialRegion] = useState<Region | null>(null);
-
-  const [osmStores, setOsmStores] = useState<OsmStore[]>([]);
-  const [osmSpots, setOsmSpots] = useState<OsmSpot[]>([]);
-  const [userSpots, setUserSpots] = useState<SkateSpot[]>([]);
-  const [userStores, setUserStores] = useState<UserStore[]>([]);
-
-  const [dismissedEmpty, setDismissedEmpty] = useState(false);
-  const [markersLoading, setMarkersLoading] = useState(false);
-  const [scanningMinimum, setScanningMinimum] = useState(false);
+  const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
   const [tooZoomedOut, setTooZoomedOut] = useState(false);
+  const [dismissedEmpty, setDismissedEmpty] = useState(false);
+  const [scanningMinimum, setScanningMinimum] = useState(false);
+
   const scanningMinRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const spotsDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const queryClient = useQueryClient();
 
-  const loadMarkers = useCallback(async (region: Region) => {
-    setDismissedEmpty(false);
-    setMarkersLoading(true);
-    if (scanningMinRef.current) clearTimeout(scanningMinRef.current);
+  const bbox = useMemo<BoundingBox | null>(
+    () => (currentRegion && !tooZoomedOut ? regionToBbox(currentRegion) : null),
+    [currentRegion, tooZoomedOut]
+  );
+
+  // Keep a ref so prependUserSpot/prependUserStore always use the latest bbox
+  const bboxRef = useRef(bbox);
+  useEffect(() => { bboxRef.current = bbox; }, [bbox]);
+
+  // ── Queries ────────────────────────────────────────────────────────────────
+
+  const { data: osmData, isFetching: osmFetching } = useQuery({
+    queryKey: queryKeys.mapOsmMarkers(bbox),
+    queryFn: () => loadOsmMarkers(currentRegion!),
+    enabled: bbox !== null,
+    staleTime: 60_000,
+  });
+
+  const { data: userData, isFetching: userFetching } = useQuery({
+    queryKey: queryKeys.mapUserMarkers(bbox),
+    queryFn: () => loadUserMarkers(currentRegion!),
+    enabled: bbox !== null,
+    staleTime: 30_000,
+  });
+
+  const osmStores: OsmStore[] = osmData?.osmStores ?? [];
+  const osmSpots: OsmSpot[] = osmData?.osmSpots ?? [];
+  const userStores: UserStore[] = osmData?.userStores ?? [];
+  const userSpots: SkateSpot[] = userData?.userSpots ?? [];
+  const markersLoading = osmFetching || userFetching;
+
+  // ── Scanning minimum timer ─────────────────────────────────────────────────
+
+  // When the region changes (i.e. a new load is triggered), show the SCANNING
+  // banner for at least SCAN_MIN_MS regardless of how fast the query returns.
+  useEffect(() => {
+    if (!currentRegion) return;
     setScanningMinimum(true);
+    if (scanningMinRef.current) clearTimeout(scanningMinRef.current);
     scanningMinRef.current = setTimeout(() => setScanningMinimum(false), SCAN_MIN_MS);
-    try {
-      await Promise.all([
-        loadOsmMarkers(region)
-          .then(({ osmSpots, osmStores, userStores }) => {
-            setOsmSpots(osmSpots);
-            setOsmStores(osmStores);
-            setUserStores(userStores);
-          })
-          .catch(() => {
-            // OSM data is best-effort; don't surface an error banner
-          }),
-        loadUserMarkers(region)
-          .then(({ userSpots }) => setUserSpots(userSpots))
-          .catch(() => {
-            // silently ignore
-          }),
-      ]);
-    } finally {
-      setMarkersLoading(false);
-    }
-  }, []);
+  }, [currentRegion]);
+
+  // ── Location bootstrap ────────────────────────────────────────────────────
 
   useEffect(() => {
     (async () => {
@@ -74,28 +97,54 @@ export function useMapRegionData() {
       };
 
       setInitialRegion(region);
-      setMarkersLoading(true);
+      setCurrentRegion(region);
       setStatus("ready");
-
-      await loadMarkers(region);
     })();
-  }, [loadMarkers]);
+  }, []);
 
-  const handleRegionChangeComplete = useCallback(
-    (region: Region) => {
-      if (spotsDebounce.current) clearTimeout(spotsDebounce.current);
+  // ── Region change handler ─────────────────────────────────────────────────
 
-      if (region.latitudeDelta > MAX_DELTA || region.longitudeDelta > MAX_DELTA) {
-        setTooZoomedOut(true);
-        return;
-      }
+  const handleRegionChangeComplete = useCallback((region: Region) => {
+    if (spotsDebounce.current) clearTimeout(spotsDebounce.current);
 
-      setTooZoomedOut(false);
-      spotsDebounce.current = setTimeout(() => {
-        loadMarkers(region);
-      }, SPOTS_DEBOUNCE_MS);
+    if (region.latitudeDelta > MAX_DELTA || region.longitudeDelta > MAX_DELTA) {
+      setTooZoomedOut(true);
+      return;
+    }
+
+    setTooZoomedOut(false);
+    spotsDebounce.current = setTimeout(() => {
+      setDismissedEmpty(false);
+      setCurrentRegion(region);
+    }, SPOTS_DEBOUNCE_MS);
+  }, []);
+
+  // ── Optimistic prepend after user creates a spot/store ────────────────────
+
+  const prependUserSpot = useCallback(
+    (spot: SkateSpot) => {
+      queryClient.setQueryData(
+        queryKeys.mapUserMarkers(bboxRef.current),
+        (old: { userSpots: SkateSpot[] } | undefined) => ({
+          userSpots: [spot, ...(old?.userSpots ?? [])],
+        })
+      );
     },
-    [loadMarkers]
+    [queryClient]
+  );
+
+  const prependUserStore = useCallback(
+    (store: UserStore) => {
+      queryClient.setQueryData(
+        queryKeys.mapOsmMarkers(bboxRef.current),
+        (old: { osmSpots: OsmSpot[]; osmStores: OsmStore[]; userStores: UserStore[] } | undefined) => ({
+          osmSpots: old?.osmSpots ?? [],
+          osmStores: old?.osmStores ?? [],
+          userStores: [store, ...(old?.userStores ?? [])],
+        })
+      );
+    },
+    [queryClient]
   );
 
   return {
@@ -105,8 +154,8 @@ export function useMapRegionData() {
     osmSpots,
     userSpots,
     userStores,
-    setUserSpots,
-    setUserStores,
+    prependUserSpot,
+    prependUserStore,
     dismissedEmpty,
     setDismissedEmpty,
     markersLoading,

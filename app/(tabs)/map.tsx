@@ -40,8 +40,8 @@ export default function MapScreen() {
     osmSpots,
     userSpots,
     userStores,
-    setUserSpots,
-    setUserStores,
+    prependUserSpot,
+    prependUserStore,
     dismissedEmpty,
     setDismissedEmpty,
     markersLoading,
@@ -211,12 +211,12 @@ export default function MapScreen() {
           setPinCategory(null);
         }}
         onSpotCreated={(spot) => {
-          setUserSpots((prev) => [spot, ...prev]);
+          prependUserSpot(spot);
           setPendingPin(null);
           setPinCategory(null);
         }}
         onStoreCreated={(store) => {
-          setUserStores((prev) => [store, ...prev]);
+          prependUserStore(store);
           setPendingPin(null);
           setPinCategory(null);
         }}
