@@ -2,6 +2,8 @@ import { useAuthContext } from "@/lib/context/use-auth-context";
 import AuthProvider from "@/providers/auth-provider";
 import { DrawerProvider } from "@/lib/context/drawer-context";
 import DrawerMenu from "@/components/ui/DrawerMenu";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Anton_400Regular,
 } from "@expo-google-fonts/anton";
@@ -24,6 +26,8 @@ import { View } from "react-native";
 import { C } from "@/lib/theme";
 
 SplashScreen.preventAutoHideAsync();
+
+const queryClient = new QueryClient();
 
 const RootNavigation = () => {
   const { session, isLoadingAuthContext, profile } = useAuthContext();
@@ -65,27 +69,31 @@ const RootNavigation = () => {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="Login" />
-      <Stack.Screen name="SignUp" />
-      <Stack.Screen name="(onboarding)" />
-      <Stack.Screen name="spot-detail" />
-      <Stack.Screen name="store-detail" />
-      <Stack.Screen name="user/[userId]" />
-    </Stack>
+    <ErrorBoundary>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="Login" />
+        <Stack.Screen name="SignUp" />
+        <Stack.Screen name="(onboarding)" />
+        <Stack.Screen name="spot-detail" />
+        <Stack.Screen name="store-detail" />
+        <Stack.Screen name="user/[userId]" />
+      </Stack>
+    </ErrorBoundary>
   );
 };
 
 export default function Layout() {
   return (
-    <AuthProvider>
-      <DrawerProvider>
-        <View style={{ flex: 1, backgroundColor: C.bg }}>
-          <RootNavigation />
-          <DrawerMenu />
-        </View>
-      </DrawerProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <DrawerProvider>
+          <View style={{ flex: 1, backgroundColor: C.bg }}>
+            <RootNavigation />
+            <DrawerMenu />
+          </View>
+        </DrawerProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
