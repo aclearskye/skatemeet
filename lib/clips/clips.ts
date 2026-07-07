@@ -9,7 +9,7 @@ export type Clip = {
   duration_seconds: number | null;
   caption: string | null;
   spot_id: string | null;
-  shop_id: string | null;
+  store_id: string | null;
   created_at: string;
 };
 
@@ -23,32 +23,18 @@ export async function fetchProfileClips(profileId: string): Promise<Clip[]> {
   return data as Clip[];
 }
 
-export async function getProfileSpotCount(profileId: string): Promise<number> {
+async function fetchCount(table: string, column: string, value: string): Promise<number> {
   const { count, error } = await supabase
-    .from("user_spots")
+    .from(table)
     .select("*", { count: "exact", head: true })
-    .eq("created_by", profileId);
-  if (error) { console.error(error); return 0; }
+    .eq(column, value);
+  if (error) throw error;
   return count ?? 0;
 }
 
-export async function getProfileClipCount(profileId: string): Promise<number> {
-  const { count, error } = await supabase
-    .from("clips")
-    .select("*", { count: "exact", head: true })
-    .eq("profile_id", profileId);
-  if (error) { console.error(error); return 0; }
-  return count ?? 0;
-}
-
-export async function getProfileCrewCount(profileId: string): Promise<number> {
-  const { count, error } = await supabase
-    .from("crew_follows")
-    .select("*", { count: "exact", head: true })
-    .eq("follower_id", profileId);
-  if (error) { console.error(error); return 0; }
-  return count ?? 0;
-}
+export const getProfileSpotCount = (profileId: string) => fetchCount("user_spots", "created_by", profileId);
+export const getProfileClipCount = (profileId: string) => fetchCount("clips", "profile_id", profileId);
+export const getProfileCrewCount = (profileId: string) => fetchCount("crew_follows", "follower_id", profileId);
 
 export async function uploadAvatar(
   profileId: string,

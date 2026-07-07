@@ -1,4 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
+import { computeAverageRating } from "@/lib/shared/ratings";
+import { toggleVoteRow, getVoteStatus, getVoteCount } from "@/lib/shared/votes";
+import { BOUNDS_ROW_LIMIT } from "@/utils/constants";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -29,7 +32,7 @@ export type OsmSpot = {
   upvote_count: number;
 };
 
-export type OsmShop = {
+export type OsmStore = {
   place_id: string;
   name: string;
   address: string;
@@ -84,7 +87,7 @@ export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[
     .lte("latitude", bbox.maxLat)
     .gte("longitude", bbox.minLng)
     .lte("longitude", bbox.maxLng)
-    .limit(150);
+    .limit(BOUNDS_ROW_LIMIT);
   if (error) throw error;
   return (data ?? []).map((row: any) => ({
     place_id: row.place_id,
@@ -98,15 +101,15 @@ export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[
 
 // ── OSM shops ─────────────────────────────────────────────────────────────────
 
-export async function fetchOsmShopsInBounds(bbox: BoundingBox): Promise<OsmShop[]> {
+export async function fetchOsmStoresInBounds(bbox: BoundingBox): Promise<OsmStore[]> {
   const { data, error } = await supabase
-    .from("osm_shops")
+    .from("osm_stores")
     .select("place_id, name, address, phone, website, opening_hours, latitude, longitude, upvote_count")
     .gte("latitude", bbox.minLat)
     .lte("latitude", bbox.maxLat)
     .gte("longitude", bbox.minLng)
     .lte("longitude", bbox.maxLng)
-    .limit(150);
+    .limit(BOUNDS_ROW_LIMIT);
   if (error) throw error;
   return (data ?? []).map((row: any) => ({
     place_id: row.place_id,
@@ -130,7 +133,7 @@ export async function fetchSpotsInBounds(bbox: BoundingBox): Promise<SkateSpot[]
     .lte("latitude", bbox.maxLat)
     .gte("longitude", bbox.minLng)
     .lte("longitude", bbox.maxLng)
-    .limit(150);
+    .limit(BOUNDS_ROW_LIMIT);
   if (error) throw error;
   return data as SkateSpot[];
 }
@@ -148,23 +151,21 @@ export async function createSpot(
   return data as SkateSpot;
 }
 
+export async function deleteSpot(spotId: string, userId: string): Promise<void> {
+  const { error } = await supabase
+    .from("user_spots")
+    .delete()
+    .eq("spot_id", spotId)
+    .eq("created_by", userId);
+  if (error) throw error;
+}
+
 export async function uploadSpotPhoto(
   userId: string,
   localUri: string
 ): Promise<string> {
-  const fileName = `${userId}/${Date.now()}.jpg`;
-
-  const response = await fetch(localUri);
-  const blob = await response.blob();
-
-  const { error } = await supabase.storage
-    .from("spot-images")
-    .upload(fileName, blob, { contentType: "image/jpeg", upsert: false });
-
-  if (error) throw error;
-
-  const { data } = supabase.storage.from("spot-images").getPublicUrl(fileName);
-  return data.publicUrl;
+  const { uploadFile } = await import("@/lib/storage");
+  return uploadFile(userId, localUri, "spot-images");
 }
 
 // ── Voting ────────────────────────────────────────────────────────────────────
@@ -174,37 +175,10 @@ export async function toggleSpotVote(
   osmPlaceId: string | null,
   userId: string
 ): Promise<{ upvote_count: number; user_has_voted: boolean }> {
-  const payload = spotId
-    ? { spot_id: spotId, profile_id: userId }
-    : { osm_place_id: osmPlaceId, profile_id: userId };
-
-  const { error: insertError } = await supabase.from("spot_votes").insert(payload);
-
-  let userHasVoted = true;
-
-  if (insertError) {
-    if (insertError.code === "23505") {
-      const base = supabase.from("spot_votes").delete().eq("profile_id", userId);
-      const { error: deleteError } = spotId
-        ? await base.eq("spot_id", spotId)
-        : await base.eq("osm_place_id", osmPlaceId!);
-      if (deleteError) throw deleteError;
-      userHasVoted = false;
-    } else {
-      throw insertError;
-    }
-  }
-
-  const table = spotId ? "user_spots" : "osm_spots";
-  const col = spotId ? "spot_id" : "place_id";
-  const val = spotId ?? osmPlaceId!;
-  const { data, error } = await supabase
-    .from(table)
-    .select("upvote_count")
-    .eq(col, val)
-    .single();
-  if (error) throw error;
-  return { upvote_count: (data as any).upvote_count, user_has_voted: userHasVoted };
+  const filter: Record<string, string> = spotId ? { spot_id: spotId } : { osm_place_id: osmPlaceId! };
+  const user_has_voted = await toggleVoteRow("spot_votes", filter, userId);
+  const upvote_count = await getSpotVoteCount(spotId, osmPlaceId);
+  return { upvote_count, user_has_voted };
 }
 
 export async function getUserVoteStatus(
@@ -212,15 +186,8 @@ export async function getUserVoteStatus(
   osmPlaceId: string | null,
   userId: string
 ): Promise<boolean> {
-  const base = supabase
-    .from("spot_votes")
-    .select("*", { count: "exact", head: true })
-    .eq("profile_id", userId);
-  const { count, error } = spotId
-    ? await base.eq("spot_id", spotId)
-    : await base.eq("osm_place_id", osmPlaceId!);
-  if (error) throw error;
-  return (count ?? 0) > 0;
+  const filter: Record<string, string> = spotId ? { spot_id: spotId } : { osm_place_id: osmPlaceId! };
+  return getVoteStatus("spot_votes", filter, userId);
 }
 
 export async function getSpotVoteCount(
@@ -230,13 +197,7 @@ export async function getSpotVoteCount(
   const table = spotId ? "user_spots" : "osm_spots";
   const col = spotId ? "spot_id" : "place_id";
   const val = spotId ?? osmPlaceId!;
-  const { data, error } = await supabase
-    .from(table)
-    .select("upvote_count")
-    .eq(col, val)
-    .single();
-  if (error) throw error;
-  return (data as any).upvote_count as number;
+  return getVoteCount(table, col, val);
 }
 
 // ── Spot Cards ────────────────────────────────────────────────────────────────
@@ -281,10 +242,7 @@ export async function fetchSpotAverageRating(
     .eq("is_verified", true)
     .not("rating", "is", null);
   if (error) throw error;
-  const rows = (data ?? []) as { rating: number }[];
-  if (rows.length === 0) return { average: null, count: 0 };
-  const sum = rows.reduce((acc, r) => acc + r.rating, 0);
-  return { average: Math.round((sum / rows.length) * 10) / 10, count: rows.length };
+  return computeAverageRating((data ?? []) as { rating: number }[]);
 }
 
 export async function createSpotCard(
@@ -302,14 +260,14 @@ export async function createSpotCard(
 
 // ── Spot Favourites ───────────────────────────────────────────────────────────
 
-export async function getSpotFavouriteStatus(
+export async function getSpotFavoriteStatus(
   spotId: string | null,
   osmPlaceId: string | null,
   userId: string
 ): Promise<boolean> {
   const filter = spotId ? { spot_id: spotId } : { osm_place_id: osmPlaceId };
   const { count, error } = await supabase
-    .from("spot_favourites")
+    .from("spot_favorites")
     .select("*", { count: "exact", head: true })
     .eq("profile_id", userId)
     .match(filter);
@@ -317,7 +275,7 @@ export async function getSpotFavouriteStatus(
   return (count ?? 0) > 0;
 }
 
-export async function toggleSpotFavourite(
+export async function toggleSpotFavorite(
   spotId: string | null,
   osmPlaceId: string | null,
   userId: string
@@ -326,12 +284,12 @@ export async function toggleSpotFavourite(
     ? { profile_id: userId, spot_id: spotId }
     : { profile_id: userId, osm_place_id: osmPlaceId };
 
-  const { error: insertError } = await supabase.from("spot_favourites").insert(payload);
+  const { error: insertError } = await supabase.from("spot_favorites").insert(payload);
 
   if (insertError) {
     if (insertError.code === "23505") {
       const base = supabase
-        .from("spot_favourites")
+        .from("spot_favorites")
         .delete()
         .eq("profile_id", userId);
       const { error: deleteError } = spotId
@@ -351,34 +309,9 @@ export async function toggleSpotCardVote(
   cardId: string,
   userId: string
 ): Promise<{ upvote_count: number; user_has_voted: boolean }> {
-  const { error: insertError } = await supabase
-    .from("spot_card_votes")
-    .insert({ card_id: cardId, profile_id: userId });
-
-  let userHasVoted = true;
-
-  if (insertError) {
-    if (insertError.code === "23505") {
-      const { error: deleteError } = await supabase
-        .from("spot_card_votes")
-        .delete()
-        .eq("card_id", cardId)
-        .eq("profile_id", userId);
-      if (deleteError) throw deleteError;
-      userHasVoted = false;
-    } else {
-      throw insertError;
-    }
-  }
-
-  const { data, error: readError } = await supabase
-    .from("spot_cards")
-    .select("upvote_count")
-    .eq("card_id", cardId)
-    .single();
-  if (readError) throw readError;
-
-  return { upvote_count: (data as any).upvote_count, user_has_voted: userHasVoted };
+  const user_has_voted = await toggleVoteRow("spot_card_votes", { card_id: cardId }, userId);
+  const upvote_count = await getVoteCount("spot_cards", "card_id", cardId);
+  return { upvote_count, user_has_voted };
 }
 
 export async function getSpotCardVoteStatuses(
