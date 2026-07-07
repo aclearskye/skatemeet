@@ -10,7 +10,9 @@ import { type Profile } from "@/lib/context/use-auth-context";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { C, F } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import { useQueries, useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { queryKeys } from "@/utils/queryKeys";
 import {
   ActivityIndicator,
   ScrollView,
@@ -36,12 +38,6 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
   const insets = useSafeAreaInsets();
 
   const [activeTab, setActiveTab] = useState(0);
-  const [clips, setClips] = useState<Clip[]>([]);
-  const [spotCount, setSpotCount] = useState(0);
-  const [clipCount, setClipCount] = useState(0);
-  const [crewCount, setCrewCount] = useState(0);
-  const [loadingStats, setLoadingStats] = useState(true);
-  const [loadingClips, setLoadingClips] = useState(true);
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(
     profile.avatar_url
   );
@@ -49,36 +45,31 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
   const displayName =
     profile.display_name?.trim() || `${profile.first_name} ${profile.last_name}`.trim();
 
-  useEffect(() => {
-    async function loadStats() {
-      setLoadingStats(true);
-      try {
-        const [spots, clipsN, crew] = await Promise.all([
-          getProfileSpotCount(profile.profile_id),
-          getProfileClipCount(profile.profile_id),
-          getProfileCrewCount(profile.profile_id),
-        ]);
-        setSpotCount(spots);
-        setClipCount(clipsN);
-        setCrewCount(crew);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoadingStats(false);
-      }
-    }
-    loadStats();
-  }, [profile.profile_id]);
+  const statsQueries = useQueries({
+    queries: [
+      {
+        queryKey: [...queryKeys.profileStats(profile.profile_id), "spots"],
+        queryFn: () => getProfileSpotCount(profile.profile_id),
+      },
+      {
+        queryKey: [...queryKeys.profileStats(profile.profile_id), "clips"],
+        queryFn: () => getProfileClipCount(profile.profile_id),
+      },
+      {
+        queryKey: [...queryKeys.profileStats(profile.profile_id), "crew"],
+        queryFn: () => getProfileCrewCount(profile.profile_id),
+      },
+    ],
+  });
+  const loadingStats = statsQueries.some((q) => q.isLoading);
+  const spotCount = statsQueries[0].data ?? 0;
+  const clipCount = statsQueries[1].data ?? 0;
+  const crewCount = statsQueries[2].data ?? 0;
 
-  useEffect(() => {
-    async function loadClips() {
-      setLoadingClips(true);
-      const data = await fetchProfileClips(profile.profile_id);
-      setClips(data);
-      setLoadingClips(false);
-    }
-    loadClips().catch(console.error);
-  }, [profile.profile_id]);
+  const { data: clips = [], isLoading: loadingClips } = useQuery({
+    queryKey: queryKeys.profileClips(profile.profile_id),
+    queryFn: () => fetchProfileClips(profile.profile_id),
+  });
 
   function handleAvatarUpdated(url: string) {
     setLocalAvatarUrl(url);
