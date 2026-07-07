@@ -12,8 +12,9 @@ import { OsmStore } from "@/lib/spots/skateSpots";
 import { deleteStore, SkateStore, UserStore } from "@/lib/stores/skateStores";
 import { storeReviewableAdapter } from "@/lib/stores/storeReviewableAdapter";
 import { C, F } from "@/lib/theme";
+import { queryKeys } from "@/utils/queryKeys";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Linking, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -26,34 +27,45 @@ export default function StoreDetailScreen() {
   const { kind, data } = useLocalSearchParams<Params>();
 
   const isUserStore = kind === "user-store";
-  const store: SkateStore | OsmStore | UserStore = JSON.parse(data);
 
-  const storeId: string | null = isUserStore ? (store as UserStore).store_id : null;
-  const osmPlaceId: string | null = !isUserStore
+  const store = useMemo<SkateStore | OsmStore | UserStore | null>(() => {
+    if (!data) return null;
+    try {
+      const parsed: unknown = JSON.parse(data);
+      if (typeof parsed !== "object" || parsed === null) return null;
+      if (kind === "user-store" && "store_id" in parsed) return parsed as UserStore;
+      if ((kind === "osm-store" || kind === "skate-store") && "place_id" in parsed) return parsed as OsmStore;
+      return null;
+    } catch {
+      return null;
+    }
+  }, [data, kind]);
+
+  const storeId: string | null = isUserStore && store ? (store as UserStore).store_id : null;
+  const osmPlaceId: string | null = !isUserStore && store
     ? (store as SkateStore | OsmStore).place_id
     : null;
 
-  const initialVoteCount =
-    "upvote_count" in store ? (store as OsmStore | UserStore).upvote_count : 0;
+  const initialVoteCount = store && "upvote_count" in store ? (store as OsmStore | UserStore).upvote_count : 0;
 
-  const lat = isUserStore
-    ? (store as UserStore).latitude
-    : (store as SkateStore | OsmStore).coordinates.lat;
-  const lng = isUserStore
-    ? (store as UserStore).longitude
-    : (store as SkateStore | OsmStore).coordinates.lng;
+  const lat = store
+    ? (isUserStore ? (store as UserStore).latitude : (store as SkateStore | OsmStore).coordinates.lat)
+    : 0;
+  const lng = store
+    ? (isUserStore ? (store as UserStore).longitude : (store as SkateStore | OsmStore).coordinates.lng)
+    : 0;
 
-  const name = store.name;
-  const address = store.address;
-  const osmRating = "rating" in store ? (store as SkateStore).rating : null;
-  const phone = "phone" in store ? (store as OsmStore | UserStore).phone : null;
-  const website = "website" in store ? (store as OsmStore | UserStore).website : null;
-  const hours = "opening_hours" in store ? (store as OsmStore | UserStore).opening_hours : null;
-  const photoUrl = isUserStore ? (store as UserStore).photo_url : null;
+  const name = store?.name ?? "";
+  const address = store?.address ?? "";
+  const osmRating = store && "rating" in store ? (store as SkateStore).rating : null;
+  const phone = store && "phone" in store ? (store as OsmStore | UserStore).phone : null;
+  const website = store && "website" in store ? (store as OsmStore | UserStore).website : null;
+  const hours = store && "opening_hours" in store ? (store as OsmStore | UserStore).opening_hours : null;
+  const photoUrl = isUserStore && store ? (store as UserStore).photo_url : null;
   const isOsm = kind === "osm-store" || kind === "skate-store";
 
   const [showAddCard, setShowAddCard] = useState(false);
-  const [isVerified, setIsVerified] = useState(isUserStore ? (store as UserStore).is_verified : false);
+  const [isVerified, setIsVerified] = useState(isUserStore && store ? (store as UserStore).is_verified : false);
 
   const {
     userHasVoted,
@@ -70,11 +82,12 @@ export default function StoreDetailScreen() {
     cardVotes,
     handleCardUpvote,
     handleCardSubmit,
-  } = useReviewableEntity(storeId, osmPlaceId, initialVoteCount, storeReviewableAdapter, (result) => {
+  } = useReviewableEntity(storeId, osmPlaceId, initialVoteCount, storeReviewableAdapter, queryKeys.storeDetail(storeId, osmPlaceId), (result) => {
     if (isUserStore) setIsVerified(result.upvote_count >= 3);
   });
 
   function handleDirections() {
+    if (!store) return;
     const label = encodeURIComponent(name);
     const url =
       Platform.OS === "ios"
@@ -83,12 +96,29 @@ export default function StoreDetailScreen() {
     Linking.openURL(url);
   }
 
-  const isOwner = isUserStore && session?.user.id === (store as UserStore).profile_id;
+  const isOwner = isUserStore && store != null && session?.user.id === (store as UserStore).profile_id;
 
   async function handleDeleteStore() {
     if (!storeId || !session) return;
     await deleteStore(storeId, session.user.id);
     router.back();
+  }
+
+  if (!store) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <DetailHeader
+          title="STORE DETAILS"
+          accent={C.secondary}
+          isFavorited={false}
+          onBack={() => router.back()}
+          onToggleFavorite={() => {}}
+        />
+        <View style={styles.body}>
+          <Text style={styles.sectionLabel}>INVALID STORE DATA</Text>
+        </View>
+      </View>
+    );
   }
 
   return (
