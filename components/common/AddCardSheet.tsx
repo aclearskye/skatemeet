@@ -1,5 +1,4 @@
-import { useAuthContext } from "@/lib/context/use-auth-context";
-import { createStoreCard, StoreCard } from "@/lib/stores/skateStores";
+import { StarInput } from "@/components/common/StarInput";
 import { C, F } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
@@ -15,17 +14,18 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+type Payload = { heading: string; rating: number | null; comment: string };
+
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onCardCreated: (card: StoreCard) => void;
-  shopId: string | null;
-  osmPlaceId: string | null;
+  accent: string;
+  onAccent: string;
+  onSubmit: (payload: Payload) => Promise<void>;
 };
 
-export function AddStoreCardSheet({ visible, onClose, onCardCreated, shopId, osmPlaceId }: Props) {
+export function AddCardSheet({ visible, onClose, accent, onAccent, onSubmit }: Props) {
   const insets = useSafeAreaInsets();
-  const { session } = useAuthContext();
 
   const [heading, setHeading] = useState("");
   const [rating, setRating] = useState<number | null>(null);
@@ -46,26 +46,11 @@ export function AddStoreCardSheet({ visible, onClose, onCardCreated, shopId, osm
     onClose();
   }
 
-  function handleStarPress(star: number) {
-    setRating((prev) => (prev === star ? null : star));
-  }
-
   async function handleSubmit() {
-    if (!session) return;
     setIsSubmitting(true);
     setErrorMsg(null);
     try {
-      const card = await createStoreCard(
-        {
-          shop_id: shopId,
-          osm_place_id: osmPlaceId,
-          heading: heading.trim(),
-          rating,
-          comment: comment.trim(),
-        },
-        session.user.id
-      );
-      onCardCreated(card);
+      await onSubmit({ heading: heading.trim(), rating, comment: comment.trim() });
       reset();
       onClose();
     } catch (e: any) {
@@ -107,22 +92,7 @@ export function AddStoreCardSheet({ visible, onClose, onCardCreated, shopId, osm
             />
 
             <Text style={[styles.fieldLabel, { marginTop: 24 }]}>RATING (OPTIONAL)</Text>
-            <View style={styles.starsRow}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity
-                  key={star}
-                  onPress={() => handleStarPress(star)}
-                  hitSlop={8}
-                  activeOpacity={0.75}
-                >
-                  <Ionicons
-                    name={rating !== null && star <= rating ? "star" : "star-outline"}
-                    size={30}
-                    color={rating !== null && star <= rating ? C.secondary : C.border}
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
+            <StarInput value={rating} onChange={setRating} accent={accent} />
 
             <Text style={[styles.fieldLabel, { marginTop: 24 }]}>COMMENT</Text>
             <TextInput
@@ -147,15 +117,19 @@ export function AddStoreCardSheet({ visible, onClose, onCardCreated, shopId, osm
 
         <View style={styles.footer}>
           <TouchableOpacity
-            style={[styles.primaryBtn, (!isValid || isSubmitting) && styles.primaryBtnDisabled]}
+            style={[
+              styles.primaryBtn,
+              { backgroundColor: accent },
+              (!isValid || isSubmitting) && styles.primaryBtnDisabled,
+            ]}
             disabled={!isValid || isSubmitting}
             onPress={handleSubmit}
             activeOpacity={0.85}
           >
             {isSubmitting ? (
-              <ActivityIndicator size="small" color={C.onSecondary} />
+              <ActivityIndicator size="small" color={onAccent} />
             ) : (
-              <Text style={styles.primaryBtnText}>SUBMIT CARD</Text>
+              <Text style={[styles.primaryBtnText, { color: onAccent }]}>SUBMIT CARD</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -176,12 +150,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: C.border,
   },
-  title: {
-    fontFamily: F.heading,
-    fontSize: 20,
-    color: C.text,
-    letterSpacing: 1,
-  },
+  title: { fontFamily: F.heading, fontSize: 20, color: C.text, letterSpacing: 1 },
   closeBtn: { padding: 4 },
   body: { flex: 1 },
   section: { padding: 20 },
@@ -203,10 +172,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   inputMultiline: { minHeight: 100, paddingTop: 12 },
-  starsRow: {
-    flexDirection: "row",
-    gap: 10,
-  },
   errorBanner: {
     marginTop: 16,
     backgroundColor: C.errorContainer,
@@ -222,17 +187,11 @@ const styles = StyleSheet.create({
     borderTopColor: C.border,
   },
   primaryBtn: {
-    backgroundColor: C.secondary,
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
     minHeight: 48,
   },
   primaryBtnDisabled: { opacity: 0.4 },
-  primaryBtnText: {
-    fontFamily: F.mono,
-    fontSize: 12,
-    color: C.onSecondary,
-    letterSpacing: 1,
-  },
+  primaryBtnText: { fontFamily: F.mono, fontSize: 12, letterSpacing: 1 },
 });

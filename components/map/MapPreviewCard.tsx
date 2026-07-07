@@ -1,7 +1,9 @@
-import { OsmShop, OsmSpot, SkateSpot, toggleSpotVote } from "@/lib/spots/skateSpots";
-import { toggleStoreVote, UserShop } from "@/lib/stores/skateStores";
+import { VoteButton } from "@/components/common/VoteButton";
+import { OsmStore, OsmSpot, SkateSpot, toggleSpotVote } from "@/lib/spots/skateSpots";
+import { toggleStoreVote, UserStore } from "@/lib/stores/skateStores";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { C, F } from "@/lib/theme";
+import { TYPE_LABELS } from "@/utils/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
@@ -18,8 +20,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export type PreviewItem =
   | { kind: "user-spot"; data: SkateSpot }
   | { kind: "osm-spot"; data: OsmSpot }
-  | { kind: "osm-shop"; data: OsmShop }
-  | { kind: "user-shop"; data: UserShop };
+  | { kind: "osm-store"; data: OsmStore }
+  | { kind: "user-store"; data: UserStore };
 
 type Props = {
   item: PreviewItem;
@@ -27,12 +29,6 @@ type Props = {
   initialHasVoted: boolean | null;
 };
 
-const TYPE_LABELS: Record<string, string> = {
-  street: "STREET",
-  diy: "D.I.Y.",
-  park: "PARK",
-  indoor: "INDOOR",
-};
 
 export type SkeletonKind = "spot" | "diy" | "store";
 
@@ -115,11 +111,11 @@ export function MapPreviewCard({ item, onDismiss, initialHasVoted }: Props) {
     isOsm = true;
     isDiy = s.spot_type === "diy";
     upvoteCount = s.upvote_count;
-  } else if (item.kind === "osm-shop") {
+  } else if (item.kind === "osm-store") {
     const s = item.data;
     name = s.name;
     subtitle = s.address;
-    typeLabel = "SKATE SHOP";
+    typeLabel = "SKATE STORE";
     isOsm = true;
     upvoteCount = s.upvote_count;
     isStore = true;
@@ -127,15 +123,15 @@ export function MapPreviewCard({ item, onDismiss, initialHasVoted }: Props) {
     const s = item.data;
     name = s.name;
     subtitle = s.address;
-    typeLabel = "SKATE SHOP";
+    typeLabel = "SKATE STORE";
     upvoteCount = s.upvote_count;
     isStore = true;
   }
 
   const spotId = item.kind === "user-spot" ? item.data.spot_id : null;
   const osmSpotId = item.kind === "osm-spot" ? item.data.place_id : null;
-  const shopId = item.kind === "user-shop" ? item.data.shop_id : null;
-  const osmShopId = item.kind === "osm-shop" ? item.data.place_id : null;
+  const storeId = item.kind === "user-store" ? item.data.store_id : null;
+  const osmStoreId = item.kind === "osm-store" ? item.data.place_id : null;
 
   const [hasVoted, setHasVoted] = useState<boolean | null>(initialHasVoted);
   const [localCount, setLocalCount] = useState(upvoteCount);
@@ -150,7 +146,7 @@ export function MapPreviewCard({ item, onDismiss, initialHasVoted }: Props) {
     try {
       const result = (spotId || osmSpotId)
         ? await toggleSpotVote(spotId, osmSpotId, userId)
-        : await toggleStoreVote(shopId, osmShopId, userId);
+        : await toggleStoreVote(storeId, osmStoreId, userId);
       setHasVoted(result.user_has_voted);
       setLocalCount(result.upvote_count);
     } catch {
@@ -220,32 +216,15 @@ export function MapPreviewCard({ item, onDismiss, initialHasVoted }: Props) {
                 </View>
               )}
               {localCount != null && hasVoted !== null && (
-                <TouchableOpacity
-                  style={[
-                    styles.upvotePill,
-                    hasVoted && (isDiy ? styles.upvotePillDiy : isStore ? styles.upvotePillStore : styles.upvotePillFilled),
-                    !hasVoted && (isDiy ? styles.upvotePillOutlineDiy : isStore ? styles.upvotePillOutlineStore : styles.upvotePillOutline),
-                  ]}
+                <VoteButton
+                  count={localCount}
+                  hasVoted={hasVoted}
+                  accent={isDiy ? C.tertiary : isStore ? C.secondary : C.primary}
+                  onAccent={isDiy ? C.onTertiary : isStore ? C.onSecondary : C.onPrimary}
                   onPress={handleUpvote}
-                  activeOpacity={0.7}
-                  hitSlop={8}
-                >
-                  <Ionicons
-                    name="arrow-up"
-                    size={11}
-                    color={hasVoted
-                      ? (isDiy ? C.onTertiary : isStore ? C.onSecondary : C.onPrimary)
-                      : (isDiy ? C.tertiary : isStore ? C.secondary : C.primary)
-                    }
-                  />
-                  <Text style={[
-                    styles.upvotePillText,
-                    hasVoted && (isDiy ? styles.upvotePillTextDiy : isStore ? styles.upvotePillTextStore : null),
-                    !hasVoted && (isDiy ? styles.upvotePillTextOutlineDiy : isStore ? styles.upvotePillTextOutlineStore : styles.upvotePillTextOutline),
-                  ]}>
-                    {localCount}
-                  </Text>
-                </TouchableOpacity>
+                  isLoading={false}
+                  variant="pill"
+                />
               )}
             </View>
 
@@ -389,59 +368,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: C.secondary,
     marginLeft: 2,
-  },
-  upvotePill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    marginLeft: "auto",
-  },
-  upvotePillFilled: {
-    backgroundColor: C.primary,
-  },
-  upvotePillDiy: {
-    backgroundColor: C.tertiary,
-  },
-  upvotePillStore: {
-    backgroundColor: C.secondary,
-  },
-  upvotePillOutline: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: C.primary,
-  },
-  upvotePillOutlineDiy: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: C.tertiary,
-  },
-  upvotePillOutlineStore: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: C.secondary,
-  },
-  upvotePillText: {
-    fontFamily: F.mono,
-    fontSize: 10,
-    letterSpacing: 0.5,
-    color: C.onPrimary,
-  },
-  upvotePillTextDiy: {
-    color: C.onTertiary,
-  },
-  upvotePillTextStore: {
-    color: C.onSecondary,
-  },
-  upvotePillTextOutline: {
-    color: C.primary,
-  },
-  upvotePillTextOutlineDiy: {
-    color: C.tertiary,
-  },
-  upvotePillTextOutlineStore: {
-    color: C.secondary,
   },
   cta: {
     backgroundColor: C.primary,
