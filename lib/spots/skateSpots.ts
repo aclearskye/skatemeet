@@ -89,13 +89,14 @@ export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[
     .lte("longitude", bbox.maxLng)
     .limit(BOUNDS_ROW_LIMIT);
   if (error) throw error;
-  return (data ?? []).map((row: any) => ({
+  type Row = { place_id: string; name: string; address: string; spot_type: OsmSpot["spot_type"]; latitude: number; longitude: number; upvote_count: number };
+  return (data as Row[]).map((row) => ({
     place_id: row.place_id,
     name: row.name,
     address: row.address,
-    spot_type: row.spot_type as OsmSpot["spot_type"],
+    spot_type: row.spot_type,
     coordinates: { lat: row.latitude, lng: row.longitude },
-    upvote_count: row.upvote_count as number,
+    upvote_count: row.upvote_count,
   }));
 }
 
@@ -111,7 +112,8 @@ export async function fetchOsmStoresInBounds(bbox: BoundingBox): Promise<OsmStor
     .lte("longitude", bbox.maxLng)
     .limit(BOUNDS_ROW_LIMIT);
   if (error) throw error;
-  return (data ?? []).map((row: any) => ({
+  type Row = { place_id: string; name: string; address: string; phone: string | null; website: string | null; opening_hours: string | null; latitude: number; longitude: number; upvote_count: number };
+  return (data as Row[]).map((row) => ({
     place_id: row.place_id,
     name: row.name,
     address: row.address,
@@ -119,7 +121,7 @@ export async function fetchOsmStoresInBounds(bbox: BoundingBox): Promise<OsmStor
     website: row.website,
     opening_hours: row.opening_hours,
     coordinates: { lat: row.latitude, lng: row.longitude },
-    upvote_count: row.upvote_count as number,
+    upvote_count: row.upvote_count,
   }));
 }
 
@@ -326,7 +328,7 @@ export async function getSpotCardVoteStatuses(
   if (error) throw error;
   const result: Record<string, boolean> = {};
   for (const row of data ?? []) {
-    result[(row as any).card_id] = true;
+    result[(row as { card_id: string }).card_id] = true;
   }
   return result;
 }
