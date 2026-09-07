@@ -1,6 +1,6 @@
 import { loadOsmMarkers, loadUserMarkers } from "@/lib/map/mapData";
-import { BoundingBox, OsmSpot, OsmStore, regionToBoundingBox, SkateSpot } from "@/lib/spots/skateSpots";
-import { UserStore } from "@/lib/stores/skateStores";
+import { BoundingBox, OsmSpot, OsmStore, regionToBoundingBox, SkateSpot } from "@/lib/spots/types";
+import { UserStore } from "@/lib/stores/types";
 import { MAX_DELTA, SCAN_MIN_MS, SPOTS_DEBOUNCE_MS } from "@/utils/constants";
 import { queryKeys } from "@/utils/queryKeys";
 import { useQuery, useQueryClient } from "@tanstack/react-query";

@@ -2,7 +2,8 @@ import { MultiStepSheet } from "@/components/common/MultiStepSheet";
 import { PhotoPickerStep } from "@/components/common/PhotoPickerStep";
 import { StarInput } from "@/components/common/StarInput";
 import { useAuthContext } from "@/lib/context/use-auth-context";
-import { createSpot, SkateSpot, SpotType, uploadSpotPhoto } from "@/lib/spots/skateSpots";
+import { createSpot, uploadSpotPhoto } from "@/lib/spots/mutations";
+import { SkateSpot, SpotType } from "@/lib/spots/types";
 import { C, F } from "@/lib/theme";
 import { useState } from "react";
 import {

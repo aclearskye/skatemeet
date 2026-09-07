@@ -1,6 +1,6 @@
 import { PreviewItem, SkeletonKind } from "@/components/map/MapPreviewCard";
-import { getSpotVoteCount, getUserVoteStatus } from "@/lib/spots/skateSpots";
-import { getStoreVoteCount, getStoreVoteStatus } from "@/lib/stores/skateStores";
+import { getSpotVoteCount, getUserVoteStatus } from "@/lib/spots/queries";
+import { getStoreVoteCount, getStoreVoteStatus } from "@/lib/stores/queries";
 import { useCallback, useRef, useState } from "react";
 
 export function useMarkerPreview(userId: string | null) {

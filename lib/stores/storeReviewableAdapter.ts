@@ -1,17 +1,18 @@
 import {
   createStoreCard,
+  toggleStoreCardVote,
+  toggleStoreFavorite,
+  toggleStoreVote,
+} from "@/lib/stores/mutations";
+import {
   fetchStoreAverageRating,
   fetchStoreCards,
   getStoreCardVoteStatuses,
   getStoreFavoriteStatus,
   getStoreVoteCount,
   getStoreVoteStatus,
-  StoreCard,
-  StoreCardWithProfile,
-  toggleStoreCardVote,
-  toggleStoreFavorite,
-  toggleStoreVote,
-} from "@/lib/stores/skateStores";
+} from "@/lib/stores/queries";
+import { StoreCard, StoreCardWithProfile } from "@/lib/stores/types";
 import { ReviewableEntityAdapter } from "@/lib/shared/useReviewableEntity";
 
 export const storeReviewableAdapter: ReviewableEntityAdapter<StoreCard, StoreCardWithProfile> = {

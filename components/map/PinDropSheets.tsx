@@ -1,7 +1,7 @@
 import { CreateSpotSheet } from "@/components/spots/CreateSpotSheet";
 import { CreateStoreSheet } from "@/components/stores/CreateStoreSheet";
-import { SkateSpot } from "@/lib/spots/skateSpots";
-import { UserStore } from "@/lib/stores/skateStores";
+import { SkateSpot } from "@/lib/spots/types";
+import { UserStore } from "@/lib/stores/types";
 import { Fragment } from "react";
 
 type Props = {

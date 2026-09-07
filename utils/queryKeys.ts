@@ -1,4 +1,4 @@
-import { BoundingBox } from "@/lib/spots/skateSpots";
+import { BoundingBox } from "@/lib/spots/types";
 
 export const queryKeys = {
   spotDetail: (spotId: string | null, osmPlaceId: string | null) =>

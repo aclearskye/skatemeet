@@ -1,7 +1,8 @@
 import { MultiStepSheet } from "@/components/common/MultiStepSheet";
 import { PhotoPickerStep } from "@/components/common/PhotoPickerStep";
 import { useAuthContext } from "@/lib/context/use-auth-context";
-import { createStore, uploadStorePhoto, UserStore } from "@/lib/stores/skateStores";
+import { createStore, uploadStorePhoto } from "@/lib/stores/mutations";
+import { UserStore } from "@/lib/stores/types";
 import { C, F } from "@/lib/theme";
 import { useState } from "react";
 import {

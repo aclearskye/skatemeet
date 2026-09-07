@@ -1,8 +1,8 @@
 import { PreviewItem } from "@/components/map/MapPreviewCard";
 import { SpotMarker } from "@/components/map/SpotMarker";
 import { StoreMarker } from "@/components/map/StoreMarker";
-import { OsmSpot, OsmStore, SkateSpot } from "@/lib/spots/skateSpots";
-import { UserStore } from "@/lib/stores/skateStores";
+import { OsmSpot, OsmStore, SkateSpot } from "@/lib/spots/types";
+import { UserStore } from "@/lib/stores/types";
 import { C } from "@/lib/theme";
 import { Fragment } from "react";
 import { StyleSheet, Text, View } from "react-native";

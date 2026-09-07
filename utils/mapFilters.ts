@@ -1,5 +1,5 @@
-import { OsmSpot, OsmStore, SkateSpot } from "@/lib/spots/skateSpots";
-import { UserStore } from "@/lib/stores/skateStores";
+import { OsmSpot, OsmStore, SkateSpot } from "@/lib/spots/types";
+import { UserStore } from "@/lib/stores/types";
 import { FilterKey } from "@/utils/constants";
 
 export type RawMapData = {

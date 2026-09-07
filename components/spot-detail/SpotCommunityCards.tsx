@@ -1,5 +1,5 @@
 import { ReviewCard } from "@/components/common/ReviewCard";
-import { SpotCardWithProfile } from "@/lib/spots/skateSpots";
+import { SpotCardWithProfile } from "@/lib/spots/types";
 import { C, F } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";

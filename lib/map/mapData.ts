@@ -2,12 +2,10 @@ import {
   fetchOsmSpotsInBounds,
   fetchOsmStoresInBounds,
   fetchSpotsInBounds,
-  OsmSpot,
-  OsmStore,
-  regionToBoundingBox,
-  SkateSpot,
-} from "@/lib/spots/skateSpots";
-import { fetchUserStoresInBounds, UserStore } from "@/lib/stores/skateStores";
+} from "@/lib/spots/queries";
+import { OsmSpot, OsmStore, regionToBoundingBox, SkateSpot } from "@/lib/spots/types";
+import { fetchUserStoresInBounds } from "@/lib/stores/queries";
+import { UserStore } from "@/lib/stores/types";
 import { Region } from "react-native-maps";
 
 export type OsmMarkersResult = {

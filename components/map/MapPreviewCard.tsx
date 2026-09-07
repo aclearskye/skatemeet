@@ -1,6 +1,8 @@
 import { VoteButton } from "@/components/common/VoteButton";
-import { OsmStore, OsmSpot, SkateSpot, toggleSpotVote } from "@/lib/spots/skateSpots";
-import { toggleStoreVote, UserStore } from "@/lib/stores/skateStores";
+import { toggleSpotVote } from "@/lib/spots/mutations";
+import { OsmStore, OsmSpot, SkateSpot } from "@/lib/spots/types";
+import { toggleStoreVote } from "@/lib/stores/mutations";
+import { UserStore } from "@/lib/stores/types";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { C, F } from "@/lib/theme";
 import { TYPE_LABELS } from "@/utils/constants";

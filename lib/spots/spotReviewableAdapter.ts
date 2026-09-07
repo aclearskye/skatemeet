@@ -1,17 +1,18 @@
 import {
   createSpotCard,
+  toggleSpotCardVote,
+  toggleSpotFavorite,
+  toggleSpotVote,
+} from "@/lib/spots/mutations";
+import {
   fetchSpotAverageRating,
   fetchSpotCards,
   getSpotCardVoteStatuses,
   getSpotFavoriteStatus,
   getSpotVoteCount,
   getUserVoteStatus,
-  SpotCard,
-  SpotCardWithProfile,
-  toggleSpotCardVote,
-  toggleSpotFavorite,
-  toggleSpotVote,
-} from "@/lib/spots/skateSpots";
+} from "@/lib/spots/queries";
+import { SpotCard, SpotCardWithProfile } from "@/lib/spots/types";
 import { ReviewableEntityAdapter } from "@/lib/shared/useReviewableEntity";
 
 export const spotReviewableAdapter: ReviewableEntityAdapter<SpotCard, SpotCardWithProfile> = {
