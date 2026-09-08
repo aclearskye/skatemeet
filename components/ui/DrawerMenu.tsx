@@ -2,18 +2,23 @@ import { onSignOutButtonPress } from "@/lib/auth/onSignOutButtonPress";
 import { useDrawer } from "@/lib/context/drawer-context";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { avatarColor, C, F } from "@/lib/theme";
+import { IconBadgeButton } from "@/components/common/IconBadgeButton";
 import SwitchToBusinessModal from "@/components/ui/SwitchToBusinessModal";
 import { Ionicons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   Animated,
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+// Native only — web's nav/account actions live permanently in WebSidebar and
+// WebAccountSidebar instead of a hamburger-triggered drawer.
 
 const DRAWER_WIDTH = 280;
 
@@ -24,7 +29,7 @@ type NavItem = {
   match: string;
 };
 
-const NAV_ITEMS: NavItem[] = [
+export const NAV_ITEMS: NavItem[] = [
   { label: "FEED",    icon: "home-outline",   path: "/",        match: "/"        },
   { label: "MAP",     icon: "map-outline",    path: "/map",     match: "/map"     },
   { label: "PROFILE", icon: "person-outline", path: "/profile", match: "/profile" },
@@ -109,9 +114,13 @@ export default function DrawerMenu() {
       >
         {/* Profile header */}
         <View style={styles.profileSection}>
-          <View style={[styles.avatar, { backgroundColor: avatarBg }]}>
-            <Text style={[styles.avatarText, { color: avatarFg }]}>{initials}</Text>
-          </View>
+          {profile?.avatar_url ? (
+            <Image source={{ uri: profile.avatar_url }} style={styles.avatar} resizeMode="cover" />
+          ) : (
+            <View style={[styles.avatar, { backgroundColor: avatarBg }]}>
+              <Text style={[styles.avatarText, { color: avatarFg }]}>{initials}</Text>
+            </View>
+          )}
           <View style={styles.profileInfo}>
             <Text style={styles.displayName} numberOfLines={1}>{displayName}</Text>
             <View style={styles.metaRow}>
@@ -129,14 +138,13 @@ export default function DrawerMenu() {
               ) : null}
             </View>
           </View>
-          <TouchableOpacity style={styles.notifBtn} activeOpacity={0.7}>
-            <Ionicons name="notifications-outline" size={22} color={C.muted} />
-          </TouchableOpacity>
+          <View style={styles.iconRow}>
+            <IconBadgeButton icon="notifications-outline" hasBadge={false} />
+            <IconBadgeButton icon="mail-outline" hasBadge={false} />
+          </View>
         </View>
 
         <View style={styles.divider} />
-
-        {/* Nav items */}
         <View style={styles.navSection}>
           {NAV_ITEMS.map(({ label, icon, path, match }) => {
             const active = pathname === match;
@@ -154,6 +162,7 @@ export default function DrawerMenu() {
           })}
         </View>
 
+        {/* Pushed to the bottom of the panel via dividerBottom's marginTop: "auto" */}
         <View style={[styles.divider, styles.dividerBottom]} />
 
         {/* Business account section */}
@@ -204,8 +213,9 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingBottom: 16,
   },
-  notifBtn: {
-    padding: 4,
+  iconRow: {
+    flexDirection: "row",
+    gap: 4,
     flexShrink: 0,
   },
   avatar: {

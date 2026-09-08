@@ -1,13 +1,16 @@
 import { C, F } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { Platform } from "react-native";
 
 export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
+        // Web has its own persistent nav (WebSidebar); the bottom tab bar would
+        // just duplicate it.
+        tabBarStyle: Platform.OS === "web" ? { display: "none" } : {
           backgroundColor: C.bg,
           borderTopWidth: 2,
           borderTopColor: C.border,

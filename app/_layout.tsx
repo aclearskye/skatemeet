@@ -2,6 +2,8 @@ import { useAuthContext } from "@/lib/context/use-auth-context";
 import AuthProvider from "@/providers/auth-provider";
 import { DrawerProvider } from "@/lib/context/drawer-context";
 import DrawerMenu from "@/components/ui/DrawerMenu";
+import WebAccountSidebar from "@/components/ui/WebAccountSidebar";
+import WebSidebar from "@/components/ui/WebSidebar";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -22,8 +24,13 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useFonts } from "expo-font";
 import { useEffect } from "react";
-import { View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { C } from "@/lib/theme";
+
+// Screen content is capped well beyond its original ~375-430px phone sizing
+// so it doesn't look sparse between the two sidebars on desktop, but still
+// centered rather than stretched edge-to-edge across the whole browser window.
+const WEB_CONTENT_WIDTH = 960;
 
 SplashScreen.preventAutoHideAsync();
 
@@ -78,6 +85,7 @@ const RootNavigation = () => {
         <Stack.Screen name="spot-detail" />
         <Stack.Screen name="store-detail" />
         <Stack.Screen name="user/[userId]" />
+        <Stack.Screen name="settings" />
       </Stack>
     </ErrorBoundary>
   );
@@ -88,12 +96,44 @@ export default function Layout() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <DrawerProvider>
-          <View style={{ flex: 1, backgroundColor: C.bg }}>
-            <RootNavigation />
-            <DrawerMenu />
-          </View>
+          {Platform.OS === "web" ? (
+            // No hamburger/drawer on web — nav and account actions live
+            // permanently in two sidebars pinned to the true left/right edges
+            // of the screen, with the (capped, centered) content between them.
+            <View style={[styles.webRoot, { backgroundColor: C.bg }]}>
+              <WebSidebar />
+              <View style={styles.webBodyOuter}>
+                <View style={[styles.webContentInner, { backgroundColor: C.bg }]}>
+                  <RootNavigation />
+                </View>
+              </View>
+              <WebAccountSidebar />
+            </View>
+          ) : (
+            <View style={{ flex: 1, backgroundColor: C.bg }}>
+              <RootNavigation />
+              <DrawerMenu />
+            </View>
+          )}
         </DrawerProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  webRoot: {
+    flex: 1,
+    flexDirection: "row",
+  },
+  webBodyOuter: {
+    flex: 1,
+    alignItems: "center",
+  },
+  webContentInner: {
+    flex: 1,
+    width: "100%",
+    maxWidth: WEB_CONTENT_WIDTH,
+    overflow: "hidden",
+  },
+});

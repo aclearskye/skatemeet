@@ -1,10 +1,13 @@
 import { useDrawer } from "@/lib/context/drawer-context";
 import { C } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 
 export default function BurgerButton() {
   const { openDrawer } = useDrawer();
+  // Web has no drawer at all — nav and account actions live permanently in
+  // the pinned WebSidebar/WebAccountSidebar instead.
+  if (Platform.OS === "web") return null;
   return (
     <TouchableOpacity onPress={openDrawer} activeOpacity={0.7} hitSlop={8}>
       <View style={styles.marker}>
