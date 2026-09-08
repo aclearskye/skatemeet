@@ -1,3 +1,4 @@
+import { AddPhotoIconButton } from "@/components/common/AddPhotoIconButton";
 import { StarRating } from "@/components/common/StarRating";
 import { C, F } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,6 +10,8 @@ type Props = {
   isOsm: boolean;
   osmRating: number | null;
   onDirections: () => void;
+  onAddPhoto: () => void;
+  isAddingPhoto: boolean;
   address: string | null;
   hours: string | null;
   phone: string | null;
@@ -20,6 +23,8 @@ export function StoreInfoBlock({
   isOsm,
   osmRating,
   onDirections,
+  onAddPhoto,
+  isAddingPhoto,
   address,
   hours,
   phone,
@@ -27,7 +32,10 @@ export function StoreInfoBlock({
 }: Props) {
   return (
     <Fragment>
-      <Text style={styles.name}>{name}</Text>
+      <View style={styles.nameRow}>
+        <Text style={styles.name}>{name}</Text>
+        <AddPhotoIconButton onPress={onAddPhoto} isLoading={isAddingPhoto} accent={C.secondary} />
+      </View>
 
       <View style={styles.badgeRow}>
         <View style={styles.typeBadge}>
@@ -90,7 +98,8 @@ export function StoreInfoBlock({
 }
 
 const styles = StyleSheet.create({
-  name: { fontFamily: F.heading, fontSize: 28, color: C.text, letterSpacing: 0.5 },
+  nameRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  name: { fontFamily: F.heading, fontSize: 28, color: C.text, letterSpacing: 0.5, flexShrink: 1 },
   badgeRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   typeBadge: {
     paddingHorizontal: 10,
