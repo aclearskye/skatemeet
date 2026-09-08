@@ -42,7 +42,11 @@ export async function uploadAvatar(
   mimeType: string
 ): Promise<string> {
   const ext = mimeType.split("/")[1] ?? "jpg";
-  const path = `${profileId}/avatar.${ext}`;
+  // A unique path per upload (rather than a fixed "avatar.<ext>" path with
+  // upsert) keeps every write a storage.objects INSERT — the avatars bucket's
+  // RLS policy only grants INSERT, so a fixed path's second-and-later upload
+  // became an UPDATE and was rejected.
+  const path = `${profileId}/${Date.now()}.${ext}`;
 
   // response.blob() silently yields an empty blob for local file:// URIs on
   // React Native — arrayBuffer() reads the same bytes reliably instead.
@@ -51,9 +55,9 @@ export async function uploadAvatar(
 
   const { error } = await supabase.storage
     .from("avatars")
-    .upload(path, arrayBuffer, { upsert: true, contentType: mimeType });
+    .upload(path, arrayBuffer, { upsert: false, contentType: mimeType });
   if (error) throw error;
 
   const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-  return `${data.publicUrl}?t=${Date.now()}`;
+  return data.publicUrl;
 }
