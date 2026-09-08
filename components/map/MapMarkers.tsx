@@ -6,7 +6,10 @@ import { UserStore } from "@/lib/stores/types";
 import { C } from "@/lib/theme";
 import { Fragment } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { Marker } from "react-native-maps";
+// Relative, not "@/...": Expo's "@/" alias resolves straight to a file and skips
+// Metro's platform-extension probing, so it would always pick MapView.ts over
+// MapView.web.tsx. A relative import goes through normal platform resolution.
+import { Marker } from "./MapView";
 
 type Props = {
   visibleOsmStores: OsmStore[];

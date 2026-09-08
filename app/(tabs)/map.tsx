@@ -16,8 +16,11 @@ import { filterVisibleMarkers } from "@/utils/mapFilters";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import MapView from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+// Relative, not "@/...": Expo's "@/" alias resolves straight to a file and skips
+// Metro's platform-extension probing, so it would always pick MapView.ts over
+// MapView.web.tsx. A relative import goes through normal platform resolution.
+import { MapView } from "../../components/map/MapView";
 
 type PinCategory = "spot" | "diy" | "store";
 
