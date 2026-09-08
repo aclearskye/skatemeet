@@ -1,3 +1,5 @@
+import { EntityPhoto } from "@/lib/shared/types";
+
 export type SkateStore = {
   place_id: string;
   name: string;
@@ -59,4 +61,9 @@ export type CreateStoreCardPayload = {
   heading: string;
   rating: number | null;
   comment: string;
+};
+
+export type StorePhoto = EntityPhoto & {
+  store_id: string | null;
+  osm_place_id: string | null;
 };
