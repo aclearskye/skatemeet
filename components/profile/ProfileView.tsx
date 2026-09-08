@@ -4,7 +4,6 @@ import {
   getProfileClipCount,
   getProfileCrewCount,
   getProfileSpotCount,
-  type Clip,
 } from "@/lib/clips/clips";
 import { type Profile } from "@/lib/context/use-auth-context";
 import { useAuthContext } from "@/lib/context/use-auth-context";
@@ -22,7 +21,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import ClipCard, { COLS, GAP } from "./ClipCard";
+import ClipCard, { GAP } from "./ClipCard";
 import ContentTabs from "./ContentTabs";
 import ProfileAvatar from "./ProfileAvatar";
 import ProfileBadges from "./ProfileBadges";
