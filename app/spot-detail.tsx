@@ -1,6 +1,7 @@
 import { AddCardSheet } from "@/components/common/AddCardSheet";
 import { DeleteUnverifiedButton } from "@/components/common/DeleteUnverifiedButton";
 import { DetailHeader } from "@/components/common/DetailHeader";
+import { EntityPhotoViewerModal } from "@/components/common/EntityPhotoViewerModal";
 import { StarRating } from "@/components/common/StarRating";
 import { SpotCommunityCards } from "@/components/spot-detail/SpotCommunityCards";
 import { SpotHero } from "@/components/spot-detail/SpotHero";
@@ -8,8 +9,11 @@ import { SpotInfoBlock } from "@/components/spot-detail/SpotInfoBlock";
 import { SpotVoteSection } from "@/components/spot-detail/SpotVoteSection";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { deleteSpot } from "@/lib/spots/mutations";
+import { spotPhotosAdapter } from "@/lib/spots/spotPhotosAdapter";
 import { OsmSpot, SkateSpot } from "@/lib/spots/types";
 import { spotReviewableAdapter } from "@/lib/spots/spotReviewableAdapter";
+import { useAddSpotPhoto } from "@/lib/spots/useAddSpotPhoto";
+import { useEntityPhotos } from "@/lib/shared/useEntityPhotos";
 import { useReviewableEntity } from "@/lib/shared/useReviewableEntity";
 import { C, F } from "@/lib/theme";
 import { TYPE_LABELS } from "@/utils/constants";
@@ -99,9 +103,28 @@ export default function SpotDetailScreen() {
   const typeLabel = spot
     ? (isSkateSpot(spot) ? (TYPE_LABELS[spot.type] ?? spot.type.toUpperCase()) : (TYPE_LABELS[spot.spot_type] ?? spot.spot_type.toUpperCase()))
     : "";
-  const photoUrl = spot && isSkateSpot(spot) ? spot.photo_url : null;
+  const { addPhoto, isAddingPhoto } = useAddSpotPhoto(spotId, osmPlaceId);
   const description = spot && isSkateSpot(spot) ? spot.description : null;
   const address = spot && isOsm ? (spot as OsmSpot).address : null;
+
+  const [showPhotoViewer, setShowPhotoViewer] = useState(false);
+  const {
+    photos,
+    isLoading: isLoadingPhotos,
+    voteStatuses: photoVoteStatuses,
+    reportStatuses: photoReportStatuses,
+    castVote: castPhotoVote,
+    report: reportPhoto,
+    isReporting: isReportingPhoto,
+    deletePhoto,
+    isDeleting: isDeletingPhoto,
+  } = useEntityPhotos(spotId, osmPlaceId, spotPhotosAdapter, queryKeys.spotPhotos(spotId, osmPlaceId));
+
+  // photos[0] is always the current highest-voted, non-hidden photo (same
+  // ordering the DB's cover-photo trigger uses) — falls back to the
+  // route-param snapshot only until that query resolves on first mount.
+  const initialPhotoUrl = spot ? (isSkateSpot(spot) ? spot.photo_url : spot.cover_photo_url) : null;
+  const photoUrl = photos[0]?.media_url ?? initialPhotoUrl;
 
   if (!spot) {
     return (
@@ -132,7 +155,7 @@ export default function SpotDetailScreen() {
       />
 
       <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
-        <SpotHero photoUrl={photoUrl} />
+        <SpotHero photoUrl={photoUrl} onPress={() => setShowPhotoViewer(true)} />
 
         <View style={styles.body}>
           <SpotInfoBlock
@@ -144,6 +167,8 @@ export default function SpotDetailScreen() {
             accent={accent}
             onAccent={onAccent}
             onDirections={handleDirections}
+            onAddPhoto={addPhoto}
+            isAddingPhoto={isAddingPhoto}
             description={description}
             address={address}
           />
@@ -187,6 +212,22 @@ export default function SpotDetailScreen() {
         accent={accent}
         onAccent={onAccent}
         onSubmit={handleCardSubmit}
+      />
+
+      <EntityPhotoViewerModal
+        visible={showPhotoViewer}
+        onClose={() => setShowPhotoViewer(false)}
+        photos={photos}
+        isLoadingPhotos={isLoadingPhotos}
+        currentUserId={session?.user.id ?? null}
+        voteStatuses={photoVoteStatuses}
+        reportStatuses={photoReportStatuses}
+        onVote={castPhotoVote}
+        onReport={reportPhoto}
+        isReporting={isReportingPhoto}
+        onDelete={deletePhoto}
+        isDeleting={isDeletingPhoto}
+        accent={accent}
       />
     </View>
   );
