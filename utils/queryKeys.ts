@@ -9,8 +9,14 @@ export const queryKeys = {
     ["spot", spotId, osmPlaceId, "cards"] as const,
   storeCards: (storeId: string | null, osmPlaceId: string | null) =>
     ["store", storeId, osmPlaceId, "cards"] as const,
+  spotPhotos: (spotId: string | null, osmPlaceId: string | null) =>
+    ["spot", spotId, osmPlaceId, "photos"] as const,
+  storePhotos: (storeId: string | null, osmPlaceId: string | null) =>
+    ["store", storeId, osmPlaceId, "photos"] as const,
+  mapOsmMarkersBase: ["map", "osmMarkers"] as const,
   mapOsmMarkers: (bbox: BoundingBox | null) =>
     ["map", "osmMarkers", bbox] as const,
+  mapUserMarkersBase: ["map", "userMarkers"] as const,
   mapUserMarkers: (bbox: BoundingBox | null) =>
     ["map", "userMarkers", bbox] as const,
   profileStats: (profileId: string) =>
