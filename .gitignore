@@ -2,6 +2,12 @@
 
 # dependencies
 node_modules/
+.
+# project files
+.vscode/
+.cursor/
+.cursorrules
+.cursorignore
 
 # Expo
 .expo/
@@ -37,6 +43,13 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+# personal learning notes, not part of the project
+/Learnings
+
+# claude code project instructions, not tracked
+/CLAUDE.md
+/CONVENTIONS.md
 
 # generated native folders
 /ios

@@ -1,3 +1,5 @@
+import { EntityPhoto } from "@/lib/shared/types";
+
 export type SpotType = "street" | "diy" | "park" | "indoor";
 
 export type SkateSpot = {
@@ -23,6 +25,7 @@ export type OsmSpot = {
   spot_type: "park" | "diy" | "street";
   coordinates: { lat: number; lng: number };
   upvote_count: number;
+  cover_photo_url: string | null;
 };
 
 export type OsmStore = {
@@ -34,6 +37,7 @@ export type OsmStore = {
   opening_hours: string | null;
   coordinates: { lat: number; lng: number };
   upvote_count: number;
+  cover_photo_url: string | null;
 };
 
 export type CreateSpotPayload = {
@@ -76,6 +80,11 @@ export type CreateSpotCardPayload = {
   heading: string;
   rating: number | null;
   comment: string;
+};
+
+export type SpotPhoto = EntityPhoto & {
+  spot_id: string | null;
+  osm_place_id: string | null;
 };
 
 export function regionToBoundingBox(

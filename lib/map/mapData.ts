@@ -1,10 +1,6 @@
-import {
-  fetchOsmSpotsInBounds,
-  fetchOsmStoresInBounds,
-  fetchSpotsInBounds,
-} from "@/lib/spots/queries";
+import { fetchOsmSpotsInBounds, fetchSpotsInBounds } from "@/lib/spots/queries";
 import { OsmSpot, OsmStore, regionToBoundingBox, SkateSpot } from "@/lib/spots/types";
-import { fetchUserStoresInBounds } from "@/lib/stores/queries";
+import { fetchOsmStoresInBounds, fetchUserStoresInBounds } from "@/lib/stores/queries";
 import { UserStore } from "@/lib/stores/types";
 import { Region } from "react-native-maps";
 

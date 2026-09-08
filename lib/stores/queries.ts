@@ -1,9 +1,46 @@
 import { supabase } from "@/lib/supabaseClient";
-import { BoundingBox } from "@/lib/spots/types";
+import { BoundingBox, OsmStore } from "@/lib/spots/types";
 import { computeAverageRating } from "@/lib/shared/ratings";
 import { getVoteStatus, getVoteCount } from "@/lib/shared/votes";
 import { BOUNDS_ROW_LIMIT } from "@/utils/constants";
 import type { StoreCardWithProfile, UserStore } from "./types";
+
+export async function fetchOsmStoresInBounds(bbox: BoundingBox): Promise<OsmStore[]> {
+  const { data, error } = await supabase
+    .from("osm_stores")
+    .select(
+      "place_id, name, address, phone, website, opening_hours, latitude, longitude, upvote_count, cover_photo_url"
+    )
+    .gte("latitude", bbox.minLat)
+    .lte("latitude", bbox.maxLat)
+    .gte("longitude", bbox.minLng)
+    .lte("longitude", bbox.maxLng)
+    .limit(BOUNDS_ROW_LIMIT);
+  if (error) throw error;
+  type Row = {
+    place_id: string;
+    name: string;
+    address: string;
+    phone: string | null;
+    website: string | null;
+    opening_hours: string | null;
+    latitude: number;
+    longitude: number;
+    upvote_count: number;
+    cover_photo_url: string | null;
+  };
+  return (data as Row[]).map((row) => ({
+    place_id: row.place_id,
+    name: row.name,
+    address: row.address,
+    phone: row.phone,
+    website: row.website,
+    opening_hours: row.opening_hours,
+    coordinates: { lat: row.latitude, lng: row.longitude },
+    upvote_count: row.upvote_count,
+    cover_photo_url: row.cover_photo_url,
+  }));
+}
 
 export async function fetchUserStoresInBounds(bbox: BoundingBox): Promise<UserStore[]> {
   const { data, error } = await supabase

@@ -44,12 +44,14 @@ export async function uploadAvatar(
   const ext = mimeType.split("/")[1] ?? "jpg";
   const path = `${profileId}/avatar.${ext}`;
 
+  // response.blob() silently yields an empty blob for local file:// URIs on
+  // React Native — arrayBuffer() reads the same bytes reliably instead.
   const response = await fetch(uri);
-  const blob = await response.blob();
+  const arrayBuffer = await response.arrayBuffer();
 
   const { error } = await supabase.storage
     .from("avatars")
-    .upload(path, blob, { upsert: true, contentType: mimeType });
+    .upload(path, arrayBuffer, { upsert: true, contentType: mimeType });
   if (error) throw error;
 
   const { data } = supabase.storage.from("avatars").getPublicUrl(path);

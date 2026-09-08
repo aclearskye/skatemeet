@@ -25,9 +25,36 @@ export async function deleteStore(storeId: string, userId: string): Promise<void
   if (error) throw error;
 }
 
-export async function uploadStorePhoto(userId: string, localUri: string): Promise<string> {
+export async function uploadStorePhoto(
+  userId: string,
+  localUri: string,
+  mimeType?: string
+): Promise<string> {
   const { uploadFile } = await import("@/lib/storage");
-  return uploadFile(userId, localUri, "store-images");
+  return uploadFile(userId, localUri, "store-images", mimeType);
+}
+
+export async function linkStorePhoto(
+  target: { storeId: string } | { osmPlaceId: string },
+  mediaUrl: string
+): Promise<void> {
+  const { error } = await supabase.rpc("add_store_photo", {
+    p_store_id: "storeId" in target ? target.storeId : null,
+    p_osm_place_id: "osmPlaceId" in target ? target.osmPlaceId : null,
+    p_media_url: mediaUrl,
+  });
+  if (error) throw error;
+}
+
+export async function addStorePhoto(
+  target: { storeId: string } | { osmPlaceId: string },
+  localUri: string,
+  mimeType: string,
+  userId: string
+): Promise<string> {
+  const mediaUrl = await uploadStorePhoto(userId, localUri, mimeType);
+  await linkStorePhoto(target, mediaUrl);
+  return mediaUrl;
 }
 
 export async function createStoreCard(

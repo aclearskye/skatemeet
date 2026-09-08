@@ -112,6 +112,7 @@ export function MapPreviewCard({ item, onDismiss, initialHasVoted }: Props) {
     case "osm-spot": {
       const s = item.data;
       name = s.name;
+      photoUrl = s.cover_photo_url;
       typeLabel = TYPE_LABELS[s.spot_type] ?? s.spot_type.toUpperCase();
       subtitle = s.address;
       isOsm = true;
@@ -122,6 +123,7 @@ export function MapPreviewCard({ item, onDismiss, initialHasVoted }: Props) {
     case "osm-store": {
       const s = item.data;
       name = s.name;
+      photoUrl = s.cover_photo_url;
       subtitle = s.address;
       typeLabel = "SKATE STORE";
       isOsm = true;
@@ -132,6 +134,7 @@ export function MapPreviewCard({ item, onDismiss, initialHasVoted }: Props) {
     case "user-store": {
       const s = item.data;
       name = s.name;
+      photoUrl = s.photo_url;
       subtitle = s.address;
       typeLabel = "SKATE STORE";
       upvoteCount = s.upvote_count;

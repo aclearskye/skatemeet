@@ -1,3 +1,4 @@
+import { AddPhotoIconButton } from "@/components/common/AddPhotoIconButton";
 import { C, F } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { Fragment } from "react";
@@ -12,6 +13,8 @@ type Props = {
   accent: string;
   onAccent: string;
   onDirections: () => void;
+  onAddPhoto: () => void;
+  isAddingPhoto: boolean;
   description: string | null;
   address: string | null;
 };
@@ -25,12 +28,17 @@ export function SpotInfoBlock({
   accent,
   onAccent,
   onDirections,
+  onAddPhoto,
+  isAddingPhoto,
   description,
   address,
 }: Props) {
   return (
     <Fragment>
-      <Text style={styles.name}>{name}</Text>
+      <View style={styles.nameRow}>
+        <Text style={styles.name}>{name}</Text>
+        <AddPhotoIconButton onPress={onAddPhoto} isLoading={isAddingPhoto} accent={accent} />
+      </View>
 
       <View style={styles.badgeRow}>
         <View style={styles.typeBadge}>
@@ -72,7 +80,8 @@ export function SpotInfoBlock({
 }
 
 const styles = StyleSheet.create({
-  name: { fontFamily: F.heading, fontSize: 28, color: C.text, letterSpacing: 0.5 },
+  nameRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  name: { fontFamily: F.heading, fontSize: 28, color: C.text, letterSpacing: 0.5, flexShrink: 1 },
   badgeRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   typeBadge: {
     paddingHorizontal: 10,

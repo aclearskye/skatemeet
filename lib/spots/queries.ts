@@ -5,7 +5,6 @@ import { BOUNDS_ROW_LIMIT } from "@/utils/constants";
 import type {
   BoundingBox,
   OsmSpot,
-  OsmStore,
   SkateSpot,
   SpotCardWithProfile,
 } from "./types";
@@ -13,7 +12,7 @@ import type {
 export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[]> {
   const { data, error } = await supabase
     .from("osm_spots")
-    .select("place_id, name, address, spot_type, latitude, longitude, upvote_count")
+    .select("place_id, name, address, spot_type, latitude, longitude, upvote_count, cover_photo_url")
     .gte("latitude", bbox.minLat)
     .lte("latitude", bbox.maxLat)
     .gte("longitude", bbox.minLng)
@@ -28,6 +27,7 @@ export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[
     latitude: number;
     longitude: number;
     upvote_count: number;
+    cover_photo_url: string | null;
   };
   return (data as Row[]).map((row) => ({
     place_id: row.place_id,
@@ -36,41 +36,7 @@ export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[
     spot_type: row.spot_type,
     coordinates: { lat: row.latitude, lng: row.longitude },
     upvote_count: row.upvote_count,
-  }));
-}
-
-export async function fetchOsmStoresInBounds(bbox: BoundingBox): Promise<OsmStore[]> {
-  const { data, error } = await supabase
-    .from("osm_stores")
-    .select(
-      "place_id, name, address, phone, website, opening_hours, latitude, longitude, upvote_count"
-    )
-    .gte("latitude", bbox.minLat)
-    .lte("latitude", bbox.maxLat)
-    .gte("longitude", bbox.minLng)
-    .lte("longitude", bbox.maxLng)
-    .limit(BOUNDS_ROW_LIMIT);
-  if (error) throw error;
-  type Row = {
-    place_id: string;
-    name: string;
-    address: string;
-    phone: string | null;
-    website: string | null;
-    opening_hours: string | null;
-    latitude: number;
-    longitude: number;
-    upvote_count: number;
-  };
-  return (data as Row[]).map((row) => ({
-    place_id: row.place_id,
-    name: row.name,
-    address: row.address,
-    phone: row.phone,
-    website: row.website,
-    opening_hours: row.opening_hours,
-    coordinates: { lat: row.latitude, lng: row.longitude },
-    upvote_count: row.upvote_count,
+    cover_photo_url: row.cover_photo_url,
   }));
 }
 

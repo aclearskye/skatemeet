@@ -1,17 +1,21 @@
 import { AddCardSheet } from "@/components/common/AddCardSheet";
 import { DeleteUnverifiedButton } from "@/components/common/DeleteUnverifiedButton";
 import { DetailHeader } from "@/components/common/DetailHeader";
+import { EntityPhotoViewerModal } from "@/components/common/EntityPhotoViewerModal";
 import { StarRating } from "@/components/common/StarRating";
 import { StoreCommunityCards } from "@/components/store-detail/StoreCommunityCards";
 import { StoreHero } from "@/components/store-detail/StoreHero";
 import { StoreInfoBlock } from "@/components/store-detail/StoreInfoBlock";
 import { StoreVoteSection } from "@/components/store-detail/StoreVoteSection";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { useEntityPhotos } from "@/lib/shared/useEntityPhotos";
 import { useReviewableEntity } from "@/lib/shared/useReviewableEntity";
 import { OsmStore } from "@/lib/spots/types";
 import { deleteStore } from "@/lib/stores/mutations";
+import { storePhotosAdapter } from "@/lib/stores/storePhotosAdapter";
 import { SkateStore, UserStore } from "@/lib/stores/types";
 import { storeReviewableAdapter } from "@/lib/stores/storeReviewableAdapter";
+import { useAddStorePhoto } from "@/lib/stores/useAddStorePhoto";
 import { C, F } from "@/lib/theme";
 import { queryKeys } from "@/utils/queryKeys";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -62,11 +66,35 @@ export default function StoreDetailScreen() {
   const phone = store && "phone" in store ? (store as OsmStore | UserStore).phone : null;
   const website = store && "website" in store ? (store as OsmStore | UserStore).website : null;
   const hours = store && "opening_hours" in store ? (store as OsmStore | UserStore).opening_hours : null;
-  const photoUrl = isUserStore && store ? (store as UserStore).photo_url : null;
   const isOsm = kind === "osm-store" || kind === "skate-store";
 
   const [showAddCard, setShowAddCard] = useState(false);
   const [isVerified, setIsVerified] = useState(isUserStore && store ? (store as UserStore).is_verified : false);
+  const { addPhoto, isAddingPhoto } = useAddStorePhoto(storeId, osmPlaceId);
+
+  const [showPhotoViewer, setShowPhotoViewer] = useState(false);
+  const {
+    photos,
+    isLoading: isLoadingPhotos,
+    voteStatuses: photoVoteStatuses,
+    reportStatuses: photoReportStatuses,
+    castVote: castPhotoVote,
+    report: reportPhoto,
+    isReporting: isReportingPhoto,
+    deletePhoto,
+    isDeleting: isDeletingPhoto,
+  } = useEntityPhotos(storeId, osmPlaceId, storePhotosAdapter, queryKeys.storePhotos(storeId, osmPlaceId));
+
+  // photos[0] is always the current highest-voted, non-hidden photo (same
+  // ordering the DB's cover-photo trigger uses) — falls back to the
+  // route-param snapshot only until that query resolves on first mount.
+  const initialPhotoUrl =
+    isUserStore && store
+      ? (store as UserStore).photo_url
+      : store && "cover_photo_url" in store
+        ? (store as OsmStore).cover_photo_url
+        : null;
+  const photoUrl = photos[0]?.media_url ?? initialPhotoUrl;
 
   const {
     userHasVoted,
@@ -134,7 +162,7 @@ export default function StoreDetailScreen() {
       />
 
       <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
-        <StoreHero photoUrl={photoUrl} />
+        <StoreHero photoUrl={photoUrl} onPress={() => setShowPhotoViewer(true)} />
 
         <View style={styles.body}>
           <StoreInfoBlock
@@ -142,6 +170,8 @@ export default function StoreDetailScreen() {
             isOsm={isOsm}
             osmRating={osmRating}
             onDirections={handleDirections}
+            onAddPhoto={addPhoto}
+            isAddingPhoto={isAddingPhoto}
             address={address}
             hours={hours}
             phone={phone}
@@ -182,6 +212,22 @@ export default function StoreDetailScreen() {
         accent={C.secondary}
         onAccent={C.onSecondary}
         onSubmit={handleCardSubmit}
+      />
+
+      <EntityPhotoViewerModal
+        visible={showPhotoViewer}
+        onClose={() => setShowPhotoViewer(false)}
+        photos={photos}
+        isLoadingPhotos={isLoadingPhotos}
+        currentUserId={session?.user.id ?? null}
+        voteStatuses={photoVoteStatuses}
+        reportStatuses={photoReportStatuses}
+        onVote={castPhotoVote}
+        onReport={reportPhoto}
+        isReporting={isReportingPhoto}
+        onDelete={deletePhoto}
+        isDeleting={isDeletingPhoto}
+        accent={C.secondary}
       />
     </View>
   );

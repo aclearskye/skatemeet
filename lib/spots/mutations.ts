@@ -25,9 +25,36 @@ export async function deleteSpot(spotId: string, userId: string): Promise<void> 
   if (error) throw error;
 }
 
-export async function uploadSpotPhoto(userId: string, localUri: string): Promise<string> {
+export async function uploadSpotPhoto(
+  userId: string,
+  localUri: string,
+  mimeType?: string
+): Promise<string> {
   const { uploadFile } = await import("@/lib/storage");
-  return uploadFile(userId, localUri, "spot-images");
+  return uploadFile(userId, localUri, "spot-images", mimeType);
+}
+
+export async function linkSpotPhoto(
+  target: { spotId: string } | { osmPlaceId: string },
+  mediaUrl: string
+): Promise<void> {
+  const { error } = await supabase.rpc("add_spot_photo", {
+    p_spot_id: "spotId" in target ? target.spotId : null,
+    p_osm_place_id: "osmPlaceId" in target ? target.osmPlaceId : null,
+    p_media_url: mediaUrl,
+  });
+  if (error) throw error;
+}
+
+export async function addSpotPhoto(
+  target: { spotId: string } | { osmPlaceId: string },
+  localUri: string,
+  mimeType: string,
+  userId: string
+): Promise<string> {
+  const mediaUrl = await uploadSpotPhoto(userId, localUri, mimeType);
+  await linkSpotPhoto(target, mediaUrl);
+  return mediaUrl;
 }
 
 export async function toggleSpotVote(
