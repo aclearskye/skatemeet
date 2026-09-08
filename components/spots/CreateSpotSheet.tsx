@@ -2,8 +2,9 @@ import { MultiStepSheet } from "@/components/common/MultiStepSheet";
 import { PhotoPickerStep } from "@/components/common/PhotoPickerStep";
 import { StarInput } from "@/components/common/StarInput";
 import { useAuthContext } from "@/lib/context/use-auth-context";
-import { createSpot, uploadSpotPhoto } from "@/lib/spots/mutations";
+import { createSpot, linkSpotPhoto, uploadSpotPhoto } from "@/lib/spots/mutations";
 import { SkateSpot, SpotType } from "@/lib/spots/types";
+import { PickedPhoto } from "@/lib/storage";
 import { C, F } from "@/lib/theme";
 import { useState } from "react";
 import {
@@ -49,7 +50,7 @@ export function CreateSpotSheet({
   const [spotType, setSpotType] = useState<SpotType>(lockedType ?? "street");
   const [description, setDescription] = useState("");
   const [difficulty, setDifficulty] = useState<number | null>(null);
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<PickedPhoto | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -59,7 +60,7 @@ export function CreateSpotSheet({
     setSpotType(lockedType ?? "street");
     setDescription("");
     setDifficulty(null);
-    setPhotoUri(null);
+    setPhoto(null);
     setIsSubmitting(false);
     setErrorMsg(null);
   }
@@ -75,8 +76,8 @@ export function CreateSpotSheet({
     setErrorMsg(null);
     try {
       let photo_url: string | undefined;
-      if (photoUri) {
-        photo_url = await uploadSpotPhoto(session.user.id, photoUri);
+      if (photo) {
+        photo_url = await uploadSpotPhoto(session.user.id, photo.uri, photo.mimeType);
       }
       const spot = await createSpot(
         {
@@ -90,6 +91,9 @@ export function CreateSpotSheet({
         },
         session.user.id
       );
+      if (photo_url) {
+        await linkSpotPhoto({ spotId: spot.spot_id }, photo_url);
+      }
       onSpotCreated(spot);
       reset();
       onClose();
@@ -191,9 +195,9 @@ export function CreateSpotSheet({
 
       {step === 3 && (
         <PhotoPickerStep
-          photoUri={photoUri}
-          onPick={setPhotoUri}
-          onRemove={() => setPhotoUri(null)}
+          photoUri={photo?.uri ?? null}
+          onPick={setPhoto}
+          onRemove={() => setPhoto(null)}
           errorMsg={errorMsg}
         />
       )}

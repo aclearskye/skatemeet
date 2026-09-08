@@ -1,4 +1,4 @@
-import { pickPhotoFromLibrary } from "@/lib/storage";
+import { PickedPhoto, pickPhotoFromLibrary } from "@/lib/storage";
 import { C, F } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -6,15 +6,15 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type Props = {
   photoUri: string | null;
-  onPick: (uri: string) => void;
+  onPick: (photo: PickedPhoto) => void;
   onRemove: () => void;
   errorMsg?: string | null;
 };
 
 export function PhotoPickerStep({ photoUri, onPick, onRemove, errorMsg }: Props) {
   async function handlePick() {
-    const uri = await pickPhotoFromLibrary();
-    if (uri) onPick(uri);
+    const photo = await pickPhotoFromLibrary();
+    if (photo) onPick(photo);
   }
 
   return (

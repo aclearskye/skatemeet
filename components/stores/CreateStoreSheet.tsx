@@ -1,15 +1,15 @@
 import { MultiStepSheet } from "@/components/common/MultiStepSheet";
 import { PhotoPickerStep } from "@/components/common/PhotoPickerStep";
 import { useAuthContext } from "@/lib/context/use-auth-context";
-import { createStore, uploadStorePhoto } from "@/lib/stores/mutations";
+import { createStore, linkStorePhoto, uploadStorePhoto } from "@/lib/stores/mutations";
 import { UserStore } from "@/lib/stores/types";
+import { PickedPhoto } from "@/lib/storage";
 import { C, F } from "@/lib/theme";
 import { useState } from "react";
 import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -35,7 +35,7 @@ export function CreateStoreSheet({
   const [website, setWebsite] = useState("");
   const [openingHours, setOpeningHours] = useState("");
   const [description, setDescription] = useState("");
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<PickedPhoto | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -47,7 +47,7 @@ export function CreateStoreSheet({
     setWebsite("");
     setOpeningHours("");
     setDescription("");
-    setPhotoUri(null);
+    setPhoto(null);
     setIsSubmitting(false);
     setErrorMsg(null);
   }
@@ -63,8 +63,8 @@ export function CreateStoreSheet({
     setErrorMsg(null);
     try {
       let photo_url: string | undefined;
-      if (photoUri) {
-        photo_url = await uploadStorePhoto(session.user.id, photoUri);
+      if (photo) {
+        photo_url = await uploadStorePhoto(session.user.id, photo.uri, photo.mimeType);
       }
       const store = await createStore(
         {
@@ -80,6 +80,9 @@ export function CreateStoreSheet({
         },
         session.user.id
       );
+      if (photo_url) {
+        await linkStorePhoto({ storeId: store.store_id }, photo_url);
+      }
       onStoreCreated(store);
       reset();
       onClose();
@@ -184,9 +187,9 @@ export function CreateStoreSheet({
 
       {step === 3 && (
         <PhotoPickerStep
-          photoUri={photoUri}
-          onPick={setPhotoUri}
-          onRemove={() => setPhotoUri(null)}
+          photoUri={photo?.uri ?? null}
+          onPick={setPhoto}
+          onRemove={() => setPhoto(null)}
           errorMsg={errorMsg}
         />
       )}
