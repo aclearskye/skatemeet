@@ -40,6 +40,12 @@ function regionToInitialCamera(region: Region) {
 // forced off too: Google's default fullscreen button sits in the same corner
 // as the app's hamburger menu button and overlaps it. `mapTypeControl` (the
 // Map/Satellite toggle) is forced off since it renders under the search bar.
+// `streetViewControl` removes the draggable Pegman icon, `zoomControl` removes
+// the +/- buttons, and `cameraControl` removes the separate collapsed circular
+// button that expands into a tilt/rotate/pan cluster — `rotateControl` alone
+// doesn't cover it, `cameraControl` is its own distinct MapOptions field.
+// `gestureHandling: "greedy"` lets a plain scroll zoom the map instead of
+// requiring Ctrl/Cmd.
 export const MapView = forwardRef<MapViewNative, Props>(({ initialCamera, options, ...props }, ref) => (
   <WebMapView
     {...props}
@@ -47,7 +53,16 @@ export const MapView = forwardRef<MapViewNative, Props>(({ initialCamera, option
     provider="google"
     googleMapsApiKey={GOOGLE_MAPS_WEB_API_KEY}
     initialCamera={initialCamera ?? (props.initialRegion ? regionToInitialCamera(props.initialRegion) : undefined)}
-    options={{ ...options, fullscreenControl: false, mapTypeControl: false }}
+    options={{
+      ...options,
+      fullscreenControl: false,
+      mapTypeControl: false,
+      streetViewControl: false,
+      zoomControl: false,
+      rotateControl: false,
+      cameraControl: false,
+      gestureHandling: "greedy",
+    }}
   />
 ));
 MapView.displayName = "MapView";

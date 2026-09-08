@@ -15,7 +15,7 @@ import { FILTER_DEFINITIONS, FilterKey, SEARCH_DEBOUNCE_MS } from "@/utils/const
 import { filterVisibleMarkers } from "@/utils/mapFilters";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 // Relative, not "@/...": Expo's "@/" alias resolves straight to a file and skips
 // Metro's platform-extension probing, so it would always pick MapView.ts over
@@ -143,11 +143,15 @@ export default function MapScreen() {
       {/* Add spot FAB */}
       {session && !isPickingLocation && (
         <TouchableOpacity
-          style={[styles.fab, { bottom: insets.bottom + 16 }]}
+          style={[
+            styles.fab,
+            { bottom: insets.bottom + 16 },
+            Platform.OS === "web" && styles.fabWeb,
+          ]}
           onPress={() => { setIsPickingLocation(true); dismissPreview(); }}
           activeOpacity={0.85}
         >
-          <Ionicons name="add" size={28} color={C.onPrimary} />
+          <Ionicons name="add" size={Platform.OS === "web" ? 32 : 28} color={C.onPrimary} />
         </TouchableOpacity>
       )}
 
@@ -266,6 +270,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
+  },
+  fabWeb: {
+    width: 64,
+    height: 64,
+    bottom: 56,
   },
 
   // Banners
