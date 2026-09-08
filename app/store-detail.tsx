@@ -8,6 +8,7 @@ import { StoreHero } from "@/components/store-detail/StoreHero";
 import { StoreInfoBlock } from "@/components/store-detail/StoreInfoBlock";
 import { StoreVoteSection } from "@/components/store-detail/StoreVoteSection";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { openDirections } from "@/lib/shared/openDirections";
 import { useEntityPhotos } from "@/lib/shared/useEntityPhotos";
 import { useReviewableEntity } from "@/lib/shared/useReviewableEntity";
 import { OsmStore } from "@/lib/spots/types";
@@ -20,7 +21,7 @@ import { C, F } from "@/lib/theme";
 import { queryKeys } from "@/utils/queryKeys";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Linking, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Params = { kind: string; data: string };
@@ -117,12 +118,7 @@ export default function StoreDetailScreen() {
 
   function handleDirections() {
     if (!store) return;
-    const label = encodeURIComponent(name);
-    const url =
-      Platform.OS === "ios"
-        ? `maps:0,0?q=${label}@${lat},${lng}`
-        : `geo:${lat},${lng}?q=${lat},${lng}(${label})`;
-    Linking.openURL(url);
+    openDirections({ lat, lng, label: name });
   }
 
   const isOwner = isUserStore && store != null && session?.user.id === (store as UserStore).profile_id;

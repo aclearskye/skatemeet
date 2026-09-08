@@ -13,6 +13,7 @@ import { spotPhotosAdapter } from "@/lib/spots/spotPhotosAdapter";
 import { OsmSpot, SkateSpot } from "@/lib/spots/types";
 import { spotReviewableAdapter } from "@/lib/spots/spotReviewableAdapter";
 import { useAddSpotPhoto } from "@/lib/spots/useAddSpotPhoto";
+import { openDirections } from "@/lib/shared/openDirections";
 import { useEntityPhotos } from "@/lib/shared/useEntityPhotos";
 import { useReviewableEntity } from "@/lib/shared/useReviewableEntity";
 import { C, F } from "@/lib/theme";
@@ -20,7 +21,7 @@ import { TYPE_LABELS } from "@/utils/constants";
 import { queryKeys } from "@/utils/queryKeys";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Linking, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Params = { kind: string; data: string };
@@ -84,12 +85,7 @@ export default function SpotDetailScreen() {
 
   function handleDirections() {
     if (!spot) return;
-    const label = encodeURIComponent(spot.name);
-    const url =
-      Platform.OS === "ios"
-        ? `maps:0,0?q=${label}@${lat},${lng}`
-        : `geo:${lat},${lng}?q=${lat},${lng}(${label})`;
-    Linking.openURL(url);
+    openDirections({ lat, lng, label: spot.name });
   }
 
   const isOwner = isUser && spot != null && session?.user.id === (spot as SkateSpot).created_by;
