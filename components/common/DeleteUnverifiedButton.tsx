@@ -1,7 +1,8 @@
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { C, F } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
 
 type Props = {
   entityLabel: string;
@@ -10,19 +11,10 @@ type Props = {
 
 export function DeleteUnverifiedButton({ entityLabel, onDelete }: Props) {
   const [isDeleting, setIsDeleting] = useState(false);
-
-  function handlePress() {
-    Alert.alert(
-      `Delete this ${entityLabel}?`,
-      "This can't be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: confirmDelete },
-      ]
-    );
-  }
+  const [showConfirm, setShowConfirm] = useState(false);
 
   async function confirmDelete() {
+    setShowConfirm(false);
     setIsDeleting(true);
     try {
       await onDelete();
@@ -32,17 +24,27 @@ export function DeleteUnverifiedButton({ entityLabel, onDelete }: Props) {
   }
 
   return (
-    <TouchableOpacity
-      style={styles.btn}
-      onPress={handlePress}
-      disabled={isDeleting}
-      activeOpacity={0.75}
-    >
-      <Ionicons name="trash-outline" size={15} color={C.error} />
-      <Text style={styles.text}>
-        {isDeleting ? "DELETING…" : `DELETE ${entityLabel.toUpperCase()}`}
-      </Text>
-    </TouchableOpacity>
+    <>
+      <TouchableOpacity
+        style={styles.btn}
+        onPress={() => setShowConfirm(true)}
+        disabled={isDeleting}
+        activeOpacity={0.75}
+      >
+        <Ionicons name="trash-outline" size={15} color={C.error} />
+        <Text style={styles.text}>
+          {isDeleting ? "DELETING…" : `DELETE ${entityLabel.toUpperCase()}`}
+        </Text>
+      </TouchableOpacity>
+
+      <ConfirmDialog
+        visible={showConfirm}
+        title={`Delete this ${entityLabel}?`}
+        message="This can't be undone."
+        onConfirm={confirmDelete}
+        onCancel={() => setShowConfirm(false)}
+      />
+    </>
   );
 }
 

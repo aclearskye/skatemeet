@@ -1,0 +1,1 @@
+export { ReviewsModal } from "./ReviewsModal";

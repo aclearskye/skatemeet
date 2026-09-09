@@ -1,19 +1,25 @@
-import { AddCardSheet } from "@/components/common/AddCardSheet";
+import { AddReviewSheet } from "@/components/common/AddReviewSheet";
 import { DeleteUnverifiedButton } from "@/components/common/DeleteUnverifiedButton";
 import { DetailHeader } from "@/components/common/DetailHeader";
+import { EditMetadataSheet } from "@/components/common/EditMetadataSheet";
+import { EntityMetadataSection } from "@/components/common/EntityMetadataSection";
 import { EntityPhotoViewerModal } from "@/components/common/EntityPhotoViewerModal";
+import { ReviewsModal } from "@/components/common/ReviewsModal";
 import { StarRating } from "@/components/common/StarRating";
-import { SpotCommunityCards } from "@/components/spot-detail/SpotCommunityCards";
 import { SpotHero } from "@/components/spot-detail/SpotHero";
 import { SpotInfoBlock } from "@/components/spot-detail/SpotInfoBlock";
+import { SpotReviews } from "@/components/spot-detail/SpotReviews";
 import { SpotVoteSection } from "@/components/spot-detail/SpotVoteSection";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { deleteSpot } from "@/lib/spots/mutations";
+import { spotMetadataAdapter } from "@/lib/spots/spotMetadataAdapter";
 import { spotPhotosAdapter } from "@/lib/spots/spotPhotosAdapter";
 import { OsmSpot, SkateSpot } from "@/lib/spots/types";
 import { spotReviewableAdapter } from "@/lib/spots/spotReviewableAdapter";
 import { useAddSpotPhoto } from "@/lib/spots/useAddSpotPhoto";
+import { useEntityMetadata } from "@/lib/shared/hooks/useEntityMetadata";
 import { openDirections } from "@/lib/shared/openDirections";
+import { ReviewInteractions } from "@/lib/shared/types";
 import { useEntityPhotos } from "@/lib/shared/useEntityPhotos";
 import { useReviewableEntity } from "@/lib/shared/useReviewableEntity";
 import { C, F } from "@/lib/theme";
@@ -62,7 +68,9 @@ export default function SpotDetailScreen() {
   const lng = spot ? (isUser ? (spot as SkateSpot).longitude : (spot as OsmSpot).coordinates.lng) : 0;
 
   const [isVerified, setIsVerified] = useState(spot && isSkateSpot(spot) ? spot.is_verified : false);
-  const [showAddCard, setShowAddCard] = useState(false);
+  const [showAddReview, setShowAddReview] = useState(false);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [showEditMetadata, setShowEditMetadata] = useState(false);
 
   const {
     userHasVoted,
@@ -73,15 +81,34 @@ export default function SpotDetailScreen() {
     isFavorited,
     isTogglingFav,
     handleFavorite,
-    cards,
-    isLoadingCards,
+    reviews,
+    isLoadingReviews,
     avgRating,
-    cardVotes,
-    handleCardUpvote,
-    handleCardSubmit,
+    reviewVotes,
+    handleReviewUpvote,
+    handleReviewSubmit,
+    reportStatuses,
+    handleReviewReport,
+    handleReviewDelete,
   } = useReviewableEntity(spotId, osmPlaceId, spot?.upvote_count ?? 0, spotReviewableAdapter, queryKeys.spotDetail(spotId, osmPlaceId), (result) => {
     if (isUser) setIsVerified(result.upvote_count >= 3);
   });
+
+  const reviewInteractions: ReviewInteractions = {
+    currentUserId: session?.user.id ?? null,
+    reviewVotes,
+    reportStatuses,
+    onUpvote: handleReviewUpvote,
+    onReport: handleReviewReport,
+    onDelete: handleReviewDelete,
+  };
+
+  const { metadata, isLoading: isLoadingMetadata, upsertMetadata } = useEntityMetadata(
+    spotId,
+    osmPlaceId,
+    spotMetadataAdapter,
+    queryKeys.spotMetadata(spotId, osmPlaceId)
+  );
 
   function handleDirections() {
     if (!spot) return;
@@ -169,6 +196,14 @@ export default function SpotDetailScreen() {
             address={address}
           />
 
+          <EntityMetadataSection
+            metadata={metadata}
+            isLoading={isLoadingMetadata}
+            accent={accent}
+            canEdit={session != null}
+            onEdit={() => setShowEditMetadata(true)}
+          />
+
           <SpotVoteSection
             count={localVoteCount}
             hasVoted={userHasVoted}
@@ -186,14 +221,14 @@ export default function SpotDetailScreen() {
             </View>
           )}
 
-          <SpotCommunityCards
-            cards={cards}
-            isLoading={isLoadingCards}
-            cardVotes={cardVotes}
+          <SpotReviews
+            reviews={reviews}
+            isLoading={isLoadingReviews}
+            interactions={reviewInteractions}
             accent={accent}
             onAccent={onAccent}
-            onUpvote={handleCardUpvote}
-            onAddCard={() => setShowAddCard(true)}
+            onAddReview={() => setShowAddReview(true)}
+            onSeeMore={() => setShowReviewsModal(true)}
           />
 
           {isOwner && !isVerified && (
@@ -202,12 +237,32 @@ export default function SpotDetailScreen() {
         </View>
       </ScrollView>
 
-      <AddCardSheet
-        visible={showAddCard}
-        onClose={() => setShowAddCard(false)}
+      <AddReviewSheet
+        visible={showAddReview}
+        onClose={() => setShowAddReview(false)}
         accent={accent}
         onAccent={onAccent}
-        onSubmit={handleCardSubmit}
+        onSubmit={handleReviewSubmit}
+      />
+
+      <ReviewsModal
+        visible={showReviewsModal}
+        onClose={() => setShowReviewsModal(false)}
+        reviews={reviews}
+        isLoading={isLoadingReviews}
+        interactions={reviewInteractions}
+        accent={accent}
+      />
+
+      <EditMetadataSheet
+        visible={showEditMetadata}
+        onClose={() => setShowEditMetadata(false)}
+        initialValue={metadata}
+        accent={accent}
+        onAccent={onAccent}
+        onSubmit={async (payload) => {
+          await upsertMetadata(payload);
+        }}
       />
 
       <EntityPhotoViewerModal

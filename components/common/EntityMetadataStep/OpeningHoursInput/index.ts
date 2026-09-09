@@ -1,0 +1,1 @@
+export { OpeningHoursInput } from "./OpeningHoursInput";

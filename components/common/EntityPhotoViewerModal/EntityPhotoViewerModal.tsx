@@ -1,12 +1,12 @@
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ReportReasonSheet } from "@/components/common/ReportReasonSheet";
-import { EntityPhoto, PhotoReportReason } from "@/lib/shared/types";
+import { EntityPhoto, PHOTO_REPORT_REASONS, PhotoReportReason } from "@/lib/shared/types";
 import { C } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Modal,
   NativeScrollEvent,
@@ -54,11 +54,13 @@ export function EntityPhotoViewerModal({
   const { width } = useWindowDimensions();
   const [index, setIndex] = useState(0);
   const [showReportReasons, setShowReportReasons] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setIndex(0);
       setShowReportReasons(false);
+      setShowDeleteConfirm(false);
     }
   }, [visible]);
 
@@ -94,16 +96,14 @@ export function EntityPhotoViewerModal({
     setShowReportReasons(true);
   }
 
-  function handleSelectReportReason(reason: PhotoReportReason) {
+  function handleSelectReportReason(reason: string) {
     setShowReportReasons(false);
-    onReport(photo.photo_id, reason);
+    onReport(photo.photo_id, reason as PhotoReportReason);
   }
 
-  function handleDeletePress() {
-    Alert.alert("Delete this photo?", "This can't be undone.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: () => onDelete(photo.photo_id) },
-    ]);
+  function handleConfirmDelete() {
+    setShowDeleteConfirm(false);
+    onDelete(photo.photo_id);
   }
 
   return (
@@ -185,7 +185,7 @@ export function EntityPhotoViewerModal({
           {isOwner && (
             <TouchableOpacity
               style={styles.actionBtn}
-              onPress={handleDeletePress}
+              onPress={() => setShowDeleteConfirm(true)}
               disabled={isDeleting}
               hitSlop={8}
             >
@@ -197,10 +197,20 @@ export function EntityPhotoViewerModal({
 
         {showReportReasons && (
           <ReportReasonSheet
+            title="WHY ARE YOU REPORTING THIS PHOTO?"
+            reasons={PHOTO_REPORT_REASONS}
             onSelect={handleSelectReportReason}
             onCancel={() => setShowReportReasons(false)}
           />
         )}
+
+        <ConfirmDialog
+          visible={showDeleteConfirm}
+          title="Delete this photo?"
+          message="This can't be undone."
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
       </View>
     </Modal>
   );

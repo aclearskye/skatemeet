@@ -1,7 +1,14 @@
+import {
+  createEmptyMetadataFormState,
+  EntityMetadataStep,
+  metadataFormStateToPayload,
+  MetadataFormState,
+} from "@/components/common/EntityMetadataStep";
 import { MultiStepSheet } from "@/components/common/MultiStepSheet";
 import { PhotoPickerStep } from "@/components/common/PhotoPickerStep";
 import { StarInput } from "@/components/common/StarInput";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { upsertSpotMetadata } from "@/lib/spots/metadataMutations";
 import { createSpot, linkSpotPhoto, uploadSpotPhoto } from "@/lib/spots/mutations";
 import { SkateSpot, SpotType } from "@/lib/spots/types";
 import { PickedPhoto } from "@/lib/storage";
@@ -50,6 +57,7 @@ export function CreateSpotSheet({
   const [spotType, setSpotType] = useState<SpotType>(lockedType ?? "street");
   const [description, setDescription] = useState("");
   const [difficulty, setDifficulty] = useState<number | null>(null);
+  const [metadata, setMetadata] = useState<MetadataFormState>(createEmptyMetadataFormState());
   const [photo, setPhoto] = useState<PickedPhoto | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -60,6 +68,7 @@ export function CreateSpotSheet({
     setSpotType(lockedType ?? "street");
     setDescription("");
     setDifficulty(null);
+    setMetadata(createEmptyMetadataFormState());
     setPhoto(null);
     setIsSubmitting(false);
     setErrorMsg(null);
@@ -94,6 +103,13 @@ export function CreateSpotSheet({
       if (photo_url) {
         await linkSpotPhoto({ spotId: spot.spot_id }, photo_url);
       }
+      // Best-effort: metadata capture is fully optional and must never undo
+      // or block the already-successful spot creation above.
+      try {
+        await upsertSpotMetadata(spot.spot_id, null, metadataFormStateToPayload(metadata));
+      } catch {
+        // ignore — the user can add details later from the spot detail screen
+      }
       onSpotCreated(spot);
       reset();
       onClose();
@@ -112,7 +128,7 @@ export function CreateSpotSheet({
       accent={accent}
       onAccent={onAccent}
       step={step}
-      totalSteps={3}
+      totalSteps={4}
       onBack={() => setStep((s) => s - 1)}
       onNext={() => setStep((s) => s + 1)}
       onSubmit={handleSubmit}
@@ -194,6 +210,16 @@ export function CreateSpotSheet({
       )}
 
       {step === 3 && (
+        <EntityMetadataStep
+          value={metadata}
+          onChange={setMetadata}
+          accent={accent}
+          onAccent={onAccent}
+          onSkip={() => setStep(4)}
+        />
+      )}
+
+      {step === 4 && (
         <PhotoPickerStep
           photoUri={photo?.uri ?? null}
           onPick={setPhoto}

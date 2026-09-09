@@ -1,18 +1,24 @@
-import { AddCardSheet } from "@/components/common/AddCardSheet";
+import { AddReviewSheet } from "@/components/common/AddReviewSheet";
 import { DeleteUnverifiedButton } from "@/components/common/DeleteUnverifiedButton";
 import { DetailHeader } from "@/components/common/DetailHeader";
+import { EditMetadataSheet } from "@/components/common/EditMetadataSheet";
+import { EntityMetadataSection } from "@/components/common/EntityMetadataSection";
 import { EntityPhotoViewerModal } from "@/components/common/EntityPhotoViewerModal";
+import { ReviewsModal } from "@/components/common/ReviewsModal";
 import { StarRating } from "@/components/common/StarRating";
-import { StoreCommunityCards } from "@/components/store-detail/StoreCommunityCards";
 import { StoreHero } from "@/components/store-detail/StoreHero";
 import { StoreInfoBlock } from "@/components/store-detail/StoreInfoBlock";
+import { StoreReviews } from "@/components/store-detail/StoreReviews";
 import { StoreVoteSection } from "@/components/store-detail/StoreVoteSection";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { useEntityMetadata } from "@/lib/shared/hooks/useEntityMetadata";
 import { openDirections } from "@/lib/shared/openDirections";
+import { ReviewInteractions } from "@/lib/shared/types";
 import { useEntityPhotos } from "@/lib/shared/useEntityPhotos";
 import { useReviewableEntity } from "@/lib/shared/useReviewableEntity";
 import { OsmStore } from "@/lib/spots/types";
 import { deleteStore } from "@/lib/stores/mutations";
+import { storeMetadataAdapter } from "@/lib/stores/storeMetadataAdapter";
 import { storePhotosAdapter } from "@/lib/stores/storePhotosAdapter";
 import { SkateStore, UserStore } from "@/lib/stores/types";
 import { storeReviewableAdapter } from "@/lib/stores/storeReviewableAdapter";
@@ -69,7 +75,9 @@ export default function StoreDetailScreen() {
   const hours = store && "opening_hours" in store ? (store as OsmStore | UserStore).opening_hours : null;
   const isOsm = kind === "osm-store" || kind === "skate-store";
 
-  const [showAddCard, setShowAddCard] = useState(false);
+  const [showAddReview, setShowAddReview] = useState(false);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [showEditMetadata, setShowEditMetadata] = useState(false);
   const [isVerified, setIsVerified] = useState(isUserStore && store ? (store as UserStore).is_verified : false);
   const { addPhoto, isAddingPhoto } = useAddStorePhoto(storeId, osmPlaceId);
 
@@ -106,15 +114,34 @@ export default function StoreDetailScreen() {
     isFavorited,
     isTogglingFav,
     handleFavorite,
-    cards,
-    isLoadingCards,
+    reviews,
+    isLoadingReviews,
     avgRating,
-    cardVotes,
-    handleCardUpvote,
-    handleCardSubmit,
+    reviewVotes,
+    handleReviewUpvote,
+    handleReviewSubmit,
+    reportStatuses,
+    handleReviewReport,
+    handleReviewDelete,
   } = useReviewableEntity(storeId, osmPlaceId, initialVoteCount, storeReviewableAdapter, queryKeys.storeDetail(storeId, osmPlaceId), (result) => {
     if (isUserStore) setIsVerified(result.upvote_count >= 3);
   });
+
+  const reviewInteractions: ReviewInteractions = {
+    currentUserId: session?.user.id ?? null,
+    reviewVotes,
+    reportStatuses,
+    onUpvote: handleReviewUpvote,
+    onReport: handleReviewReport,
+    onDelete: handleReviewDelete,
+  };
+
+  const { metadata, isLoading: isLoadingMetadata, upsertMetadata } = useEntityMetadata(
+    storeId,
+    osmPlaceId,
+    storeMetadataAdapter,
+    queryKeys.storeMetadata(storeId, osmPlaceId)
+  );
 
   function handleDirections() {
     if (!store) return;
@@ -174,6 +201,14 @@ export default function StoreDetailScreen() {
             website={website}
           />
 
+          <EntityMetadataSection
+            metadata={metadata}
+            isLoading={isLoadingMetadata}
+            accent={C.secondary}
+            canEdit={session != null}
+            onEdit={() => setShowEditMetadata(true)}
+          />
+
           <StoreVoteSection
             count={localVoteCount}
             hasVoted={userHasVoted}
@@ -188,12 +223,12 @@ export default function StoreDetailScreen() {
             </View>
           )}
 
-          <StoreCommunityCards
-            cards={cards}
-            isLoading={isLoadingCards}
-            cardVotes={cardVotes}
-            onUpvote={handleCardUpvote}
-            onAddCard={() => setShowAddCard(true)}
+          <StoreReviews
+            reviews={reviews}
+            isLoading={isLoadingReviews}
+            interactions={reviewInteractions}
+            onAddReview={() => setShowAddReview(true)}
+            onSeeMore={() => setShowReviewsModal(true)}
           />
 
           {isOwner && !isVerified && (
@@ -202,12 +237,32 @@ export default function StoreDetailScreen() {
         </View>
       </ScrollView>
 
-      <AddCardSheet
-        visible={showAddCard}
-        onClose={() => setShowAddCard(false)}
+      <AddReviewSheet
+        visible={showAddReview}
+        onClose={() => setShowAddReview(false)}
         accent={C.secondary}
         onAccent={C.onSecondary}
-        onSubmit={handleCardSubmit}
+        onSubmit={handleReviewSubmit}
+      />
+
+      <ReviewsModal
+        visible={showReviewsModal}
+        onClose={() => setShowReviewsModal(false)}
+        reviews={reviews}
+        isLoading={isLoadingReviews}
+        interactions={reviewInteractions}
+        accent={C.secondary}
+      />
+
+      <EditMetadataSheet
+        visible={showEditMetadata}
+        onClose={() => setShowEditMetadata(false)}
+        initialValue={metadata}
+        accent={C.secondary}
+        onAccent={C.onSecondary}
+        onSubmit={async (payload) => {
+          await upsertMetadata(payload);
+        }}
       />
 
       <EntityPhotoViewerModal

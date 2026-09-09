@@ -1,6 +1,13 @@
+import {
+  createEmptyMetadataFormState,
+  EntityMetadataStep,
+  metadataFormStateToPayload,
+  MetadataFormState,
+} from "@/components/common/EntityMetadataStep";
 import { MultiStepSheet } from "@/components/common/MultiStepSheet";
 import { PhotoPickerStep } from "@/components/common/PhotoPickerStep";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { upsertStoreMetadata } from "@/lib/stores/metadataMutations";
 import { createStore, linkStorePhoto, uploadStorePhoto } from "@/lib/stores/mutations";
 import { UserStore } from "@/lib/stores/types";
 import { PickedPhoto } from "@/lib/storage";
@@ -33,8 +40,8 @@ export function CreateStoreSheet({
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [website, setWebsite] = useState("");
-  const [openingHours, setOpeningHours] = useState("");
   const [description, setDescription] = useState("");
+  const [metadata, setMetadata] = useState<MetadataFormState>(createEmptyMetadataFormState());
   const [photo, setPhoto] = useState<PickedPhoto | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -45,8 +52,8 @@ export function CreateStoreSheet({
     setAddress("");
     setPhone("");
     setWebsite("");
-    setOpeningHours("");
     setDescription("");
+    setMetadata(createEmptyMetadataFormState());
     setPhoto(null);
     setIsSubmitting(false);
     setErrorMsg(null);
@@ -74,7 +81,6 @@ export function CreateStoreSheet({
           longitude: initialCoordinates.longitude,
           phone: phone.trim() || undefined,
           website: website.trim() || undefined,
-          opening_hours: openingHours.trim() || undefined,
           description: description.trim() || undefined,
           photo_url,
         },
@@ -82,6 +88,13 @@ export function CreateStoreSheet({
       );
       if (photo_url) {
         await linkStorePhoto({ storeId: store.store_id }, photo_url);
+      }
+      // Best-effort: metadata capture is fully optional and must never undo
+      // or block the already-successful store creation above.
+      try {
+        await upsertStoreMetadata(store.store_id, null, metadataFormStateToPayload(metadata));
+      } catch {
+        // ignore — the user can add details later from the store detail screen
       }
       onStoreCreated(store);
       reset();
@@ -101,7 +114,7 @@ export function CreateStoreSheet({
       accent={C.secondary}
       onAccent={C.onSecondary}
       step={step}
-      totalSteps={3}
+      totalSteps={4}
       onBack={() => setStep((s) => s - 1)}
       onNext={() => setStep((s) => s + 1)}
       onSubmit={handleSubmit}
@@ -160,16 +173,6 @@ export function CreateStoreSheet({
             autoCapitalize="none"
             returnKeyType="next"
           />
-          <Text style={[styles.fieldLabel, { marginTop: 24 }]}>OPENING HOURS (OPTIONAL)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. Mon–Fri 10–6, Sat 11–5"
-            placeholderTextColor={C.muted}
-            value={openingHours}
-            onChangeText={setOpeningHours}
-            maxLength={100}
-            returnKeyType="next"
-          />
           <Text style={[styles.fieldLabel, { marginTop: 24 }]}>DESCRIPTION (OPTIONAL)</Text>
           <TextInput
             style={[styles.input, styles.inputMultiline]}
@@ -186,6 +189,16 @@ export function CreateStoreSheet({
       )}
 
       {step === 3 && (
+        <EntityMetadataStep
+          value={metadata}
+          onChange={setMetadata}
+          accent={C.secondary}
+          onAccent={C.onSecondary}
+          onSkip={() => setStep(4)}
+        />
+      )}
+
+      {step === 4 && (
         <PhotoPickerStep
           photoUri={photo?.uri ?? null}
           onPick={setPhoto}

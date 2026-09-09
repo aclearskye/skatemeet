@@ -1,30 +1,30 @@
 import { StarInput } from "@/components/common/StarInput";
-import { C, F } from "@/lib/theme";
+import { C } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
   ActivityIndicator,
   Modal,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { styles } from "./AddReviewSheet.styles";
 
-type Payload = { heading: string; rating: number | null; comment: string };
+type ReviewPayload = { heading: string; rating: number | null; comment: string };
 
 type Props = {
   visible: boolean;
   onClose: () => void;
   accent: string;
   onAccent: string;
-  onSubmit: (payload: Payload) => Promise<void>;
+  onSubmit: (payload: ReviewPayload) => Promise<void>;
 };
 
-export function AddCardSheet({ visible, onClose, accent, onAccent, onSubmit }: Props) {
+export function AddReviewSheet({ visible, onClose, accent, onAccent, onSubmit }: Props) {
   const insets = useSafeAreaInsets();
 
   const [heading, setHeading] = useState("");
@@ -54,7 +54,7 @@ export function AddCardSheet({ visible, onClose, accent, onAccent, onSubmit }: P
       reset();
       onClose();
     } catch (e: any) {
-      setErrorMsg(e.message ?? "Failed to submit card. Please try again.");
+      setErrorMsg(e.message ?? "Failed to submit review. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -71,7 +71,7 @@ export function AddCardSheet({ visible, onClose, accent, onAccent, onSubmit }: P
     >
       <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
         <View style={styles.header}>
-          <Text style={styles.title}>ADD CARD</Text>
+          <Text style={styles.title}>ADD REVIEW</Text>
           <TouchableOpacity onPress={handleClose} style={styles.closeBtn} hitSlop={8}>
             <Ionicons name="close" size={22} color={C.muted} />
           </TouchableOpacity>
@@ -129,7 +129,7 @@ export function AddCardSheet({ visible, onClose, accent, onAccent, onSubmit }: P
             {isSubmitting ? (
               <ActivityIndicator size="small" color={onAccent} />
             ) : (
-              <Text style={[styles.primaryBtnText, { color: onAccent }]}>SUBMIT CARD</Text>
+              <Text style={[styles.primaryBtnText, { color: onAccent }]}>SUBMIT REVIEW</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -137,61 +137,3 @@ export function AddCardSheet({ visible, onClose, accent, onAccent, onSubmit }: P
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: C.border,
-  },
-  title: { fontFamily: F.heading, fontSize: 20, color: C.text, letterSpacing: 1 },
-  closeBtn: { padding: 4 },
-  body: { flex: 1 },
-  section: { padding: 20 },
-  fieldLabel: {
-    fontFamily: F.mono,
-    fontSize: 10,
-    color: C.muted,
-    letterSpacing: 2,
-    marginBottom: 10,
-  },
-  input: {
-    backgroundColor: C.surface,
-    borderWidth: 2,
-    borderColor: C.border,
-    color: C.text,
-    fontFamily: F.body,
-    fontSize: 15,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  inputMultiline: { minHeight: 100, paddingTop: 12 },
-  errorBanner: {
-    marginTop: 16,
-    backgroundColor: C.errorContainer,
-    borderWidth: 1,
-    borderColor: C.errorBorder,
-    padding: 12,
-  },
-  errorText: { fontFamily: F.body, fontSize: 13, color: C.error },
-  footer: {
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: C.border,
-  },
-  primaryBtn: {
-    paddingVertical: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 48,
-  },
-  primaryBtnDisabled: { opacity: 0.4 },
-  primaryBtnText: { fontFamily: F.mono, fontSize: 12, letterSpacing: 1 },
-});
