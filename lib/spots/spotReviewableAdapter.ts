@@ -1,30 +1,33 @@
+import { toggleSpotFavorite, toggleSpotVote } from "@/lib/spots/mutations";
 import {
-  createSpotCard,
-  toggleSpotCardVote,
-  toggleSpotFavorite,
-  toggleSpotVote,
-} from "@/lib/spots/mutations";
+  createSpotReview,
+  deleteSpotReview,
+  reportSpotReview,
+  toggleSpotReviewVote,
+} from "@/lib/spots/reviewMutations";
 import {
   fetchSpotAverageRating,
-  fetchSpotCards,
-  getSpotCardVoteStatuses,
-  getSpotFavoriteStatus,
-  getSpotVoteCount,
-  getUserVoteStatus,
-} from "@/lib/spots/queries";
-import { SpotCard, SpotCardWithProfile } from "@/lib/spots/types";
+  fetchSpotReviews,
+  getSpotReviewReportStatuses,
+  getSpotReviewVoteStatuses,
+} from "@/lib/spots/reviewQueries";
+import { getSpotFavoriteStatus, getSpotVoteCount, getUserVoteStatus } from "@/lib/spots/queries";
+import { SpotReview, SpotReviewWithProfile } from "@/lib/spots/types";
 import { ReviewableEntityAdapter } from "@/lib/shared/useReviewableEntity";
 
-export const spotReviewableAdapter: ReviewableEntityAdapter<SpotCard, SpotCardWithProfile> = {
-  fetchCards: fetchSpotCards,
+export const spotReviewableAdapter: ReviewableEntityAdapter<SpotReview, SpotReviewWithProfile> = {
+  fetchReviews: fetchSpotReviews,
   fetchAverageRating: fetchSpotAverageRating,
   getFavoriteStatus: getSpotFavoriteStatus,
   toggleFavorite: toggleSpotFavorite,
   getVoteStatus: getUserVoteStatus,
   getVoteCount: getSpotVoteCount,
   toggleVote: toggleSpotVote,
-  toggleCardVote: toggleSpotCardVote,
-  getCardVoteStatuses: getSpotCardVoteStatuses,
-  createCard: (spotId, osmPlaceId, payload, userId) =>
-    createSpotCard({ spot_id: spotId, osm_place_id: osmPlaceId, ...payload }, userId),
+  toggleReviewVote: toggleSpotReviewVote,
+  getReviewVoteStatuses: getSpotReviewVoteStatuses,
+  getReportStatuses: getSpotReviewReportStatuses,
+  createReview: (spotId, osmPlaceId, payload, userId) =>
+    createSpotReview({ spot_id: spotId, osm_place_id: osmPlaceId, ...payload }, userId),
+  report: reportSpotReview,
+  deleteReview: deleteSpotReview,
 };

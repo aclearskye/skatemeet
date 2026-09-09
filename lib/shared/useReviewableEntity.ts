@@ -1,12 +1,13 @@
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { ReviewReportReason } from "@/lib/shared/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-type CardBase = { card_id: string; upvote_count: number; is_verified: boolean };
+type ReviewBase = { review_id: string; upvote_count: number; is_verified: boolean };
 
-export type CardPayload = { heading: string; rating: number | null; comment: string };
+export type ReviewPayload = { heading: string; rating: number | null; comment: string };
 
-export type ReviewableEntityAdapter<TCard extends CardBase, TCardWithProfile extends TCard> = {
-  fetchCards: (id: string | null, osmId: string | null) => Promise<TCardWithProfile[]>;
+export type ReviewableEntityAdapter<TReview extends ReviewBase, TReviewWithProfile extends TReview> = {
+  fetchReviews: (id: string | null, osmId: string | null) => Promise<TReviewWithProfile[]>;
   fetchAverageRating: (
     id: string | null,
     osmId: string | null
@@ -20,24 +21,27 @@ export type ReviewableEntityAdapter<TCard extends CardBase, TCardWithProfile ext
     osmId: string | null,
     userId: string
   ) => Promise<{ upvote_count: number; user_has_voted: boolean }>;
-  toggleCardVote: (
-    cardId: string,
+  toggleReviewVote: (
+    reviewId: string,
     userId: string
   ) => Promise<{ upvote_count: number; user_has_voted: boolean }>;
-  getCardVoteStatuses: (cardIds: string[], userId: string) => Promise<Record<string, boolean>>;
-  createCard: (
+  getReviewVoteStatuses: (reviewIds: string[], userId: string) => Promise<Record<string, boolean>>;
+  getReportStatuses: (reviewIds: string[], userId: string) => Promise<Record<string, boolean>>;
+  createReview: (
     id: string | null,
     osmId: string | null,
-    payload: CardPayload,
+    payload: ReviewPayload,
     userId: string
-  ) => Promise<TCard>;
+  ) => Promise<TReview>;
+  report: (reviewId: string, reason: ReviewReportReason) => Promise<void>;
+  deleteReview: (reviewId: string, userId: string) => Promise<void>;
 };
 
-export function useReviewableEntity<TCard extends CardBase, TCardWithProfile extends TCard>(
+export function useReviewableEntity<TReview extends ReviewBase, TReviewWithProfile extends TReview>(
   entityId: string | null,
   osmPlaceId: string | null,
   initialVoteCount: number,
-  adapter: ReviewableEntityAdapter<TCard, TCardWithProfile>,
+  adapter: ReviewableEntityAdapter<TReview, TReviewWithProfile>,
   queryKeyBase: readonly unknown[],
   onVoteToggled?: (result: { upvote_count: number; user_has_voted: boolean }) => void
 ) {
@@ -59,9 +63,9 @@ export function useReviewableEntity<TCard extends CardBase, TCardWithProfile ext
     initialData: initialVoteCount,
   });
 
-  const { data: cards = [], isLoading: isLoadingCards } = useQuery({
-    queryKey: [...queryKeyBase, "cards"],
-    queryFn: () => adapter.fetchCards(entityId, osmPlaceId),
+  const { data: reviews = [], isLoading: isLoadingReviews } = useQuery({
+    queryKey: [...queryKeyBase, "reviews"],
+    queryFn: () => adapter.fetchReviews(entityId, osmPlaceId),
   });
 
   const { data: avgRating = { average: null, count: 0 } } = useQuery({
@@ -75,11 +79,17 @@ export function useReviewableEntity<TCard extends CardBase, TCardWithProfile ext
     enabled: !!userId,
   });
 
-  const cardIds = cards.map((c) => c.card_id);
-  const { data: cardVotes = {} } = useQuery({
-    queryKey: [...queryKeyBase, "cardVotes"],
-    queryFn: () => adapter.getCardVoteStatuses(cardIds, userId!),
-    enabled: !!userId && cardIds.length > 0,
+  const reviewIds = reviews.map((r) => r.review_id);
+  const { data: reviewVotes = {} } = useQuery({
+    queryKey: [...queryKeyBase, "reviewVotes"],
+    queryFn: () => adapter.getReviewVoteStatuses(reviewIds, userId!),
+    enabled: !!userId && reviewIds.length > 0,
+  });
+
+  const { data: reportStatuses = {} } = useQuery({
+    queryKey: [...queryKeyBase, "reviewReports"],
+    queryFn: () => adapter.getReportStatuses(reviewIds, userId!),
+    enabled: !!userId && reviewIds.length > 0,
   });
 
   // ── Mutations ─────────────────────────────────────────────────────────────
@@ -130,48 +140,72 @@ export function useReviewableEntity<TCard extends CardBase, TCardWithProfile ext
     },
   });
 
-  const cardUpvoteMutation = useMutation({
-    mutationFn: (cardId: string) => adapter.toggleCardVote(cardId, userId!),
-    onMutate: async (cardId) => {
-      await queryClient.cancelQueries({ queryKey: [...queryKeyBase, "cards"] });
-      await queryClient.cancelQueries({ queryKey: [...queryKeyBase, "cardVotes"] });
-      const prevCards = queryClient.getQueryData<TCardWithProfile[]>([...queryKeyBase, "cards"]);
-      const prevCardVotes = queryClient.getQueryData<Record<string, boolean>>([
+  const reviewUpvoteMutation = useMutation({
+    mutationFn: (reviewId: string) => adapter.toggleReviewVote(reviewId, userId!),
+    onMutate: async (reviewId) => {
+      await queryClient.cancelQueries({ queryKey: [...queryKeyBase, "reviews"] });
+      await queryClient.cancelQueries({ queryKey: [...queryKeyBase, "reviewVotes"] });
+      const prevReviews = queryClient.getQueryData<TReviewWithProfile[]>([...queryKeyBase, "reviews"]);
+      const prevReviewVotes = queryClient.getQueryData<Record<string, boolean>>([
         ...queryKeyBase,
-        "cardVotes",
+        "reviewVotes",
       ]);
-      const optimistic = !(prevCardVotes?.[cardId] ?? false);
+      const optimistic = !(prevReviewVotes?.[reviewId] ?? false);
       queryClient.setQueryData(
-        [...queryKeyBase, "cardVotes"],
-        (old: Record<string, boolean> | undefined) => ({ ...(old ?? {}), [cardId]: optimistic })
+        [...queryKeyBase, "reviewVotes"],
+        (old: Record<string, boolean> | undefined) => ({ ...(old ?? {}), [reviewId]: optimistic })
       );
       queryClient.setQueryData(
-        [...queryKeyBase, "cards"],
-        (old: TCardWithProfile[] | undefined) =>
-          (old ?? []).map((c) => {
-            if (c.card_id !== cardId) return c;
-            const newCount = c.upvote_count + (optimistic ? 1 : -1);
-            return { ...c, upvote_count: newCount, is_verified: newCount >= 3 };
+        [...queryKeyBase, "reviews"],
+        (old: TReviewWithProfile[] | undefined) =>
+          (old ?? []).map((r) => {
+            if (r.review_id !== reviewId) return r;
+            const newCount = r.upvote_count + (optimistic ? 1 : -1);
+            return { ...r, upvote_count: newCount, is_verified: newCount >= 3 };
           })
       );
-      return { prevCards, prevCardVotes };
+      return { prevReviews, prevReviewVotes };
     },
-    onError: (_err, _cardId, context) => {
-      queryClient.setQueryData([...queryKeyBase, "cards"], context?.prevCards);
-      queryClient.setQueryData([...queryKeyBase, "cardVotes"], context?.prevCardVotes);
+    onError: (_err, _reviewId, context) => {
+      queryClient.setQueryData([...queryKeyBase, "reviews"], context?.prevReviews);
+      queryClient.setQueryData([...queryKeyBase, "reviewVotes"], context?.prevReviewVotes);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "cards"] });
-      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "cardVotes"] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "reviews"] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "reviewVotes"] });
     },
   });
 
-  const createCardMutation = useMutation({
-    mutationFn: (payload: CardPayload) =>
-      adapter.createCard(entityId, osmPlaceId, payload, userId!),
+  const createReviewMutation = useMutation({
+    mutationFn: (payload: ReviewPayload) =>
+      adapter.createReview(entityId, osmPlaceId, payload, userId!),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "cards"] });
-      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "cardVotes"] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "reviews"] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "reviewVotes"] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "rating"] });
+    },
+  });
+
+  const reportMutation = useMutation({
+    mutationFn: ({ reviewId, reason }: { reviewId: string; reason: ReviewReportReason }) =>
+      adapter.report(reviewId, reason),
+    onSuccess: (_result, { reviewId }) => {
+      queryClient.setQueryData([...queryKeyBase, "reviewReports"], (old: Record<string, boolean> | undefined) => ({
+        ...(old ?? {}),
+        [reviewId]: true,
+      }));
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (reviewId: string) => adapter.deleteReview(reviewId, userId!),
+    onSuccess: (_result, reviewId) => {
+      queryClient.setQueryData(
+        [...queryKeyBase, "reviews"],
+        (old: TReviewWithProfile[] | undefined) => (old ?? []).filter((r) => r.review_id !== reviewId)
+      );
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "rating"] });
     },
   });
@@ -188,13 +222,23 @@ export function useReviewableEntity<TCard extends CardBase, TCardWithProfile ext
     favoriteMutation.mutate();
   }
 
-  function handleCardUpvote(cardId: string) {
+  function handleReviewUpvote(reviewId: string) {
     if (!userId) return;
-    cardUpvoteMutation.mutate(cardId);
+    reviewUpvoteMutation.mutate(reviewId);
   }
 
-  async function handleCardSubmit(payload: CardPayload) {
-    await createCardMutation.mutateAsync(payload);
+  async function handleReviewSubmit(payload: ReviewPayload) {
+    await createReviewMutation.mutateAsync(payload);
+  }
+
+  function handleReviewReport(reviewId: string, reason: ReviewReportReason) {
+    if (!userId) return;
+    reportMutation.mutate({ reviewId, reason });
+  }
+
+  function handleReviewDelete(reviewId: string) {
+    if (!userId) return;
+    deleteMutation.mutate(reviewId);
   }
 
   return {
@@ -206,11 +250,16 @@ export function useReviewableEntity<TCard extends CardBase, TCardWithProfile ext
     isFavorited,
     isTogglingFav: favoriteMutation.isPending,
     handleFavorite,
-    cards,
-    isLoadingCards,
+    reviews,
+    isLoadingReviews,
     avgRating,
-    cardVotes,
-    handleCardUpvote,
-    handleCardSubmit,
+    reviewVotes,
+    handleReviewUpvote,
+    handleReviewSubmit,
+    reportStatuses,
+    handleReviewReport,
+    isReportingReview: reportMutation.isPending,
+    handleReviewDelete,
+    isDeletingReview: deleteMutation.isPending,
   };
 }

@@ -1,4 +1,4 @@
-import { EntityPhoto } from "@/lib/shared/types";
+import { EntityMetadataBase, EntityPhoto } from "@/lib/shared/types";
 
 export type SpotType = "street" | "diy" | "park" | "indoor";
 
@@ -57,8 +57,8 @@ export type BoundingBox = {
   maxLng: number;
 };
 
-export type SpotCard = {
-  card_id: string;
+export type SpotReview = {
+  review_id: string;
   profile_id: string;
   spot_id: string | null;
   osm_place_id: string | null;
@@ -66,21 +66,24 @@ export type SpotCard = {
   rating: number | null;
   comment: string;
   upvote_count: number;
+  report_count: number;
   is_verified: boolean;
   created_at: string;
 };
 
-export type SpotCardWithProfile = SpotCard & {
+export type SpotReviewWithProfile = SpotReview & {
   profiles: { username: string; display_name: string | null };
 };
 
-export type CreateSpotCardPayload = {
+export type CreateSpotReviewPayload = {
   spot_id: string | null;
   osm_place_id: string | null;
   heading: string;
   rating: number | null;
   comment: string;
 };
+
+export type SpotMetadata = EntityMetadataBase & { spot_id: string | null };
 
 export type SpotPhoto = EntityPhoto & {
   spot_id: string | null;

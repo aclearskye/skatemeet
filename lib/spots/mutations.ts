@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
-import { toggleVoteRow, getVoteCount } from "@/lib/shared/votes";
+import { toggleVoteRow } from "@/lib/shared/votes";
 import { getSpotVoteCount } from "./queries";
-import type { CreateSpotPayload, CreateSpotCardPayload, SkateSpot, SpotCard } from "./types";
+import type { CreateSpotPayload, SkateSpot } from "./types";
 
 export async function createSpot(
   payload: CreateSpotPayload,
@@ -70,19 +70,6 @@ export async function toggleSpotVote(
   return { upvote_count, user_has_voted };
 }
 
-export async function createSpotCard(
-  payload: CreateSpotCardPayload,
-  userId: string
-): Promise<SpotCard> {
-  const { data, error } = await supabase
-    .from("spot_cards")
-    .insert({ ...payload, profile_id: userId })
-    .select()
-    .single();
-  if (error) throw error;
-  return data as SpotCard;
-}
-
 export async function toggleSpotFavorite(
   spotId: string | null,
   osmPlaceId: string | null,
@@ -106,13 +93,4 @@ export async function toggleSpotFavorite(
     throw insertError;
   }
   return true;
-}
-
-export async function toggleSpotCardVote(
-  cardId: string,
-  userId: string
-): Promise<{ upvote_count: number; user_has_voted: boolean }> {
-  const user_has_voted = await toggleVoteRow("spot_card_votes", { card_id: cardId }, userId);
-  const upvote_count = await getVoteCount("spot_cards", "card_id", cardId);
-  return { upvote_count, user_has_voted };
 }

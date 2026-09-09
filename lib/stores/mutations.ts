@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
-import { toggleVoteRow, getVoteCount } from "@/lib/shared/votes";
+import { toggleVoteRow } from "@/lib/shared/votes";
 import { getStoreVoteCount } from "./queries";
-import type { CreateStorePayload, CreateStoreCardPayload, StoreCard, UserStore } from "./types";
+import type { CreateStorePayload, UserStore } from "./types";
 
 export async function createStore(
   payload: CreateStorePayload,
@@ -57,19 +57,6 @@ export async function addStorePhoto(
   return mediaUrl;
 }
 
-export async function createStoreCard(
-  payload: CreateStoreCardPayload,
-  userId: string
-): Promise<StoreCard> {
-  const { data, error } = await supabase
-    .from("store_cards")
-    .insert({ ...payload, profile_id: userId })
-    .select()
-    .single();
-  if (error) throw error;
-  return data as StoreCard;
-}
-
 export async function toggleStoreFavorite(
   storeId: string | null,
   osmPlaceId: string | null,
@@ -99,16 +86,6 @@ export async function toggleStoreFavorite(
 
   throw insertError;
 }
-
-export async function toggleStoreCardVote(
-  cardId: string,
-  userId: string
-): Promise<{ upvote_count: number; user_has_voted: boolean }> {
-  const user_has_voted = await toggleVoteRow("store_card_votes", { card_id: cardId }, userId);
-  const upvote_count = await getVoteCount("store_cards", "card_id", cardId);
-  return { upvote_count, user_has_voted };
-}
-
 export async function toggleStoreVote(
   storeId: string | null,
   osmPlaceId: string | null,

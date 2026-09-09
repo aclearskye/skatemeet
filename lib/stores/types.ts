@@ -1,4 +1,4 @@
-import { EntityPhoto } from "@/lib/shared/types";
+import { EntityMetadataBase, EntityPhoto } from "@/lib/shared/types";
 
 export type SkateStore = {
   place_id: string;
@@ -38,8 +38,8 @@ export type CreateStorePayload = {
   photo_url?: string;
 };
 
-export type StoreCard = {
-  card_id: string;
+export type StoreReview = {
+  review_id: string;
   profile_id: string;
   store_id: string | null;
   osm_place_id: string | null;
@@ -47,21 +47,24 @@ export type StoreCard = {
   rating: number | null;
   comment: string;
   upvote_count: number;
+  report_count: number;
   is_verified: boolean;
   created_at: string;
 };
 
-export type StoreCardWithProfile = StoreCard & {
+export type StoreReviewWithProfile = StoreReview & {
   profiles: { username: string; display_name: string | null };
 };
 
-export type CreateStoreCardPayload = {
+export type CreateStoreReviewPayload = {
   store_id: string | null;
   osm_place_id: string | null;
   heading: string;
   rating: number | null;
   comment: string;
 };
+
+export type StoreMetadata = EntityMetadataBase & { store_id: string | null };
 
 export type StorePhoto = EntityPhoto & {
   store_id: string | null;

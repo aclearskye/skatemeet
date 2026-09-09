@@ -1,13 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
-import { computeAverageRating } from "@/lib/shared/ratings";
 import { getVoteStatus, getVoteCount } from "@/lib/shared/votes";
 import { BOUNDS_ROW_LIMIT } from "@/utils/constants";
-import type {
-  BoundingBox,
-  OsmSpot,
-  SkateSpot,
-  SpotCardWithProfile,
-} from "./types";
+import type { BoundingBox, OsmSpot, SkateSpot } from "./types";
 
 export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[]> {
   const { data, error } = await supabase
@@ -53,33 +47,6 @@ export async function fetchSpotsInBounds(bbox: BoundingBox): Promise<SkateSpot[]
   return data as SkateSpot[];
 }
 
-export async function fetchSpotCards(
-  spotId: string | null,
-  osmPlaceId: string | null
-): Promise<SpotCardWithProfile[]> {
-  const { data, error } = await supabase
-    .from("spot_cards")
-    .select("*, profiles(username, display_name)")
-    .eq(spotId ? "spot_id" : "osm_place_id", spotId ?? osmPlaceId)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as SpotCardWithProfile[];
-}
-
-export async function fetchSpotAverageRating(
-  spotId: string | null,
-  osmPlaceId: string | null
-): Promise<{ average: number | null; count: number }> {
-  const { data, error } = await supabase
-    .from("spot_cards")
-    .select("rating")
-    .eq(spotId ? "spot_id" : "osm_place_id", spotId ?? osmPlaceId)
-    .eq("is_verified", true)
-    .not("rating", "is", null);
-  if (error) throw error;
-  return computeAverageRating((data ?? []) as { rating: number }[]);
-}
-
 export async function getUserVoteStatus(
   spotId: string | null,
   osmPlaceId: string | null,
@@ -114,21 +81,4 @@ export async function getSpotFavoriteStatus(
     .match(filter);
   if (error) throw error;
   return (count ?? 0) > 0;
-}
-
-export async function getSpotCardVoteStatuses(
-  cardIds: string[],
-  userId: string
-): Promise<Record<string, boolean>> {
-  const { data, error } = await supabase
-    .from("spot_card_votes")
-    .select("card_id")
-    .eq("profile_id", userId)
-    .in("card_id", cardIds);
-  if (error) throw error;
-  const result: Record<string, boolean> = {};
-  for (const row of data ?? []) {
-    result[(row as { card_id: string }).card_id] = true;
-  }
-  return result;
 }
