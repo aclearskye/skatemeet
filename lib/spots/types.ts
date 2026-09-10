@@ -26,6 +26,8 @@ export type OsmSpot = {
   coordinates: { lat: number; lng: number };
   upvote_count: number;
   cover_photo_url: string | null;
+  description: string | null;
+  osm_image_url: string | null;
 };
 
 export type OsmStore = {
@@ -38,6 +40,8 @@ export type OsmStore = {
   coordinates: { lat: number; lng: number };
   upvote_count: number;
   cover_photo_url: string | null;
+  description: string | null;
+  osm_image_url: string | null;
 };
 
 export type CreateSpotPayload = {

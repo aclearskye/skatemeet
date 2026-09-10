@@ -48,7 +48,7 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted }: Props) {
     case "osm-spot": {
       const s = item.data;
       name = s.name;
-      photoUrl = s.cover_photo_url;
+      photoUrl = s.cover_photo_url ?? s.osm_image_url;
       typeLabel = TYPE_LABELS[s.spot_type] ?? s.spot_type.toUpperCase();
       subtitle = s.address;
       isOsm = true;
@@ -59,7 +59,7 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted }: Props) {
     case "osm-store": {
       const s = item.data;
       name = s.name;
-      photoUrl = s.cover_photo_url;
+      photoUrl = s.cover_photo_url ?? s.osm_image_url;
       subtitle = s.address;
       typeLabel = "SKATE STORE";
       isOsm = true;

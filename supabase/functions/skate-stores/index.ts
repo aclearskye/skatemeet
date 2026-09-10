@@ -67,17 +67,18 @@ serve(async (req) => {
     if (!osm) throw new Error(`All Overpass mirrors failed. Last: ${lastErr}`);
 
     const results = (osm.elements ?? [])
-      .filter((el: any) => el.tags?.name)
+      .filter((el: any) => el.tags?.name || el.tags?.brand || el.tags?.operator)
       .map((el: any) => {
         // Ways have a `center` object; nodes have direct lat/lon
         const coordLat = el.type === "way" ? el.center?.lat : el.lat;
         const coordLng = el.type === "way" ? el.center?.lon : el.lon;
         return {
           place_id: `osm-${el.type}-${el.id}`,
-          name: el.tags.name,
+          name: el.tags.name ?? el.tags.brand ?? el.tags.operator,
           address: formatAddress(el.tags),
           rating: null,
           coordinates: { lat: coordLat, lng: coordLng },
+          description: el.tags.description ?? null,
         };
       })
       // Deduplicate by name+coords in case node and way overlap

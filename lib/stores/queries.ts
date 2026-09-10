@@ -8,7 +8,7 @@ export async function fetchOsmStoresInBounds(bbox: BoundingBox): Promise<OsmStor
   const { data, error } = await supabase
     .from("osm_stores")
     .select(
-      "place_id, name, address, phone, website, opening_hours, latitude, longitude, upvote_count, cover_photo_url"
+      "place_id, name, address, phone, website, opening_hours, latitude, longitude, upvote_count, cover_photo_url, description, osm_image_url"
     )
     .gte("latitude", bbox.minLat)
     .lte("latitude", bbox.maxLat)
@@ -27,6 +27,8 @@ export async function fetchOsmStoresInBounds(bbox: BoundingBox): Promise<OsmStor
     longitude: number;
     upvote_count: number;
     cover_photo_url: string | null;
+    description: string | null;
+    osm_image_url: string | null;
   };
   return (data as Row[]).map((row) => ({
     place_id: row.place_id,
@@ -38,6 +40,8 @@ export async function fetchOsmStoresInBounds(bbox: BoundingBox): Promise<OsmStor
     coordinates: { lat: row.latitude, lng: row.longitude },
     upvote_count: row.upvote_count,
     cover_photo_url: row.cover_photo_url,
+    description: row.description,
+    osm_image_url: row.osm_image_url,
   }));
 }
 
@@ -66,7 +70,7 @@ export async function fetchOsmStoresByIds(placeIds: string[]): Promise<OsmStore[
   const { data, error } = await supabase
     .from("osm_stores")
     .select(
-      "place_id, name, address, phone, website, opening_hours, latitude, longitude, upvote_count, cover_photo_url"
+      "place_id, name, address, phone, website, opening_hours, latitude, longitude, upvote_count, cover_photo_url, description, osm_image_url"
     )
     .in("place_id", placeIds);
   if (error) throw error;
@@ -81,6 +85,8 @@ export async function fetchOsmStoresByIds(placeIds: string[]): Promise<OsmStore[
     longitude: number;
     upvote_count: number;
     cover_photo_url: string | null;
+    description: string | null;
+    osm_image_url: string | null;
   };
   return (data as Row[]).map((row) => ({
     place_id: row.place_id,
@@ -92,6 +98,8 @@ export async function fetchOsmStoresByIds(placeIds: string[]): Promise<OsmStore[
     coordinates: { lat: row.latitude, lng: row.longitude },
     upvote_count: row.upvote_count,
     cover_photo_url: row.cover_photo_url,
+    description: row.description,
+    osm_image_url: row.osm_image_url,
   }));
 }
 

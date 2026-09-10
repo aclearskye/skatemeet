@@ -16,6 +16,7 @@ type Props = {
   hours: string | null;
   phone: string | null;
   website: string | null;
+  description: string | null;
 };
 
 export function StoreInfoBlock({
@@ -29,6 +30,7 @@ export function StoreInfoBlock({
   hours,
   phone,
   website,
+  description,
 }: Props) {
   return (
     <Fragment>
@@ -54,6 +56,10 @@ export function StoreInfoBlock({
         <Ionicons name="navigate-outline" size={16} color={C.onSecondary} />
         <Text style={styles.directionsBtnText}>GET DIRECTIONS</Text>
       </TouchableOpacity>
+
+      {description != null && description !== "" && (
+        <Text style={styles.description}>{description}</Text>
+      )}
 
       <View style={styles.infoSection}>
         {address !== "" && (
@@ -131,6 +137,7 @@ const styles = StyleSheet.create({
     color: C.onSecondary,
     letterSpacing: 1,
   },
+  description: { fontFamily: F.body, fontSize: 15, color: C.text, lineHeight: 24 },
   infoSection: { gap: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: C.borderVariant },
   infoRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
   infoText: { fontFamily: F.body, fontSize: 14, color: C.text, flex: 1, lineHeight: 22 },

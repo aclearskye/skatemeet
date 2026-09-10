@@ -30,14 +30,68 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 
 function deriveSpotType(tags) {
   if (tags["skate"] === "diy") return "diy";
-  if (tags["shop"] === "skateboard") return "shop";
-  if (tags["sport"] === "skateboard") return "park";
+  if (tags["leisure"] === "skatepark" || tags["sport"] === "skateboard") return "park";
   return "street";
 }
 
 function formatAddress(tags) {
   const parts = [tags["addr:housenumber"], tags["addr:street"], tags["addr:city"]].filter(Boolean);
   return parts.length > 0 ? parts.join(", ") : tags["addr:full"] ?? "";
+}
+
+// Nominatim usage policy caps public API use at ~1 request/second.
+const NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse";
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let lastNominatimCall = 0;
+async function nearestRoad(lat, lng) {
+  const wait = 1100 - (Date.now() - lastNominatimCall);
+  if (wait > 0) await sleep(wait);
+  lastNominatimCall = Date.now();
+  try {
+    const url = `${NOMINATIM_URL}?lat=${lat}&lon=${lng}&format=json&zoom=16`;
+    const res = await fetch(url, { headers: { "User-Agent": "SkateMeet/1.0 (import-script)" } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const addr = data?.address ?? {};
+    return addr.road ?? addr.pedestrian ?? addr.path ?? addr.footway ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function extractImageUrl(tags) {
+  if (tags["image"]) return tags["image"];
+  const commons = tags["wikimedia_commons"];
+  if (commons?.startsWith("File:")) {
+    return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(commons.slice(5))}`;
+  }
+  return null;
+}
+
+const FACILITY_TAGS = [
+  ["drinking_water", "water_fountain"],
+  ["bench", "seating"],
+  ["toilets", "restrooms"],
+];
+
+function extractFacilities(tags) {
+  return FACILITY_TAGS.filter(([tag]) => tags[tag] === "yes").map(([, facility]) => facility);
+}
+
+function yesNo(value) {
+  return value === "yes" ? true : value === "no" ? false : null;
+}
+
+async function seedSpotMetadata(rows) {
+  if (rows.length === 0) return;
+  const CHUNK = 500;
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    const chunk = rows.slice(i, i + CHUNK);
+    const { error } = await supabase
+      .from("spot_metadata")
+      .upsert(chunk, { onConflict: "osm_place_id", ignoreDuplicates: true });
+    if (error) throw new Error(`Metadata seed failed: ${error.message}`);
+  }
 }
 
 async function main() {
@@ -56,6 +110,7 @@ async function main() {
   console.log(`Parsing ${elements.length} OSM elements...`);
 
   const spots = [];
+  const metadata = [];
   for (const el of elements) {
     const eLat = el.type === "way" ? el.center?.lat : el.lat;
     const eLng = el.type === "way" ? el.center?.lon : el.lon;
@@ -64,17 +119,33 @@ async function main() {
     const tags = el.tags ?? {};
     const spotType = deriveSpotType(tags);
     const suffix = spotType === "diy" ? "DIY Spot" : spotType === "park" ? "Skate Park" : "Skate Spot";
-    const name = tags.name ?? (tags["addr:street"] ? `${tags["addr:street"]} ${suffix}` : suffix);
 
+    let name = tags.name ?? tags.operator ?? tags.brand;
+    if (!name && tags["addr:street"]) name = `${tags["addr:street"]} ${suffix}`;
+    if (!name) {
+      const road = await nearestRoad(eLat, eLng);
+      name = road ? `${road} ${suffix}` : suffix;
+    }
+
+    const placeId = `osm-spot-${el.type}-${el.id}`;
     spots.push({
-      place_id: `osm-spot-${el.type}-${el.id}`,
+      place_id: placeId,
       name,
       address: formatAddress(tags),
       spot_type: spotType,
       latitude: eLat,
       longitude: eLng,
+      description: tags.description ?? null,
+      osm_image_url: extractImageUrl(tags),
       seeded_at: new Date().toISOString(),
     });
+
+    const facilities = extractFacilities(tags);
+    const wellLit = yesNo(tags.lit);
+    const paid = yesNo(tags.fee);
+    if (facilities.length > 0 || wellLit !== null || paid !== null) {
+      metadata.push({ osm_place_id: placeId, facilities, well_lit: wellLit, paid });
+    }
   }
 
   const unique = spots.filter((s, i, arr) => arr.findIndex((x) => x.place_id === s.place_id) === i);
@@ -90,6 +161,8 @@ async function main() {
     }
     process.stdout.write(`  ${Math.min(i + CHUNK, unique.length)}/${unique.length} saved\r`);
   }
+
+  await seedSpotMetadata(metadata);
 
   console.log(`\nDone! ${unique.length} spots in database.\n`);
 }

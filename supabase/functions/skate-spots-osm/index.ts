@@ -17,22 +17,22 @@ function buildOverpassQuery(lat: number, lng: number, radius: number): string {
   return `
 [out:json][timeout:25];
 (
+  node["leisure"="skatepark"]${around};
+  way["leisure"="skatepark"]${around};
+  relation["leisure"="skatepark"]${around};
   node["sport"="skateboard"]${around};
   way["sport"="skateboard"]${around};
   relation["sport"="skateboard"]${around};
   node["skate"="diy"]${around};
   way["skate"="diy"]${around};
-  node["shop"="skateboard"]${around};
-  way["shop"="skateboard"]${around};
 );
 out center;
   `.trim();
 }
 
-function deriveSpotType(tags: Record<string, string>): "park" | "diy" | "street" | "shop" {
+function deriveSpotType(tags: Record<string, string>): "park" | "diy" | "street" {
   if (tags["skate"] === "diy") return "diy";
-  if (tags["shop"] === "skateboard") return "shop";
-  if (tags["sport"] === "skateboard") return "park";
+  if (tags["leisure"] === "skatepark" || tags["sport"] === "skateboard") return "park";
   return "street";
 }
 
@@ -115,12 +115,11 @@ serve(async (req) => {
           : spotType === "park" ? "Skate Park"
           : "Skate Spot";
 
-        let name: string;
-        if (el.tags.name) {
-          name = el.tags.name;
-        } else if (el.tags["addr:street"]) {
+        let name: string | undefined = el.tags.name ?? el.tags.operator ?? el.tags.brand;
+        if (!name && el.tags["addr:street"]) {
           name = `${el.tags["addr:street"]} ${suffix}`;
-        } else {
+        }
+        if (!name) {
           const road = await nearestRoad(coordLat, coordLng);
           name = road ? `${road} ${suffix}` : suffix;
         }
@@ -131,6 +130,7 @@ serve(async (req) => {
           address: formatAddress(el.tags),
           spot_type: spotType,
           coordinates: { lat: coordLat, lng: coordLng },
+          description: el.tags.description ?? null,
         };
       })
     );

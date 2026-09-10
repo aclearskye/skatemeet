@@ -127,7 +127,7 @@ export default function SpotDetailScreen() {
     ? (isSkateSpot(spot) ? (TYPE_LABELS[spot.type] ?? spot.type.toUpperCase()) : (TYPE_LABELS[spot.spot_type] ?? spot.spot_type.toUpperCase()))
     : "";
   const { addPhoto, isAddingPhoto } = useAddSpotPhoto(spotId, osmPlaceId);
-  const description = spot && isSkateSpot(spot) ? spot.description : null;
+  const description = spot ? (isSkateSpot(spot) ? spot.description : (spot as OsmSpot).description) : null;
   const address = spot && isOsm ? (spot as OsmSpot).address : null;
 
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
@@ -146,7 +146,11 @@ export default function SpotDetailScreen() {
   // photos[0] is always the current highest-voted, non-hidden photo (same
   // ordering the DB's cover-photo trigger uses) — falls back to the
   // route-param snapshot only until that query resolves on first mount.
-  const initialPhotoUrl = spot ? (isSkateSpot(spot) ? spot.photo_url : spot.cover_photo_url) : null;
+  const initialPhotoUrl = spot
+    ? isSkateSpot(spot)
+      ? spot.photo_url
+      : (spot.cover_photo_url ?? spot.osm_image_url)
+    : null;
   const photoUrl = photos[0]?.media_url ?? initialPhotoUrl;
 
   if (!spot) {

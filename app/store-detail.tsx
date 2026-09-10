@@ -73,6 +73,7 @@ export default function StoreDetailScreen() {
   const phone = store && "phone" in store ? (store as OsmStore | UserStore).phone : null;
   const website = store && "website" in store ? (store as OsmStore | UserStore).website : null;
   const hours = store && "opening_hours" in store ? (store as OsmStore | UserStore).opening_hours : null;
+  const description = store && "description" in store ? (store as OsmStore | UserStore).description : null;
   const isOsm = kind === "osm-store" || kind === "skate-store";
 
   const [showAddReview, setShowAddReview] = useState(false);
@@ -101,7 +102,7 @@ export default function StoreDetailScreen() {
     isUserStore && store
       ? (store as UserStore).photo_url
       : store && "cover_photo_url" in store
-        ? (store as OsmStore).cover_photo_url
+        ? ((store as OsmStore).cover_photo_url ?? (store as OsmStore).osm_image_url)
         : null;
   const photoUrl = photos[0]?.media_url ?? initialPhotoUrl;
 
@@ -199,6 +200,7 @@ export default function StoreDetailScreen() {
             hours={hours}
             phone={phone}
             website={website}
+            description={description}
           />
 
           <EntityMetadataSection

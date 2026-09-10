@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Seed OSM skate stores into Supabase (osm_spots table, spot_type = 'shop').
+// Seed OSM skate stores into Supabase (osm_stores table).
 //
 // Local area:  node scripts/seed-osm-stores.mjs --lat=45.5231 --lng=-122.6697 [--radius=10000]
 // Global seed: node scripts/seed-osm-stores.mjs --global  (queries ~130 cities, ~7-10 min)
@@ -262,25 +262,70 @@ function formatAddress(tags) {
   return parts.length > 0 ? parts.join(", ") : tags["addr:full"] ?? "";
 }
 
+// `image` is sometimes a direct URL; `wikimedia_commons` usually names a
+// "File:...jpg" page — Commons' Special:FilePath redirect resolves either
+// straight to the raw file, so it works as an <img> src with no extra API call.
+function extractImageUrl(tags) {
+  if (tags["image"]) return tags["image"];
+  const commons = tags["wikimedia_commons"];
+  if (commons?.startsWith("File:")) {
+    return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(commons.slice(5))}`;
+  }
+  return null;
+}
+
+const FACILITY_TAGS = [
+  ["drinking_water", "water_fountain"],
+  ["bench", "seating"],
+  ["toilets", "restrooms"],
+];
+
+function extractFacilities(tags) {
+  return FACILITY_TAGS.filter(([tag]) => tags[tag] === "yes").map(([, facility]) => facility);
+}
+
+function yesNo(value) {
+  return value === "yes" ? true : value === "no" ? false : null;
+}
+
 function elementsToStores(elements) {
   const stores = [];
+  const metadata = [];
   for (const el of elements) {
-    if (!el.tags?.name) continue; // skip unnamed shops
+    const tags = el.tags ?? {};
+    const name = tags.name ?? tags.brand ?? tags.operator;
+    if (!name) continue; // skip shops with no identifiable name at all
     const eLat = el.type === "way" ? el.center?.lat : el.lat;
     const eLng = el.type === "way" ? el.center?.lon : el.lon;
     if (eLat == null || eLng == null) continue;
 
+    // Keep the historical "osm-spot-" prefix (pre-dates the shops/stores
+    // table split) so re-seeding upserts existing osm_stores rows instead of
+    // creating duplicates alongside them.
+    const placeId = `osm-spot-${el.type}-${el.id}`;
     stores.push({
-      place_id: `osm-spot-${el.type}-${el.id}`,
-      name: el.tags.name,
-      address: formatAddress(el.tags),
-      spot_type: "shop",
+      place_id: placeId,
+      name,
+      address: formatAddress(tags),
+      phone: tags.phone ?? tags["contact:phone"] ?? null,
+      website: tags.website ?? tags["contact:website"] ?? null,
+      opening_hours: tags.opening_hours ?? null,
+      description: tags.description ?? null,
+      osm_image_url: extractImageUrl(tags),
       latitude: eLat,
       longitude: eLng,
       seeded_at: new Date().toISOString(),
     });
+
+    const facilities = extractFacilities(tags);
+    const wellLit = yesNo(tags.lit);
+    const paid = yesNo(tags.fee);
+    if (facilities.length > 0 || wellLit !== null || paid !== null) {
+      metadata.push({ osm_place_id: placeId, facilities, well_lit: wellLit, paid });
+    }
   }
-  return stores.filter((s, i, arr) => arr.findIndex((x) => x.place_id === s.place_id) === i);
+  const uniqueStores = stores.filter((s, i, arr) => arr.findIndex((x) => x.place_id === s.place_id) === i);
+  return { stores: uniqueStores, metadata };
 }
 
 // ── Upsert ────────────────────────────────────────────────────────────────────
@@ -290,11 +335,26 @@ async function upsertStores(stores) {
   const CHUNK = 500;
   for (let i = 0; i < stores.length; i += CHUNK) {
     const chunk = stores.slice(i, i + CHUNK);
-    const { error } = await supabase.from("osm_spots").upsert(chunk, { onConflict: "place_id" });
+    const { error } = await supabase.from("osm_stores").upsert(chunk, { onConflict: "place_id" });
     if (error) throw new Error(`Upsert failed: ${error.message}`);
     process.stdout.write(`  Saved ${Math.min(i + CHUNK, stores.length)}/${stores.length}\r`);
   }
   console.log();
+}
+
+// Insert-only: `ignoreDuplicates` makes this a plain INSERT ... ON CONFLICT DO
+// NOTHING against store_metadata_osm_place_id_unique, so a store a user has
+// already annotated is never clobbered by a later re-seed.
+async function seedStoreMetadata(rows) {
+  if (rows.length === 0) return;
+  const CHUNK = 500;
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    const chunk = rows.slice(i, i + CHUNK);
+    const { error } = await supabase
+      .from("store_metadata")
+      .upsert(chunk, { onConflict: "osm_place_id", ignoreDuplicates: true });
+    if (error) throw new Error(`Metadata seed failed: ${error.message}`);
+  }
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -310,9 +370,10 @@ async function main() {
       try {
         const query = buildStoreQuery(cLat, cLng, GLOBAL_RADIUS);
         const osm = await fetchFromOverpass(query);
-        const stores = elementsToStores(osm.elements ?? []);
+        const { stores, metadata } = elementsToStores(osm.elements ?? []);
         console.log(`  Found ${stores.length} stores`);
         await upsertStores(stores);
+        await seedStoreMetadata(metadata);
         totalSaved += stores.length;
       } catch (err) {
         console.error(`  Skipping ${name}: ${err.message}`);
@@ -325,9 +386,10 @@ async function main() {
     console.log(`\nSeeding stores around ${lat}, ${lng} (radius: ${radius}m)\n`);
     const query = buildStoreQuery(lat, lng, radius);
     const osm = await fetchFromOverpass(query);
-    const stores = elementsToStores(osm.elements ?? []);
+    const { stores, metadata } = elementsToStores(osm.elements ?? []);
     console.log(`  Found ${stores.length} stores`);
     await upsertStores(stores);
+    await seedStoreMetadata(metadata);
     console.log(`Done! ${stores.length} stores seeded.\n`);
   }
 }

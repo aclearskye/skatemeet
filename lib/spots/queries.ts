@@ -6,7 +6,9 @@ import type { BoundingBox, OsmSpot, SkateSpot } from "./types";
 export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[]> {
   const { data, error } = await supabase
     .from("osm_spots")
-    .select("place_id, name, address, spot_type, latitude, longitude, upvote_count, cover_photo_url")
+    .select(
+      "place_id, name, address, spot_type, latitude, longitude, upvote_count, cover_photo_url, description, osm_image_url"
+    )
     .gte("latitude", bbox.minLat)
     .lte("latitude", bbox.maxLat)
     .gte("longitude", bbox.minLng)
@@ -22,6 +24,8 @@ export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[
     longitude: number;
     upvote_count: number;
     cover_photo_url: string | null;
+    description: string | null;
+    osm_image_url: string | null;
   };
   return (data as Row[]).map((row) => ({
     place_id: row.place_id,
@@ -31,6 +35,8 @@ export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[
     coordinates: { lat: row.latitude, lng: row.longitude },
     upvote_count: row.upvote_count,
     cover_photo_url: row.cover_photo_url,
+    description: row.description,
+    osm_image_url: row.osm_image_url,
   }));
 }
 
@@ -79,7 +85,9 @@ export async function fetchOsmSpotsByIds(placeIds: string[]): Promise<OsmSpot[]>
   if (placeIds.length === 0) return [];
   const { data, error } = await supabase
     .from("osm_spots")
-    .select("place_id, name, address, spot_type, latitude, longitude, upvote_count, cover_photo_url")
+    .select(
+      "place_id, name, address, spot_type, latitude, longitude, upvote_count, cover_photo_url, description, osm_image_url"
+    )
     .in("place_id", placeIds);
   if (error) throw error;
   type Row = {
@@ -91,6 +99,8 @@ export async function fetchOsmSpotsByIds(placeIds: string[]): Promise<OsmSpot[]>
     longitude: number;
     upvote_count: number;
     cover_photo_url: string | null;
+    description: string | null;
+    osm_image_url: string | null;
   };
   return (data as Row[]).map((row) => ({
     place_id: row.place_id,
@@ -100,6 +110,8 @@ export async function fetchOsmSpotsByIds(placeIds: string[]): Promise<OsmSpot[]>
     coordinates: { lat: row.latitude, lng: row.longitude },
     upvote_count: row.upvote_count,
     cover_photo_url: row.cover_photo_url,
+    description: row.description,
+    osm_image_url: row.osm_image_url,
   }));
 }
 
