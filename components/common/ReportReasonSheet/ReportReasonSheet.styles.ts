@@ -30,7 +30,7 @@ export const styles = StyleSheet.create({
   row: {
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
+    borderBottomColor: C.borderVariant,
   },
   rowText: { fontFamily: F.body, fontSize: 15, color: C.text },
   cancelBtn: { paddingVertical: 16, alignItems: "center" },

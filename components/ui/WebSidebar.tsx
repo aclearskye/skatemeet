@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 2,
-    backgroundColor: C.border,
+    backgroundColor: C.borderVariant,
     marginBottom: 20,
   },
   nav: {

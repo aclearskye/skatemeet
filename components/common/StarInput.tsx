@@ -24,7 +24,7 @@ export function StarInput({ value, onChange, size = 30, gap = 10, hitSlop = 8, a
           <Ionicons
             name={value !== null && star <= value ? "star" : "star-outline"}
             size={size}
-            color={value !== null && star <= value ? accent : C.border}
+            color={value !== null && star <= value ? accent : C.borderVariant}
           />
         </TouchableOpacity>
       ))}

@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 4,
     borderRadius: R,
-    backgroundColor: C.border,
+    backgroundColor: C.borderVariant,
   },
   progressSegmentActive: {
     backgroundColor: C.primary,

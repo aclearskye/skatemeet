@@ -27,6 +27,6 @@ export function StoreVoteSection({ count, hasVoted, onPress, isLoading }: Props)
 }
 
 const styles = StyleSheet.create({
-  voteSection: { gap: 10, paddingTop: 14, borderTopWidth: 1, borderTopColor: C.border },
+  voteSection: { gap: 10, paddingTop: 14, borderTopWidth: 1, borderTopColor: C.borderVariant },
   voteLabel: { fontFamily: F.mono, fontSize: 10, color: C.muted, letterSpacing: 2 },
 });

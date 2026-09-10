@@ -288,5 +288,5 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   body: { padding: 20, gap: 14 },
   sectionLabel: { fontFamily: F.mono, fontSize: 10, color: C.muted, letterSpacing: 2 },
-  ratingSection: { gap: 10, paddingTop: 14, borderTopWidth: 1, borderTopColor: C.border },
+  ratingSection: { gap: 10, paddingTop: 14, borderTopWidth: 1, borderTopColor: C.borderVariant },
 });

@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     backgroundColor: C.surfaceHigh,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: C.borderVariant,
   },
   typeBadgeText: { fontFamily: F.mono, fontSize: 10, color: C.textVariant, letterSpacing: 1 },
   verifiedBadge: { paddingHorizontal: 10, paddingVertical: 4 },
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     backgroundColor: C.surface,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: C.borderVariant,
   },
   osmBadgeText: { fontFamily: F.mono, fontSize: 10, color: C.muted, letterSpacing: 1 },
   directionsBtn: {

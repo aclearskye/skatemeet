@@ -72,7 +72,7 @@ export function ReviewCard({
               key={i}
               name={i <= Math.round(review.rating!) ? "star" : "star-outline"}
               size={14}
-              color={i <= Math.round(review.rating!) ? accent : C.border}
+              color={i <= Math.round(review.rating!) ? accent : C.borderVariant}
             />
           ))}
         </View>

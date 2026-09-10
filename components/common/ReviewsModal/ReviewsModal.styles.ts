@@ -11,7 +11,7 @@ export const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
+    borderBottomColor: C.borderVariant,
   },
   title: { fontFamily: F.heading, fontSize: 20, color: C.text, letterSpacing: 1 },
   count: { fontFamily: F.mono, fontSize: 14, color: C.muted, flex: 1 },

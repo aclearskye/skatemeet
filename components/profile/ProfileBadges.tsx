@@ -1,5 +1,6 @@
-import { C, F } from "@/lib/theme";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { C } from "@/lib/theme";
+import { ScrollView, Text, View } from "react-native";
+import { styles } from "./ProfileBadges.styles";
 
 type Props = {
   skillLevel: string | null;
@@ -18,20 +19,20 @@ export default function ProfileBadges({ skillLevel, disciplines, pronouns }: Pro
       contentContainerStyle={styles.row}
     >
       {skillLevel && (
-        <View style={[styles.badge, styles.badgeOutlinedOrange]}>
-          <Text style={[styles.label, { color: C.secondary }]}>
+        <View style={[styles.badge, styles.badgeSkill]}>
+          <Text style={[styles.label, { color: C.onSecondary }]}>
             {skillLevel.toUpperCase()}
           </Text>
         </View>
       )}
       {disciplines?.map((d) => (
-        <View key={d} style={[styles.badge, styles.badgeOutlinedMuted]}>
-          <Text style={[styles.label, { color: C.text }]}>{d.toUpperCase()}</Text>
+        <View key={d} style={[styles.badge, styles.badgeDiscipline]}>
+          <Text style={[styles.label, { color: C.onPrimary }]}>{d.toUpperCase()}</Text>
         </View>
       ))}
       {pronouns && (
-        <View style={[styles.badge, styles.badgeFilledOrange]}>
-          <Text style={[styles.label, { color: C.onSecondary }]}>
+        <View style={[styles.badge, styles.badgePronouns]}>
+          <Text style={[styles.label, { color: C.onTertiary }]}>
             {pronouns.toUpperCase()}
           </Text>
         </View>
@@ -39,33 +40,3 @@ export default function ProfileBadges({ skillLevel, disciplines, pronouns }: Pro
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    gap: 6,
-    paddingVertical: 2,
-  },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderWidth: 1.5,
-  },
-  badgeOutlinedOrange: {
-    borderColor: C.secondary,
-    backgroundColor: "transparent",
-  },
-  badgeOutlinedMuted: {
-    borderColor: C.muted,
-    backgroundColor: "transparent",
-  },
-  badgeFilledOrange: {
-    borderColor: C.secondary,
-    backgroundColor: C.secondary,
-  },
-  label: {
-    fontFamily: F.mono,
-    fontSize: 10,
-    letterSpacing: 1,
-  },
-});

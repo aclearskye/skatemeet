@@ -1,6 +1,7 @@
-import { C, F } from "@/lib/theme";
+import { C, TAPE } from "@/lib/theme";
 import { FilterKey } from "@/utils/constants";
-import { ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { ScrollView, Text, TouchableOpacity } from "react-native";
+import { styles } from "./MapFilterBar.styles";
 
 type Props = {
   filters: { key: FilterKey; label: string }[];
@@ -20,10 +21,23 @@ export function MapFilterBar({ filters, activeFilters, onToggle }: Props) {
         const accentBg = key === "stores" ? C.secondary : key === "diys" ? C.tertiary : C.primary;
         const accentText =
           key === "stores" ? C.onSecondary : key === "diys" ? C.onTertiary : C.onPrimary;
+        const accentRotate =
+          key === "stores"
+            ? TAPE.rotateSecondary
+            : key === "diys"
+              ? TAPE.rotateTertiary
+              : TAPE.rotatePrimary;
         return (
           <TouchableOpacity
             key={key}
-            style={[styles.chip, active && { backgroundColor: accentBg, borderColor: accentBg }]}
+            style={[
+              styles.chip,
+              active && {
+                backgroundColor: accentBg,
+                borderColor: accentBg,
+                transform: [{ rotate: accentRotate }],
+              },
+            ]}
             onPress={() => onToggle(key)}
             activeOpacity={0.75}
           >
@@ -34,21 +48,3 @@ export function MapFilterBar({ filters, activeFilters, onToggle }: Props) {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  filtersRow: { flexDirection: "row", gap: 8 },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 2,
-    borderColor: C.border,
-    backgroundColor: C.bg,
-  },
-  chipText: {
-    fontFamily: F.mono,
-    fontSize: 10,
-    letterSpacing: 1,
-    color: C.muted,
-    textTransform: "uppercase",
-  },
-});

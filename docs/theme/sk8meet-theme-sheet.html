@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sk8:Meet — Theme Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0A0A;
+    --surface:#151515;
+    --surface-2:#1E1E1E;
+    --line:#2C2C2C;
+    --ink:#F2F2F0;
+    --ink-dim:#9C9C96;
+    --chartreuse:#D8F927;
+    --chartreuse-dk:#B8D81F;
+    --orange:#FF5C1F;
+    --cyan:#35E8FF;
+    --display:'Anton', sans-serif;
+    --body:'Hanken Grotesk', sans-serif;
+    --mono:'Space Mono', monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;border-radius:0 !important;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:16px;
+    line-height:1.55;
+  }
+  .page{max-width:880px;margin:0 auto;padding:0 24px 96px;}
+  .mono{font-family:var(--mono);}
+  code{
+    font-family:var(--mono);
+    font-size:.85em;
+    background:var(--surface-2);
+    padding:2px 7px;
+    color:var(--cyan);
+    white-space:nowrap;
+  }
+  section{margin-top:80px;}
+  .sec-head{
+    display:flex;
+    align-items:baseline;
+    gap:16px;
+    border-bottom:3px solid var(--ink);
+    padding-bottom:10px;
+    margin-bottom:26px;
+  }
+  .sec-head h2{
+    font-family:var(--display);
+    font-weight:400;
+    text-transform:uppercase;
+    font-size:clamp(26px,4.5vw,38px);
+    letter-spacing:.01em;
+  }
+  .sec-head .mono{color:var(--ink-dim);font-size:13px;}
+  .note{
+    font-size:14px;
+    color:var(--ink-dim);
+    max-width:70ch;
+    margin-top:14px;
+  }
+
+  /* header */
+  header{padding-top:60px;}
+  .kit-tag{
+    display:flex;
+    justify-content:space-between;
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--ink-dim);
+    border-bottom:1px solid var(--line);
+    padding-bottom:14px;
+    margin-bottom:44px;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .kit-tag b{color:var(--chartreuse);}
+  h1{
+    font-family:var(--display);
+    font-weight:400;
+    text-transform:uppercase;
+    font-size:clamp(44px,9vw,88px);
+    line-height:.96;
+  }
+  h1 span{color:var(--chartreuse);}
+  .intro{max-width:62ch;margin-top:22px;color:var(--ink-dim);}
+
+  /* color swatches */
+  .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px;}
+  .swatch{border:2px solid var(--ink);background:var(--surface);}
+  .swatch .chip{height:88px;border-bottom:2px solid var(--ink);position:relative;}
+  .swatch .chip .on-sample{
+    position:absolute;bottom:8px;left:12px;
+    font-family:var(--mono);font-size:11px;font-weight:700;
+  }
+  .swatch .meta{padding:14px 14px 16px;}
+  .swatch .name{
+    font-family:var(--display);
+    text-transform:uppercase;
+    font-size:19px;
+    letter-spacing:.01em;
+  }
+  .swatch .vals{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-dim);
+    margin-top:8px;
+    line-height:1.8;
+  }
+  .swatch .vals b{color:var(--cyan);font-weight:700;}
+  .swatch .role{
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px solid var(--line);
+    font-size:13.5px;
+    color:var(--ink);
+  }
+
+  /* type specimens */
+  .spec{
+    border:2px solid var(--ink);
+    background:var(--surface);
+    margin-bottom:20px;
+  }
+  .spec .spec-bar{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-dim);
+    padding:10px 16px;
+    border-bottom:2px solid var(--ink);
+    background:var(--bg);
+  }
+  .spec .spec-bar b{color:var(--chartreuse);font-weight:700;}
+  .spec .sample{padding:20px 16px;}
+  .sample-anton{
+    font-family:var(--display);
+    font-weight:400;
+    text-transform:uppercase;
+    font-size:clamp(34px,6vw,56px);
+    line-height:.98;
+  }
+  .sample-hanken{font-size:17px;max-width:60ch;}
+  .sample-hanken .w600{font-weight:600;}
+  .sample-hanken .w700{font-weight:700;}
+  .sample-mono{
+    font-family:var(--mono);
+    font-size:13px;
+    letter-spacing:.06em;
+    line-height:2;
+  }
+  .spec .spec-roles{
+    padding:12px 16px 14px;
+    border-top:1px solid var(--line);
+    font-size:14px;
+    color:var(--ink-dim);
+  }
+  .spec .spec-roles b{color:var(--ink);font-weight:600;}
+
+  /* scale table */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    border:2px solid var(--ink);
+    font-size:14.5px;
+  }
+  th,td{
+    text-align:left;
+    padding:11px 14px;
+    border-bottom:1px solid var(--line);
+    vertical-align:top;
+  }
+  th{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.06em;
+    color:var(--ink-dim);
+    background:var(--surface);
+    border-bottom:2px solid var(--ink);
+  }
+  tr:last-child td{border-bottom:none;}
+  td.tok{font-family:var(--mono);font-size:12.5px;color:var(--cyan);font-weight:700;white-space:nowrap;}
+
+  /* component tokens */
+  .comp{
+    border:2px solid var(--ink);
+    background:var(--surface);
+    margin-bottom:20px;
+    display:grid;
+    grid-template-columns:220px 1fr;
+  }
+  .comp .demo{
+    border-right:2px solid var(--ink);
+    padding:26px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--bg);
+  }
+  .comp .spec-txt{padding:16px 18px 18px;}
+  .comp h3{
+    font-family:var(--display);
+    font-weight:400;
+    text-transform:uppercase;
+    font-size:19px;
+  }
+  .comp ul{
+    list-style:none;
+    margin-top:10px;
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:var(--ink-dim);
+    line-height:2;
+  }
+  .comp ul b{color:var(--cyan);font-weight:700;}
+
+  .tape{
+    display:inline-block;
+    font-family:var(--mono);
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    background:var(--chartreuse);
+    color:#0A0A0A;
+    padding:5px 14px;
+    transform:rotate(-1.5deg);
+  }
+  .tape.orange{background:var(--orange);transform:rotate(1.2deg);}
+  .tape.cyan{background:var(--cyan);transform:rotate(-.8deg);}
+  .exp-demo{width:100%;}
+  .exp-demo .bar{
+    height:22px;
+    background:var(--surface-2);
+    border:2px solid var(--ink);
+    position:relative;
+    overflow:hidden;
+  }
+  .exp-demo .fill{
+    position:absolute;inset:0 32% 0 0;
+    background:repeating-linear-gradient(-45deg,var(--chartreuse) 0 12px,var(--chartreuse-dk) 12px 24px);
+  }
+  .slot-demo{
+    font-family:var(--mono);
+    font-weight:700;
+    color:var(--cyan);
+    font-size:15px;
+  }
+  .callout-demo{
+    width:100%;
+    background:var(--surface);
+    border-left:6px solid var(--chartreuse);
+    padding:12px 14px;
+    font-family:var(--display);
+    text-transform:uppercase;
+    font-size:16px;
+  }
+
+  /* controls: switch / toggle / dropdown */
+  .switch{
+    display:inline-flex;
+    align-items:center;
+    gap:12px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .switch .track{
+    width:52px;height:28px;
+    background:var(--surface-2);
+    border:2px solid var(--ink);
+    position:relative;
+    transition:background 120ms cubic-bezier(0.2,0,0,1);
+  }
+  .switch .thumb{
+    position:absolute;top:3px;left:3px;
+    width:18px;height:18px;
+    background:var(--ink-dim);
+    transition:transform 120ms cubic-bezier(0.2,0,0,1), background 120ms;
+  }
+  .switch.on .track{background:var(--chartreuse);}
+  .switch.on .thumb{transform:translateX(24px);background:#0A0A0A;}
+  .switch .sw-label{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.06em;
+    color:var(--ink-dim);
+  }
+  .switch.on .sw-label{color:var(--ink);}
+
+  .toggle-group{
+    display:inline-flex;
+    border:2px solid var(--ink);
+  }
+  .toggle-group button{
+    appearance:none;
+    background:var(--surface);
+    border:none;
+    border-right:2px solid var(--ink);
+    color:var(--ink-dim);
+    font-family:var(--mono);
+    font-weight:700;
+    font-size:12px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    padding:9px 16px;
+    cursor:pointer;
+  }
+  .toggle-group button:last-child{border-right:none;}
+  .toggle-group button.active{
+    background:var(--chartreuse);
+    color:#0A0A0A;
+  }
+
+  .dropdown{position:relative;display:inline-block;min-width:190px;}
+  .dropdown .dd-label{
+    display:block;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.06em;
+    color:var(--ink-dim);
+    margin-bottom:6px;
+  }
+  .dropdown .dd-trigger{
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    background:var(--surface-2);
+    border:2px solid var(--ink);
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:15px;
+    padding:10px 12px;
+    cursor:pointer;
+  }
+  .dropdown .dd-trigger .caret{
+    width:0;height:0;
+    border-left:6px solid transparent;
+    border-right:6px solid transparent;
+    border-top:7px solid var(--chartreuse);
+    transition:transform 120ms cubic-bezier(0.2,0,0,1);
+  }
+  .dropdown.open .dd-trigger{border-color:var(--chartreuse);}
+  .dropdown.open .dd-trigger .caret{transform:rotate(180deg);}
+  .dropdown .dd-menu{
+    display:none;
+    position:absolute;
+    top:calc(100% + 4px);
+    left:0;right:0;
+    background:var(--surface);
+    border:2px solid var(--ink);
+    box-shadow:3px 3px 0 rgba(0,0,0,.55);
+    z-index:5;
+  }
+  .dropdown.open .dd-menu{display:block;}
+  .dropdown .dd-menu button{
+    appearance:none;
+    display:block;
+    width:100%;
+    text-align:left;
+    background:none;
+    border:none;
+    border-bottom:1px solid var(--line);
+    border-left:4px solid transparent;
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:15px;
+    padding:10px 12px;
+    cursor:pointer;
+  }
+  .dropdown .dd-menu button:last-child{border-bottom:none;}
+  .dropdown .dd-menu button:hover{background:var(--surface-2);}
+  .dropdown .dd-menu button.selected{
+    border-left-color:var(--chartreuse);
+    background:var(--surface-2);
+  }
+  .comp .demo{flex-direction:column;gap:18px;}
+
+  /* rules */
+  .rules{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    border:2px solid var(--ink);
+  }
+  .rules>div{padding:20px;}
+  .rules .yes{border-right:2px solid var(--ink);}
+  .rules h3{font-family:var(--mono);font-size:13px;letter-spacing:.06em;}
+  .rules .yes h3{color:var(--chartreuse);}
+  .rules .no h3{color:var(--orange);}
+  .rules ul{list-style:none;margin-top:12px;}
+  .rules li{padding:8px 0;border-bottom:1px solid var(--line);font-size:14.5px;}
+  .rules li:last-child{border-bottom:none;}
+
+  footer{
+    margin-top:80px;
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-dim);
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    border-top:1px solid var(--line);
+    padding-top:16px;
+  }
+
+  @media (max-width:640px){
+    .comp{grid-template-columns:1fr;}
+    .comp .demo{border-right:none;border-bottom:2px solid var(--ink);}
+    .rules{grid-template-columns:1fr;}
+    .rules .yes{border-right:none;border-bottom:2px solid var(--ink);}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="kit-tag">
+      <span><b>SK8:MEET</b> // THEME SHEET</span>
+      <span>MEDIA KIT TOKENS — VER 0.1</span>
+    </div>
+    <h1>Technical <span>brand sheet</span></h1>
+    <p class="intro">Every token used in the Sk8:Meet media kit: colors, type, scale, and component recipes. Copy values from here to keep any new material pixel-consistent. Reconcile against the design system markdown — that doc remains the source of truth; this sheet documents the media kit as built.</p>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <h2>Color</h2>
+      <span class="mono">// 10 tokens</span>
+    </div>
+    <div class="swatches">
+
+      <div class="swatch">
+        <div class="chip" style="background:#0A0A0A;border-bottom-color:#2C2C2C;">
+          <span class="on-sample" style="color:#F2F2F0;">TEXT ON THIS</span>
+        </div>
+        <div class="meta">
+          <div class="name">BG</div>
+          <div class="vals">HEX <b>#0A0A0A</b><br>RGB <b>10 10 10</b> · <span>--bg</span></div>
+          <div class="role">Page background. True near-black, never tinted grey.</div>
+        </div>
+      </div>
+
+      <div class="swatch">
+        <div class="chip" style="background:#151515;border-bottom-color:#2C2C2C;">
+          <span class="on-sample" style="color:#F2F2F0;">TEXT ON THIS</span>
+        </div>
+        <div class="meta">
+          <div class="name">SURFACE</div>
+          <div class="vals">HEX <b>#151515</b><br>RGB <b>21 21 21</b> · <span>--surface</span></div>
+          <div class="role">Cards, panels, table headers. One step above BG.</div>
+        </div>
+      </div>
+
+      <div class="swatch">
+        <div class="chip" style="background:#1E1E1E;border-bottom-color:#2C2C2C;">
+          <span class="on-sample" style="color:#F2F2F0;">TEXT ON THIS</span>
+        </div>
+        <div class="meta">
+          <div class="name">SURFACE-2</div>
+          <div class="vals">HEX <b>#1E1E1E</b><br>RGB <b>30 30 30</b> · <span>--surface-2</span></div>
+          <div class="role">Inset elements: bar tracks, inline code chips.</div>
+        </div>
+      </div>
+
+      <div class="swatch">
+        <div class="chip" style="background:#2C2C2C;">
+          <span class="on-sample" style="color:#F2F2F0;">TEXT ON THIS</span>
+        </div>
+        <div class="meta">
+          <div class="name">LINE</div>
+          <div class="vals">HEX <b>#2C2C2C</b><br>RGB <b>44 44 44</b> · <span>--line</span></div>
+          <div class="role">Hairline dividers and dashed borders only. Structural borders use INK instead.</div>
+        </div>
+      </div>
+
+      <div class="swatch">
+        <div class="chip" style="background:#F2F2F0;">
+          <span class="on-sample" style="color:#0A0A0A;">TEXT ON THIS</span>
+        </div>
+        <div class="meta">
+          <div class="name">INK</div>
+          <div class="vals">HEX <b>#F2F2F0</b><br>RGB <b>242 242 240</b> · <span>--ink</span></div>
+          <div class="role">Primary text and all 2–3px structural borders. Warm off-white, not pure #FFF.</div>
+        </div>
+      </div>
+
+      <div class="swatch">
+        <div class="chip" style="background:#9C9C96;">
+          <span class="on-sample" style="color:#0A0A0A;">TEXT ON THIS</span>
+        </div>
+        <div class="meta">
+          <div class="name">INK-DIM</div>
+          <div class="vals">HEX <b>#9C9C96</b><br>RGB <b>156 156 150</b> · <span>--ink-dim</span></div>
+          <div class="role">Secondary text, labels, captions, footers.</div>
+        </div>
+      </div>
+
+      <div class="swatch">
+        <div class="chip" style="background:#D8F927;">
+          <span class="on-sample" style="color:#0A0A0A;">TEXT ON THIS</span>
+        </div>
+        <div class="meta">
+          <div class="name">CHARTREUSE</div>
+          <div class="vals">HEX <b>#D8F927</b><br>RGB <b>216 249 39</b> · <span>--chartreuse</span></div>
+          <div class="role">Primary accent. Duct tape, prices, key highlights, full-bleed CTA panels. Always #0A0A0A text on top.</div>
+        </div>
+      </div>
+
+      <div class="swatch">
+        <div class="chip" style="background:#B8D81F;">
+          <span class="on-sample" style="color:#0A0A0A;">TEXT ON THIS</span>
+        </div>
+        <div class="meta">
+          <div class="name">CHARTREUSE-DK</div>
+          <div class="vals">HEX <b>#B8D81F</b><br>RGB <b>184 216 31</b> · <span>--chartreuse-dk</span></div>
+          <div class="role">Secondary stripe in EXP-bar hazard fills. Never used alone.</div>
+        </div>
+      </div>
+
+      <div class="swatch">
+        <div class="chip" style="background:#FF5C1F;">
+          <span class="on-sample" style="color:#0A0A0A;">TEXT ON THIS</span>
+        </div>
+        <div class="meta">
+          <div class="name">ORANGE</div>
+          <div class="vals">HEX <b>#FF5C1F</b><br>RGB <b>255 92 31</b> · <span>--orange</span></div>
+          <div class="role">Secondary accent. Alternate tape, "FOR:" eyebrows, warnings, NEVER-column headings.</div>
+        </div>
+      </div>
+
+      <div class="swatch">
+        <div class="chip" style="background:#35E8FF;">
+          <span class="on-sample" style="color:#0A0A0A;">TEXT ON THIS</span>
+        </div>
+        <div class="meta">
+          <div class="name">CYAN</div>
+          <div class="vals">HEX <b>#35E8FF</b><br>RGB <b>53 232 255</b> · <span>--cyan</span></div>
+          <div class="role">Tertiary accent. Stat numerals, fill-in slots, data callouts, third tape variant.</div>
+        </div>
+      </div>
+
+    </div>
+    <p class="note">Shadow token: hard offset only — <code>3px 3px 0 rgba(0,0,0,.55)</code> on dropdown/menu surfaces. No soft/blurred shadows anywhere in the system.</p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Typography</h2>
+      <span class="mono">// 3 families</span>
+    </div>
+
+    <div class="spec">
+      <div class="spec-bar">
+        <span><b>ANTON</b> — display</span>
+        <span>weight 400 only · UPPERCASE · Google Fonts</span>
+      </div>
+      <div class="sample sample-anton">Skaters ride free</div>
+      <div class="spec-roles"><b>Used for:</b> H1–H3, stat numerals, callout headlines, CTA panel titles. Line-height 0.96–1.15, letter-spacing 0.005–0.01em. Never in body copy, never mixed-case.</div>
+    </div>
+
+    <div class="spec">
+      <div class="spec-bar">
+        <span><b>HANKEN GROTESK</b> — body</span>
+        <span>weights 400 / 600 / 700 · Google Fonts</span>
+      </div>
+      <div class="sample sample-hanken">Regular 400 carries all body copy at 15–18px, line-height 1.55. <span class="w600">Semibold 600 handles inline emphasis and CTA-panel copy.</span> <span class="w700">Bold 700 is rare — reserve it for maximum-urgency lines.</span></div>
+      <div class="spec-roles"><b>Used for:</b> paragraphs, table cells, list items, product descriptions. Max line length ~66ch.</div>
+    </div>
+
+    <div class="spec">
+      <div class="spec-bar">
+        <span><b>SPACE MONO</b> — metadata</span>
+        <span>weights 400 / 700 · Google Fonts</span>
+      </div>
+      <div class="sample sample-mono">// SECTION EYEBROWS · TAPE LABELS · STAT CAPTIONS<br>[FILL-IN SLOTS] · TABLE HEADERS · VER 0.1 FOOTERS</div>
+      <div class="spec-roles"><b>Used for:</b> everything machine-ish — labels, eyebrows, tape, slots, footers, code. 11–15px, letter-spacing 0.04–0.08em, uppercase. Bold 700 for tape and slots, 400 elsewhere.</div>
+    </div>
+
+    <table>
+      <thead><tr><th>Level</th><th>Family / weight</th><th>Size</th><th>Case / tracking</th></tr></thead>
+      <tbody>
+        <tr><td class="tok">h1</td><td>Anton 400</td><td>clamp(52px, 10vw, 104px)</td><td>UPPER · 0.005em · lh 0.96</td></tr>
+        <tr><td class="tok">h2</td><td>Anton 400</td><td>clamp(28px, 4.5vw, 40px)</td><td>UPPER · 0.01em</td></tr>
+        <tr><td class="tok">h3</td><td>Anton 400</td><td>24px</td><td>UPPER · 0.01em</td></tr>
+        <tr><td class="tok">stat-num</td><td>Anton 400</td><td>clamp(30px, 5vw, 44px)</td><td>lh 1 · CYAN</td></tr>
+        <tr><td class="tok">body</td><td>Hanken 400</td><td>15–18px</td><td>Sentence · lh 1.55</td></tr>
+        <tr><td class="tok">label</td><td>Space Mono 400/700</td><td>11–13px</td><td>UPPER · 0.04–0.08em</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Structure</h2>
+      <span class="mono">// layout + borders</span>
+    </div>
+    <table>
+      <thead><tr><th>Token</th><th>Value</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td class="tok">radius</td><td>0 — everywhere</td><td>Enforced globally: <code>border-radius:0 !important</code>. Brutalist rule, no exceptions.</td></tr>
+        <tr><td class="tok">border-heavy</td><td>2px solid #F2F2F0</td><td>Cards, tables, swatches. 3px under section heads.</td></tr>
+        <tr><td class="tok">border-light</td><td>1px solid #2C2C2C</td><td>Internal dividers only.</td></tr>
+        <tr><td class="tok">border-accent</td><td>6px solid #D8F927 (left)</td><td>Callout panels.</td></tr>
+        <tr><td class="tok">page-width</td><td>max 880px · pad 24px</td><td>Single-column document flow.</td></tr>
+        <tr><td class="tok">section-gap</td><td>80–88px vertical</td><td>48px in print media query.</td></tr>
+        <tr><td class="tok">card-pad</td><td>~24px / internal 14–22px</td><td>Card gutters 18–22px.</td></tr>
+        <tr><td class="tok">breakpoint</td><td>640px</td><td>Grids collapse to single column; right borders become bottom borders.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Component recipes</h2>
+      <span class="mono">// signature elements</span>
+    </div>
+
+    <div class="comp">
+      <div class="demo"><span class="tape">SPONSORED</span><span class="tape orange">WARNING</span><span class="tape cyan">NEW SPOT</span></div>
+      <div class="spec-txt">
+        <h3>Duct tape label</h3>
+        <ul>
+          <li>font: <b>Space Mono 700 / 13px / 0.08em</b> UPPERCASE</li>
+          <li>pad <b>5px 14px</b> · text always <b>#0A0A0A</b></li>
+          <li>rotate: <b>-1.5°</b> chartreuse · <b>+1.2°</b> orange · <b>-0.8°</b> cyan</li>
+          <li>no drop shadow — RN can't contain a rotated view's shadow inside its layout box, so it clips on iOS/web</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="comp">
+      <div class="demo"><div class="exp-demo"><div class="bar"><div class="fill"></div></div></div></div>
+      <div class="spec-txt">
+        <h3>EXP / meter bar</h3>
+        <ul>
+          <li>track: <b>22px</b> tall · <b>#1E1E1E</b> · 2px INK border</li>
+          <li>fill: repeating hazard stripe <b>-45°</b></li>
+          <li>stripe A <b>#D8F927</b> 0–12px · stripe B <b>#B8D81F</b> 12–24px</li>
+          <li>caption row: Space Mono 12px, INK-DIM, above bar</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="comp">
+      <div class="demo"><span class="slot-demo">[X,XXX]</span></div>
+      <div class="spec-txt">
+        <h3>Fill-in slot</h3>
+        <ul>
+          <li>font: <b>Space Mono 700</b> · color <b>#35E8FF</b></li>
+          <li>always wrapped in <b>[square brackets]</b></li>
+          <li>marks any value pending real data — replace before sending</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="comp">
+      <div class="demo"><div class="callout-demo">Local density beats global reach</div></div>
+      <div class="spec-txt">
+        <h3>Accent callout</h3>
+        <ul>
+          <li>bg <b>#151515</b> · left border <b>6px #D8F927</b></li>
+          <li>headline: Anton UPPERCASE · body: Hanken INK-DIM</li>
+          <li>one per section maximum</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Controls</h2>
+      <span class="mono">// switch / toggle / dropdown</span>
+    </div>
+
+    <div class="comp">
+      <div class="demo">
+        <div class="switch" id="sw1" role="switch" aria-checked="false" tabindex="0">
+          <span class="track"><span class="thumb"></span></span>
+          <span class="sw-label">GHOST MODE</span>
+        </div>
+        <div class="switch on" id="sw2" role="switch" aria-checked="true" tabindex="0">
+          <span class="track"><span class="thumb"></span></span>
+          <span class="sw-label">BATTLE ALERTS</span>
+        </div>
+      </div>
+      <div class="spec-txt">
+        <h3>Switch</h3>
+        <ul>
+          <li>track: <b>52 × 28px</b> · 2px INK border · rectangular, never a pill</li>
+          <li>thumb: <b>18px square</b> · 3px inset · slides <b>24px</b></li>
+          <li>off: track <b>#1E1E1E</b> / thumb <b>#9C9C96</b></li>
+          <li>on: track <b>#D8F927</b> / thumb <b>#0A0A0A</b></li>
+          <li>motion: <b>120ms</b> mechanical slide, no bounce</li>
+          <li>label: Space Mono 12px, INK-DIM off → INK on</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="comp">
+      <div class="demo">
+        <div class="toggle-group" id="tg1" role="group" aria-label="Feed filter">
+          <button class="active">ALL</button>
+          <button>SPOTS</button>
+          <button>BATTLES</button>
+        </div>
+      </div>
+      <div class="spec-txt">
+        <h3>Toggle group</h3>
+        <ul>
+          <li>segments share one <b>2px INK</b> frame + 2px internal dividers</li>
+          <li>font: <b>Space Mono 700 / 12px / 0.06em</b> UPPERCASE</li>
+          <li>pad <b>9px 16px</b> · inactive: SURFACE bg / INK-DIM text</li>
+          <li>active: <b>#D8F927</b> bg / <b>#0A0A0A</b> text — hard cut, no slide</li>
+          <li>exactly one segment active · 2–4 segments max</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="comp">
+      <div class="demo">
+        <div class="dropdown" id="dd1">
+          <span class="dd-label">SORT SPOTS BY</span>
+          <button class="dd-trigger" aria-haspopup="listbox" aria-expanded="false">
+            <span class="dd-value">Nearest</span>
+            <span class="caret"></span>
+          </button>
+          <div class="dd-menu" role="listbox">
+            <button class="selected" role="option" aria-selected="true">Nearest</button>
+            <button role="option">Most hyped</button>
+            <button role="option">Newest</button>
+            <button role="option">Best lit</button>
+          </div>
+        </div>
+      </div>
+      <div class="spec-txt">
+        <h3>Dropdown</h3>
+        <ul>
+          <li>trigger: input recipe — <b>#1E1E1E</b> bg · 2px INK border · Hanken 15px</li>
+          <li>label above: <b>Space Mono 11px</b> INK-DIM UPPERCASE</li>
+          <li>caret: solid <b>#D8F927</b> triangle · rotates 180° · 120ms</li>
+          <li>open: trigger border → chartreuse · menu 4px below</li>
+          <li>menu: SURFACE bg · 2px INK border · shadow <b>3px 3px 0 rgba(0,0,0,.55)</b></li>
+          <li>option: Hanken 15px · hover <b>#1E1E1E</b> · selected: <b>4px chartreuse</b> left border</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note">Shared control rules: radius 0, focus state is a 2px chartreuse border/outline, all targets ≥ 44px including padding, state changes are labelled — never color alone.</p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Usage rules</h2>
+      <span class="mono">// keep it consistent</span>
+    </div>
+    <div class="rules">
+      <div class="yes">
+        <h3>ALWAYS</h3>
+        <ul>
+          <li>Zero border-radius on every element</li>
+          <li>#0A0A0A text on any neon background</li>
+          <li>Hard-offset shadows only, and only on dropdown/menu surfaces</li>
+          <li>One neon dominates per composition — chartreuse leads</li>
+        </ul>
+      </div>
+      <div class="no">
+        <h3>NEVER</h3>
+        <ul>
+          <li>No rounded corners, pills, or soft shadows</li>
+          <li>No gradients except the hazard stripe</li>
+          <li>No neon-on-neon text pairings</li>
+          <li>No pure #FFFFFF or pure #000000</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>SK8:MEET — THEME SHEET // MEDIA KIT TOKENS</span>
+    <span>VER 0.1 — RECONCILE WITH DESIGN SYSTEM MD</span>
+  </footer>
+
+</div>
+<script>
+  document.querySelectorAll('.switch').forEach(function(sw){
+    function flip(){
+      sw.classList.toggle('on');
+      sw.setAttribute('aria-checked', sw.classList.contains('on'));
+    }
+    sw.addEventListener('click', flip);
+    sw.addEventListener('keydown', function(e){
+      if(e.key===' '||e.key==='Enter'){e.preventDefault();flip();}
+    });
+  });
+
+  document.querySelectorAll('.toggle-group').forEach(function(tg){
+    tg.querySelectorAll('button').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        tg.querySelectorAll('button').forEach(function(b){b.classList.remove('active');});
+        btn.classList.add('active');
+      });
+    });
+  });
+
+  document.querySelectorAll('.dropdown').forEach(function(dd){
+    var trigger=dd.querySelector('.dd-trigger');
+    var value=dd.querySelector('.dd-value');
+    trigger.addEventListener('click', function(e){
+      e.stopPropagation();
+      dd.classList.toggle('open');
+      trigger.setAttribute('aria-expanded', dd.classList.contains('open'));
+    });
+    dd.querySelectorAll('.dd-menu button').forEach(function(opt){
+      opt.addEventListener('click', function(){
+        dd.querySelectorAll('.dd-menu button').forEach(function(o){
+          o.classList.remove('selected');o.setAttribute('aria-selected','false');
+        });
+        opt.classList.add('selected');
+        opt.setAttribute('aria-selected','true');
+        value.textContent=opt.textContent;
+        dd.classList.remove('open');
+        trigger.setAttribute('aria-expanded','false');
+      });
+    });
+  });
+  document.addEventListener('click', function(){
+    document.querySelectorAll('.dropdown.open').forEach(function(dd){
+      dd.classList.remove('open');
+      dd.querySelector('.dd-trigger').setAttribute('aria-expanded','false');
+    });
+  });
+</script>
+</body>
+</html>

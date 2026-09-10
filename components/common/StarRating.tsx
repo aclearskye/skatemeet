@@ -17,7 +17,7 @@ export function StarRating({ rating, count, size = 20, accent }: Props) {
           key={i}
           name={rating != null && i <= Math.round(rating) ? "star" : "star-outline"}
           size={size}
-          color={rating != null && i <= Math.round(rating) ? accent : C.border}
+          color={rating != null && i <= Math.round(rating) ? accent : C.borderVariant}
         />
       ))}
       {rating != null && (

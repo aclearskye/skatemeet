@@ -5,7 +5,7 @@ export const styles = StyleSheet.create({
   container: {
     backgroundColor: C.surface,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: C.borderVariant,
     padding: 14,
     gap: 8,
     marginBottom: 10,
@@ -26,7 +26,7 @@ export const styles = StyleSheet.create({
   needsVotesBadge: {
     backgroundColor: C.surfaceHigh,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: C.borderVariant,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },

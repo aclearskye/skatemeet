@@ -11,7 +11,7 @@ export const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
+    borderBottomColor: C.borderVariant,
   },
   title: { fontFamily: F.heading, fontSize: 20, color: C.text, letterSpacing: 1 },
   closeBtn: { padding: 4 },
@@ -29,7 +29,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: C.border,
+    borderTopColor: C.borderVariant,
   },
   primaryBtn: {
     paddingVertical: 14,

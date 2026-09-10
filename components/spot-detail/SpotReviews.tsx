@@ -70,7 +70,7 @@ export function SpotReviews({
 }
 
 const styles = StyleSheet.create({
-  section: { paddingTop: 14, borderTopWidth: 1, borderTopColor: C.border, gap: 10 },
+  section: { paddingTop: 14, borderTopWidth: 1, borderTopColor: C.borderVariant, gap: 10 },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",

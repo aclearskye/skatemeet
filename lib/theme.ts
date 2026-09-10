@@ -1,52 +1,64 @@
+// Rebased on docs/theme/sk8meet-design-system.md v1.0 (single source of truth
+// for brand color — update that file first, then propagate here). Tokens
+// below map 1:1 to the doc's core tokens where one exists (bg, surface,
+// surface-2/surfaceHigh, ink/text, ink-dim/muted, chartreuse/primary,
+// orange/secondary, cyan/tertiary, and border -> ink per color rule 2.3).
+// Extra tiers the app needs that the doc doesn't define (bgLowest/bgLow/
+// bgMid, surfaceLow/surfaceHighest/surfaceBright, textVariant) are
+// extrapolated to fit the same near-black/near-white ramp, preserving their
+// prior relative brightness ordering.
 export const C = {
   // Backgrounds
-  bg: "#131313",
-  bgLowest: "#0e0e0e",
-  bgLow: "#1c1b1b",
-  bgMid: "#201f1f",
+  bg: "#0A0A0A",
+  bgLowest: "#0A0A0A",
+  bgLow: "#151515",
+  bgMid: "#1E1E1E",
 
   // Surfaces
-  surface: "#201f1f",
-  surfaceLow: "#1c1b1b",
-  surfaceHigh: "#2a2a2a",
-  surfaceHighest: "#353534",
-  surfaceBright: "#393939",
+  surface: "#151515",
+  surfaceLow: "#101010",
+  surfaceHigh: "#1E1E1E",
+  surfaceHighest: "#2C2C2C",
+  surfaceBright: "#383838",
 
   // Text
-  text: "#e5e2e1",
-  textVariant: "#c4c9ac",
-  muted: "#8e9379",
-  inverseText: "#313030",
+  text: "#F2F2F0",
+  textVariant: "#C6C6C2",
+  muted: "#9C9C96",
+  inverseText: "#0A0A0A",
 
-  // Borders
-  border: "#2a2a2a",
-  borderVariant: "#444933",
+  // Borders — structural borders always use ink, never a dim grey (design
+  // system rule 2.3). borderVariant maps to the doc's --line, reserved for
+  // hairline internal dividers only.
+  border: "#F2F2F0",
+  borderVariant: "#2C2C2C",
 
-  // Accents — Neon Green (Primary)
-  primary: "#abd600",
-  primaryBright: "#c3f400",
-  onPrimary: "#283500",
-  onPrimaryContainer: "#556d00",
-  inversePrimary: "#506600",
+  // Accents — Chartreuse (Primary)
+  primary: "#D8F927",
+  primaryBright: "#D8F927",
+  onPrimary: "#0A0A0A",
+  onPrimaryContainer: "#B8D81F",
+  inversePrimary: "#B8D81F",
 
-  // Accents — Electric Orange (Secondary)
-  secondary: "#fe6500",
-  secondaryLight: "#ffb596",
-  onSecondary: "#541d00",
+  // Accents — Orange (Secondary)
+  secondary: "#FF5C1F",
+  secondaryLight: "#FFB596",
+  onSecondary: "#0A0A0A",
 
-  // Accents — Electric Blue (Tertiary)
-  tertiary: "#a5eeff",
-  onTertiary: "#006f7f",
+  // Accents — Cyan (Tertiary)
+  tertiary: "#35E8FF",
+  onTertiary: "#0A0A0A",
 
-  // Semantic
-  error: "#ffb4ab",
-  onError: "#690005",
-  errorContainer: "#93000a",
-  onErrorContainer: "#ffdad6",
-  errorDim: "#93000a33",
-  errorBorder: "#93000a88",
+  // Semantic — danger aliases to orange per design system 2.2 ("--danger
+  // points to --orange"), not a separate hue.
+  error: "#FF5C1F",
+  onError: "#0A0A0A",
+  errorContainer: "#541D00",
+  onErrorContainer: "#FFB596",
+  errorDim: "#FF5C1F33",
+  errorBorder: "#FF5C1F88",
 
-  // Discord
+  // Discord (third-party brand color, outside the design system)
   discord: "#5865F2",
 };
 
@@ -69,7 +81,16 @@ export const TS = {
   bodyLg:     { fontFamily: F.body,         fontSize: 18, lineHeight: 28 },
   bodyMd:     { fontFamily: F.body,         fontSize: 16, lineHeight: 24 },
   labelCaps:  { fontFamily: F.mono,         fontSize: 12, lineHeight: 16 },
-  labelTape:  { fontFamily: F.monoRegular,  fontSize: 14, lineHeight: 14 },
+  labelTape:  { fontFamily: F.mono,         fontSize: 13, letterSpacing: 1 },
+};
+
+// Duct tape label recipe (docs/theme/sk8meet-theme-sheet.html — "Component
+// recipes" section). Rotation is fixed per accent color, never randomized,
+// and only ever applied to the filled/active state of a chip.
+export const TAPE = {
+  rotatePrimary: "-1.5deg",
+  rotateSecondary: "1.2deg",
+  rotateTertiary: "-0.8deg",
 };
 
 // Spacing scale — 4px base unit

@@ -19,15 +19,16 @@ export function TriStateToggle({ label, value, onChange, accent, onAccent }: Pro
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
-      <View style={styles.row}>
-        {options.map((option) => {
+      <View style={styles.group}>
+        {options.map((option, i) => {
           const selected = value === option.key;
           return (
             <TouchableOpacity
               key={String(option.key)}
               style={[
                 styles.segment,
-                selected && { backgroundColor: accent, borderColor: accent },
+                i < options.length - 1 && styles.segmentDivider,
+                selected && { backgroundColor: accent },
               ]}
               onPress={() => onChange(option.key)}
               activeOpacity={0.75}

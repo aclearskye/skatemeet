@@ -30,7 +30,7 @@ export const styles = StyleSheet.create({
     paddingTop: 14,
     backgroundColor: C.bgLowest,
     borderTopWidth: 1,
-    borderTopColor: C.border,
+    borderTopColor: C.borderVariant,
   },
   actionBtn: { alignItems: "center", gap: 4, minWidth: 56 },
   actionCount: { fontFamily: F.mono, fontSize: 12, color: C.text },

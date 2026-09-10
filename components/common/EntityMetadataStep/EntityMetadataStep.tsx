@@ -1,4 +1,5 @@
 import { TriStateToggle } from "@/components/common/TriStateToggle";
+import { C, TAPE } from "@/lib/theme";
 import { Text, TouchableOpacity, View } from "react-native";
 import { FacilitiesSelect } from "./FacilitiesSelect";
 import { OpeningHoursInput } from "./OpeningHoursInput";
@@ -10,11 +11,10 @@ type Props = {
   value: MetadataFormState;
   onChange: (value: MetadataFormState) => void;
   accent: string;
-  onAccent: string;
   onSkip?: () => void;
 };
 
-export function EntityMetadataStep({ value, onChange, accent, onAccent, onSkip }: Props) {
+export function EntityMetadataStep({ value, onChange, accent, onSkip }: Props) {
   return (
     <View style={styles.section}>
       <View style={styles.headerRow}>
@@ -34,16 +34,18 @@ export function EntityMetadataStep({ value, onChange, accent, onAccent, onSkip }
       <FacilitiesSelect
         value={value.facilities}
         onChange={(facilities) => onChange({ ...value, facilities })}
-        accent={accent}
-        onAccent={onAccent}
+        accent={C.primary}
+        onAccent={C.onPrimary}
+        rotate={TAPE.rotatePrimary}
       />
 
       <Text style={[styles.fieldLabel, styles.spaced]}>PARKING</Text>
       <ParkingSelect
         value={value.parking}
         onChange={(parking) => onChange({ ...value, parking })}
-        accent={accent}
-        onAccent={onAccent}
+        accent={C.tertiary}
+        onAccent={C.onTertiary}
+        rotate={TAPE.rotateTertiary}
       />
 
       <View style={styles.toggles}>
@@ -51,22 +53,22 @@ export function EntityMetadataStep({ value, onChange, accent, onAccent, onSkip }
           label="PET FRIENDLY"
           value={value.petFriendly}
           onChange={(petFriendly) => onChange({ ...value, petFriendly })}
-          accent={accent}
-          onAccent={onAccent}
+          accent={C.secondary}
+          onAccent={C.onSecondary}
         />
         <TriStateToggle
           label="PAID"
           value={value.paid}
           onChange={(paid) => onChange({ ...value, paid })}
-          accent={accent}
-          onAccent={onAccent}
+          accent={C.secondary}
+          onAccent={C.onSecondary}
         />
         <TriStateToggle
           label="WELL LIT"
           value={value.wellLit}
           onChange={(wellLit) => onChange({ ...value, wellLit })}
-          accent={accent}
-          onAccent={onAccent}
+          accent={C.secondary}
+          onAccent={C.onSecondary}
         />
       </View>
     </View>

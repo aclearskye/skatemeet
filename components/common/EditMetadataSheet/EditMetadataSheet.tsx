@@ -71,7 +71,7 @@ export function EditMetadataSheet({
         </View>
 
         <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
-          <EntityMetadataStep value={value} onChange={setValue} accent={accent} onAccent={onAccent} />
+          <EntityMetadataStep value={value} onChange={setValue} accent={accent} />
           {errorMsg && (
             <View style={styles.errorBanner}>
               <Text style={styles.errorText}>{errorMsg}</Text>

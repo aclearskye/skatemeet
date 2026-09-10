@@ -214,7 +214,6 @@ export function CreateSpotSheet({
           value={metadata}
           onChange={setMetadata}
           accent={accent}
-          onAccent={onAccent}
           onSkip={() => setStep(4)}
         />
       )}

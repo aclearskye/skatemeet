@@ -7,9 +7,10 @@ type Props = {
   onChange: (value: ParkingType | null) => void;
   accent: string;
   onAccent: string;
+  rotate: string;
 };
 
-export function ParkingSelect({ value, onChange, accent, onAccent }: Props) {
+export function ParkingSelect({ value, onChange, accent, onAccent, rotate }: Props) {
   return (
     <View style={styles.row}>
       {PARKING_OPTIONS.map((option) => {
@@ -17,7 +18,14 @@ export function ParkingSelect({ value, onChange, accent, onAccent }: Props) {
         return (
           <TouchableOpacity
             key={option}
-            style={[styles.chip, selected && { backgroundColor: accent, borderColor: accent }]}
+            style={[
+              styles.chip,
+              selected && {
+                backgroundColor: accent,
+                borderColor: accent,
+                transform: [{ rotate }],
+              },
+            ]}
             onPress={() => onChange(selected ? null : option)}
             activeOpacity={0.75}
           >

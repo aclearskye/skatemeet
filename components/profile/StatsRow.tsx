@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: C.border,
+    borderColor: C.borderVariant,
   },
   cell: {
     flex: 1,
@@ -55,6 +55,6 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 32,
-    backgroundColor: C.border,
+    backgroundColor: C.borderVariant,
   },
 });

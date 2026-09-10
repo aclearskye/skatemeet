@@ -1,9 +1,9 @@
 import { StyleSheet } from "react-native";
-import { C, F } from "@/lib/theme";
+import { C, F, TAPE } from "@/lib/theme";
 
 export const styles = StyleSheet.create({
   loading: { marginVertical: 12 },
-  section: { paddingTop: 14, borderTopWidth: 1, borderTopColor: C.border, gap: 10 },
+  section: { paddingTop: 14, borderTopWidth: 1, borderTopColor: C.borderVariant, gap: 10 },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -17,26 +17,46 @@ export const styles = StyleSheet.create({
   weekRow: { flexDirection: "row", justifyContent: "space-between" },
   weekDay: { fontFamily: F.body, fontSize: 12, color: C.muted },
   weekHours: { fontFamily: F.monoRegular, fontSize: 12, color: C.textVariant },
-  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  chip: {
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  chipText: { fontFamily: F.mono, fontSize: 10, color: C.muted, letterSpacing: 0.5 },
+  facilityChip: {
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderWidth: 1,
-    borderColor: C.border,
-    backgroundColor: C.surface,
+    backgroundColor: C.primary,
+    transform: [{ rotate: TAPE.rotatePrimary }],
   },
-  chipText: { fontFamily: F.mono, fontSize: 10, color: C.muted, letterSpacing: 0.5 },
-  badge: {
+  facilityChipText: { fontFamily: F.mono, fontSize: 10, color: C.onPrimary, letterSpacing: 0.5 },
+  parkingChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: C.tertiary,
+    transform: [{ rotate: TAPE.rotateTertiary }],
+  },
+  parkingChipText: { fontFamily: F.body, fontSize: 13, color: C.onTertiary },
+  badgeOn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: C.secondary,
+    transform: [{ rotate: TAPE.rotateSecondary }],
+  },
+  badgeOnText: { fontFamily: F.mono, fontSize: 10, color: C.onSecondary, letterSpacing: 0.5 },
+  badgeOff: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderWidth: 1,
+    borderColor: C.borderVariant,
     backgroundColor: C.surface,
   },
-  infoRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  infoText: { fontFamily: F.body, fontSize: 13, color: C.textVariant },
   emptyText: {
     fontFamily: F.body,
     fontSize: 13,

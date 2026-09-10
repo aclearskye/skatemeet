@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     backgroundColor: C.surfaceHigh,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: C.borderVariant,
   },
   typeBadgeText: { fontFamily: F.mono, fontSize: 10, color: C.textVariant, letterSpacing: 1 },
   osmBadge: {
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     backgroundColor: C.surface,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: C.borderVariant,
   },
   osmBadgeText: { fontFamily: F.mono, fontSize: 10, color: C.muted, letterSpacing: 1 },
   directionsBtn: {
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     color: C.onSecondary,
     letterSpacing: 1,
   },
-  infoSection: { gap: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: C.border },
+  infoSection: { gap: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: C.borderVariant },
   infoRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
   infoText: { fontFamily: F.body, fontSize: 14, color: C.text, flex: 1, lineHeight: 22 },
   infoLink: { color: C.secondary, textDecorationLine: "underline" },

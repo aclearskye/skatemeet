@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   communityRatingSection: {
     paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: C.border,
+    borderTopColor: C.borderVariant,
     gap: 10,
   },
 });

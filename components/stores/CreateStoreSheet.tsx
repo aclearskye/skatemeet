@@ -193,7 +193,6 @@ export function CreateStoreSheet({
           value={metadata}
           onChange={setMetadata}
           accent={C.secondary}
-          onAccent={C.onSecondary}
           onSkip={() => setStep(4)}
         />
       )}

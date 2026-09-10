@@ -69,7 +69,7 @@ export function EntityMetadataSection({ metadata, isLoading, accent, canEdit, on
               ? "Closed today"
               : todayHours?.open && todayHours?.close
                 ? `Open today ${todayHours.open}–${todayHours.close}`
-                : "Hours not set for today"}
+                : "Open today"}
           </Text>
           <Ionicons
             name={expanded ? "chevron-up" : "chevron-down"}
@@ -98,37 +98,35 @@ export function EntityMetadataSection({ metadata, isLoading, accent, canEdit, on
       {metadata && metadata.facilities.length > 0 && (
         <View style={styles.chipRow}>
           {metadata.facilities.map((facility) => (
-            <View key={facility} style={styles.chip}>
-              <Text style={styles.chipText}>{FACILITY_LABELS[facility]}</Text>
+            <View key={facility} style={styles.facilityChip}>
+              <Text style={styles.facilityChipText}>{FACILITY_LABELS[facility]}</Text>
             </View>
           ))}
         </View>
       )}
 
       {metadata?.parking && (
-        <View style={styles.infoRow}>
-          <Ionicons name="car-outline" size={15} color={C.muted} />
-          <Text style={styles.infoText}>{PARKING_LABELS[metadata.parking]}</Text>
+        <View style={styles.parkingChip}>
+          <Ionicons name="car-outline" size={15} color={C.onTertiary} />
+          <Text style={styles.parkingChipText}>{PARKING_LABELS[metadata.parking]}</Text>
         </View>
       )}
 
       {visibleBadges.length > 0 && (
         <View style={styles.chipRow}>
-          {visibleBadges.map((badge) => (
-            <View
-              key={badge.label}
-              style={[styles.badge, { borderColor: badge.value ? accent : C.border }]}
-            >
-              <Ionicons
-                name={badge.value ? "checkmark" : "close"}
-                size={12}
-                color={badge.value ? accent : C.muted}
-              />
-              <Text style={[styles.chipText, badge.value && { color: accent }]}>
-                {badge.label}
-              </Text>
-            </View>
-          ))}
+          {visibleBadges.map((badge) =>
+            badge.value ? (
+              <View key={badge.label} style={styles.badgeOn}>
+                <Ionicons name="checkmark" size={12} color={C.onSecondary} />
+                <Text style={styles.badgeOnText}>{badge.label}</Text>
+              </View>
+            ) : (
+              <View key={badge.label} style={styles.badgeOff}>
+                <Ionicons name="close" size={12} color={C.muted} />
+                <Text style={styles.chipText}>{badge.label}</Text>
+              </View>
+            )
+          )}
         </View>
       )}
 

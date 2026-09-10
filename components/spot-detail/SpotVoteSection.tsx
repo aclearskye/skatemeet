@@ -43,7 +43,7 @@ export function SpotVoteSection({
 }
 
 const styles = StyleSheet.create({
-  voteSection: { gap: 10, paddingTop: 14, borderTopWidth: 1, borderTopColor: C.border },
+  voteSection: { gap: 10, paddingTop: 14, borderTopWidth: 1, borderTopColor: C.borderVariant },
   voteMeta: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   voteLabel: { fontFamily: F.mono, fontSize: 10, color: C.muted, letterSpacing: 2 },
   voteHint: { fontFamily: F.monoRegular, fontSize: 11, color: C.muted, letterSpacing: 0.5 },

@@ -7,9 +7,10 @@ type Props = {
   onChange: (value: Facility[]) => void;
   accent: string;
   onAccent: string;
+  rotate: string;
 };
 
-export function FacilitiesSelect({ value, onChange, accent, onAccent }: Props) {
+export function FacilitiesSelect({ value, onChange, accent, onAccent, rotate }: Props) {
   function toggle(facility: Facility) {
     onChange(
       value.includes(facility) ? value.filter((f) => f !== facility) : [...value, facility]
@@ -23,7 +24,14 @@ export function FacilitiesSelect({ value, onChange, accent, onAccent }: Props) {
         return (
           <TouchableOpacity
             key={facility}
-            style={[styles.chip, selected && { backgroundColor: accent, borderColor: accent }]}
+            style={[
+              styles.chip,
+              selected && {
+                backgroundColor: accent,
+                borderColor: accent,
+                transform: [{ rotate }],
+              },
+            ]}
             onPress={() => toggle(facility)}
             activeOpacity={0.75}
           >
