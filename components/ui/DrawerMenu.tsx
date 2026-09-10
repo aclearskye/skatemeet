@@ -1,10 +1,13 @@
 import { onSignOutButtonPress } from "@/lib/auth/onSignOutButtonPress";
 import { useDrawer } from "@/lib/context/drawer-context";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { fetchUnreadNotificationCount } from "@/lib/notifications/queries";
 import { avatarColor, C, F } from "@/lib/theme";
+import { queryKeys } from "@/utils/queryKeys";
 import { IconBadgeButton } from "@/components/common/IconBadgeButton";
 import SwitchToBusinessModal from "@/components/ui/SwitchToBusinessModal";
 import { Ionicons } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -30,9 +33,10 @@ type NavItem = {
 };
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: "FEED",    icon: "home-outline",   path: "/",        match: "/"        },
-  { label: "MAP",     icon: "map-outline",    path: "/map",     match: "/map"     },
-  { label: "PROFILE", icon: "person-outline", path: "/profile", match: "/profile" },
+  { label: "FEED",       icon: "home-outline",   path: "/",           match: "/"           },
+  { label: "MAP",        icon: "map-outline",    path: "/map",        match: "/map"        },
+  { label: "FAVOURITES", icon: "heart-outline",  path: "/favourites", match: "/favourites" },
+  { label: "PROFILE",    icon: "person-outline", path: "/profile",    match: "/profile"    },
 ];
 
 export default function DrawerMenu() {
@@ -44,6 +48,12 @@ export default function DrawerMenu() {
   const [bizModalVisible, setBizModalVisible] = useState(false);
 
   const accountType = profile?.account_type ?? "user";
+
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: queryKeys.notificationsUnreadCount(profile?.profile_id ?? ""),
+    queryFn: () => fetchUnreadNotificationCount(profile!.profile_id),
+    enabled: !!profile,
+  });
 
   const openBizModal = () => {
     closeDrawer();
@@ -139,7 +149,11 @@ export default function DrawerMenu() {
             </View>
           </View>
           <View style={styles.iconRow}>
-            <IconBadgeButton icon="notifications-outline" hasBadge={false} />
+            <IconBadgeButton
+              icon="notifications-outline"
+              hasBadge={unreadCount > 0}
+              onPress={() => navigate("/notifications")}
+            />
             <IconBadgeButton icon="mail-outline" hasBadge={false} />
           </View>
         </View>
@@ -268,7 +282,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 2,
-    backgroundColor: C.border,
+    backgroundColor: C.borderVariant,
     marginVertical: 16,
   },
   dividerBottom: {

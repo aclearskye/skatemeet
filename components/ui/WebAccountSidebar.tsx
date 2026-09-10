@@ -1,9 +1,12 @@
 import { onSignOutButtonPress } from "@/lib/auth/onSignOutButtonPress";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { fetchUnreadNotificationCount } from "@/lib/notifications/queries";
 import { avatarColor, C, F } from "@/lib/theme";
+import { queryKeys } from "@/utils/queryKeys";
 import { IconBadgeButton } from "@/components/common/IconBadgeButton";
 import SwitchToBusinessModal from "@/components/ui/SwitchToBusinessModal";
 import { Ionicons } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "expo-router";
 import { useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -16,6 +19,12 @@ export default function WebAccountSidebar() {
   const insets = useSafeAreaInsets();
   const [bizModalVisible, setBizModalVisible] = useState(false);
   const settingsActive = pathname === "/settings";
+
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: queryKeys.notificationsUnreadCount(profile?.profile_id ?? ""),
+    queryFn: () => fetchUnreadNotificationCount(profile!.profile_id),
+    enabled: !!profile,
+  });
 
   // No account sidebar on auth/onboarding screens — this is for the logged-in app only.
   if (!session || !profile?.onboarding_completed) return null;
@@ -54,7 +63,11 @@ export default function WebAccountSidebar() {
           {profile.username ? <Text style={styles.username}>@{profile.username}</Text> : null}
         </View>
         <View style={styles.iconRow}>
-          <IconBadgeButton icon="notifications-outline" hasBadge={false} />
+          <IconBadgeButton
+            icon="notifications-outline"
+            hasBadge={unreadCount > 0}
+            onPress={() => router.push("/notifications")}
+          />
           <IconBadgeButton icon="mail-outline" hasBadge={false} />
         </View>
       </View>
@@ -145,7 +158,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 2,
-    backgroundColor: C.border,
+    backgroundColor: C.borderVariant,
     marginVertical: 16,
   },
   dividerBottom: {

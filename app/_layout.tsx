@@ -1,7 +1,10 @@
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import AuthProvider from "@/providers/auth-provider";
 import { DrawerProvider } from "@/lib/context/drawer-context";
+import { ToastProvider } from "@/lib/context/toast-context";
+import { useWelcomeXpToast } from "@/lib/xp/useWelcomeXpToast";
 import DrawerMenu from "@/components/ui/DrawerMenu";
+import { ToastHost } from "@/components/ui/ToastHost";
 import WebAccountSidebar from "@/components/ui/WebAccountSidebar";
 import WebSidebar from "@/components/ui/WebSidebar";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
@@ -40,6 +43,8 @@ const RootNavigation = () => {
   const { session, isLoadingAuthContext, profile } = useAuthContext();
   const segments = useSegments();
   const router = useRouter();
+
+  useWelcomeXpToast(profile);
 
   const [fontsLoaded] = useFonts({
     Anton_400Regular,
@@ -86,6 +91,8 @@ const RootNavigation = () => {
         <Stack.Screen name="store-detail" />
         <Stack.Screen name="user/[userId]" />
         <Stack.Screen name="settings" />
+        <Stack.Screen name="favourites" />
+        <Stack.Screen name="notifications" />
       </Stack>
     </ErrorBoundary>
   );
@@ -96,25 +103,28 @@ export default function Layout() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <DrawerProvider>
-          {Platform.OS === "web" ? (
-            // No hamburger/drawer on web — nav and account actions live
-            // permanently in two sidebars pinned to the true left/right edges
-            // of the screen, with the (capped, centered) content between them.
-            <View style={[styles.webRoot, { backgroundColor: C.bg }]}>
-              <WebSidebar />
-              <View style={styles.webBodyOuter}>
-                <View style={[styles.webContentInner, { backgroundColor: C.bg }]}>
-                  <RootNavigation />
+          <ToastProvider>
+            {Platform.OS === "web" ? (
+              // No hamburger/drawer on web — nav and account actions live
+              // permanently in two sidebars pinned to the true left/right edges
+              // of the screen, with the (capped, centered) content between them.
+              <View style={[styles.webRoot, { backgroundColor: C.bg }]}>
+                <WebSidebar />
+                <View style={styles.webBodyOuter}>
+                  <View style={[styles.webContentInner, { backgroundColor: C.bg }]}>
+                    <RootNavigation />
+                  </View>
                 </View>
+                <WebAccountSidebar />
               </View>
-              <WebAccountSidebar />
-            </View>
-          ) : (
-            <View style={{ flex: 1, backgroundColor: C.bg }}>
-              <RootNavigation />
-              <DrawerMenu />
-            </View>
-          )}
+            ) : (
+              <View style={{ flex: 1, backgroundColor: C.bg }}>
+                <RootNavigation />
+                <DrawerMenu />
+              </View>
+            )}
+            <ToastHost />
+          </ToastProvider>
         </DrawerProvider>
       </AuthProvider>
     </QueryClientProvider>

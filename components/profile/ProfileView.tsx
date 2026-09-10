@@ -1,4 +1,16 @@
-import BurgerButton from "@/components/ui/BurgerButton";
+import { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useQueries, useQuery } from "@tanstack/react-query";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import {
   fetchProfileClips,
   getProfileClipCount,
@@ -8,19 +20,10 @@ import {
 import { type Profile } from "@/lib/context/use-auth-context";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { C, F } from "@/lib/theme";
-import { Ionicons } from "@expo/vector-icons";
-import { useQueries, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { fetchProfileXpState } from "@/lib/xp/queries";
 import { queryKeys } from "@/utils/queryKeys";
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import BurgerButton from "@/components/ui/BurgerButton";
+import { ExpBar } from "@/components/profile/ExpBar";
 import ClipCard, { GAP } from "./ClipCard";
 import ContentTabs from "./ContentTabs";
 import ProfileAvatar from "./ProfileAvatar";
@@ -70,6 +73,31 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
     queryFn: () => fetchProfileClips(profile.profile_id),
   });
 
+  const { data: xpState } = useQuery({
+    queryKey: queryKeys.profileXp(profile.profile_id),
+    queryFn: () => fetchProfileXpState(profile.profile_id),
+  });
+
+  const previousLevelRef = useRef<number | null>(null);
+  const [didLevelUp, setDidLevelUp] = useState(false);
+
+  useEffect(() => {
+    if (!xpState) return;
+    const previousLevel = previousLevelRef.current;
+    if (previousLevel !== null && xpState.currentLevel > previousLevel) {
+      setDidLevelUp(true);
+    }
+    previousLevelRef.current = xpState.currentLevel;
+  }, [xpState]);
+
+  useEffect(() => {
+    if (!didLevelUp) return;
+    // Clears the flag once the ExpBar's 320ms level-up tween has had time to
+    // finish, so an unrelated re-render doesn't replay or cut off the animation.
+    const timeout = setTimeout(() => setDidLevelUp(false), 400);
+    return () => clearTimeout(timeout);
+  }, [didLevelUp]);
+
   function handleAvatarUpdated(url: string) {
     setLocalAvatarUrl(url);
     refreshProfile();
@@ -109,12 +137,23 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
           </View>
 
           <View style={styles.metaRow}>
-            <Text style={styles.meta}>@{profile.username}</Text>
+            <Text style={[styles.meta, Platform.OS === "web" && styles.metaWeb]}>
+              @{profile.username}
+            </Text>
             {profile.city ? (
               <>
-                <Text style={styles.metaDot}> · </Text>
-                <Ionicons name="location-outline" size={12} color={C.muted} />
-                <Text style={styles.meta}> {profile.city.toUpperCase()}</Text>
+                <Text style={[styles.metaDot, Platform.OS === "web" && styles.metaWeb]}>
+                  {" · "}
+                </Text>
+                <Ionicons
+                  name="location-outline"
+                  size={Platform.OS === "web" ? 15 : 12}
+                  color={C.muted}
+                />
+                <Text style={[styles.meta, Platform.OS === "web" && styles.metaWeb]}>
+                  {" "}
+                  {profile.city.toUpperCase()}
+                </Text>
               </>
             ) : null}
           </View>
@@ -126,6 +165,18 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
           />
         </View>
       </View>
+
+      {/* EXP bar */}
+      {xpState && (
+        <ExpBar
+          currentLevel={xpState.currentLevel}
+          levelTitle={xpState.levelTitle}
+          xpIntoLevel={xpState.xpIntoLevel}
+          xpForNextLevel={xpState.xpForNextLevel}
+          isMaxLevel={xpState.isMaxLevel}
+          didLevelUp={didLevelUp}
+        />
+      )}
 
       {/* Bio */}
       {profile.bio ? (
@@ -257,6 +308,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: C.muted,
   },
+  metaWeb: {
+    fontSize: 15,
+  },
 
   bio: {
     fontFamily: F.body,
@@ -272,7 +326,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: C.border,
+    borderColor: C.borderVariant,
   },
 
   gridContainer: {

@@ -54,6 +54,47 @@ export async function fetchUserStoresInBounds(bbox: BoundingBox): Promise<UserSt
   return (data ?? []) as UserStore[];
 }
 
+export async function fetchUserStoresByIds(storeIds: string[]): Promise<UserStore[]> {
+  if (storeIds.length === 0) return [];
+  const { data, error } = await supabase.from("user_stores").select("*").in("store_id", storeIds);
+  if (error) throw error;
+  return (data ?? []) as UserStore[];
+}
+
+export async function fetchOsmStoresByIds(placeIds: string[]): Promise<OsmStore[]> {
+  if (placeIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from("osm_stores")
+    .select(
+      "place_id, name, address, phone, website, opening_hours, latitude, longitude, upvote_count, cover_photo_url"
+    )
+    .in("place_id", placeIds);
+  if (error) throw error;
+  type Row = {
+    place_id: string;
+    name: string;
+    address: string;
+    phone: string | null;
+    website: string | null;
+    opening_hours: string | null;
+    latitude: number;
+    longitude: number;
+    upvote_count: number;
+    cover_photo_url: string | null;
+  };
+  return (data as Row[]).map((row) => ({
+    place_id: row.place_id,
+    name: row.name,
+    address: row.address,
+    phone: row.phone,
+    website: row.website,
+    opening_hours: row.opening_hours,
+    coordinates: { lat: row.latitude, lng: row.longitude },
+    upvote_count: row.upvote_count,
+    cover_photo_url: row.cover_photo_url,
+  }));
+}
+
 export async function getStoreFavoriteStatus(
   storeId: string | null,
   osmPlaceId: string | null,

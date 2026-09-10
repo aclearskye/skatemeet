@@ -23,4 +23,12 @@ export const queryKeys = {
     ["profile", profileId, "stats"] as const,
   profileClips: (profileId: string) =>
     ["profile", profileId, "clips"] as const,
+  profileFavorites: (profileId: string) =>
+    ["profile", profileId, "favorites"] as const,
+  profileXp: (profileId: string) =>
+    ["profile", profileId, "xp"] as const,
+  notifications: (profileId: string) =>
+    ["notifications", profileId] as const,
+  notificationsUnreadCount: (profileId: string) =>
+    ["notifications", profileId, "unreadCount"] as const,
 };

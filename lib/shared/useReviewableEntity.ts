@@ -1,5 +1,6 @@
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { ReviewReportReason } from "@/lib/shared/types";
+import { queryKeys } from "@/utils/queryKeys";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 type ReviewBase = { review_id: string; upvote_count: number; is_verified: boolean };
@@ -137,6 +138,9 @@ export function useReviewableEntity<TReview extends ReviewBase, TReviewWithProfi
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "favorite"] });
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.profileFavorites(userId) });
+      }
     },
   });
 

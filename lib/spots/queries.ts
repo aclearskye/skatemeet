@@ -68,6 +68,41 @@ export async function getSpotVoteCount(
   return getVoteCount(table, col, val);
 }
 
+export async function fetchUserSpotsByIds(spotIds: string[]): Promise<SkateSpot[]> {
+  if (spotIds.length === 0) return [];
+  const { data, error } = await supabase.from("user_spots").select("*").in("spot_id", spotIds);
+  if (error) throw error;
+  return data as SkateSpot[];
+}
+
+export async function fetchOsmSpotsByIds(placeIds: string[]): Promise<OsmSpot[]> {
+  if (placeIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from("osm_spots")
+    .select("place_id, name, address, spot_type, latitude, longitude, upvote_count, cover_photo_url")
+    .in("place_id", placeIds);
+  if (error) throw error;
+  type Row = {
+    place_id: string;
+    name: string;
+    address: string;
+    spot_type: OsmSpot["spot_type"];
+    latitude: number;
+    longitude: number;
+    upvote_count: number;
+    cover_photo_url: string | null;
+  };
+  return (data as Row[]).map((row) => ({
+    place_id: row.place_id,
+    name: row.name,
+    address: row.address,
+    spot_type: row.spot_type,
+    coordinates: { lat: row.latitude, lng: row.longitude },
+    upvote_count: row.upvote_count,
+    cover_photo_url: row.cover_photo_url,
+  }));
+}
+
 export async function getSpotFavoriteStatus(
   spotId: string | null,
   osmPlaceId: string | null,
