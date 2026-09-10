@@ -145,13 +145,17 @@ export default function MapScreen() {
         <TouchableOpacity
           style={[
             styles.fab,
-            { bottom: insets.bottom + 16 },
+            // Native: the map screen already sits above the tab bar (which
+            // reserves its own safe-area clearance), so a flat 16 here
+            // matches the FAB's 16 right margin instead of double-counting
+            // insets.bottom on top of the tab bar's own height.
             Platform.OS === "web" && styles.fabWeb,
           ]}
           onPress={() => { setIsPickingLocation(true); dismissPreview(); }}
           activeOpacity={0.85}
         >
-          <Ionicons name="add" size={Platform.OS === "web" ? 32 : 28} color={C.onPrimary} />
+          <Ionicons name="add" size={Platform.OS === "web" ? 26 : 22} color={C.onPrimary} />
+          <Text style={styles.fabLabel}>ADD SPOT</Text>
         </TouchableOpacity>
       )}
 
@@ -231,7 +235,7 @@ export default function MapScreen() {
 
       {/* Map preview card */}
       {previewLoading && !isPickingLocation && (
-        <MapPreviewCardSkeleton onDismiss={dismissPreview} kind={previewKind} />
+        <MapPreviewCardSkeleton kind={previewKind} />
       )}
       {previewItem && !previewLoading && !isPickingLocation && (
         <MapPreviewCard
@@ -260,20 +264,28 @@ const styles = StyleSheet.create({
   fab: {
     position: "absolute",
     right: 16,
-    width: 52,
-    height: 52,
+    bottom: 16,
+    width: 68,
+    height: 68,
     backgroundColor: C.primary,
     alignItems: "center",
     justifyContent: "center",
+    gap: 2,
     elevation: 4,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
+  fabLabel: {
+    fontFamily: F.mono,
+    fontSize: 8,
+    letterSpacing: 0.5,
+    color: C.onPrimary,
+  },
   fabWeb: {
-    width: 64,
-    height: 64,
+    width: 78,
+    height: 78,
     bottom: 56,
   },
 

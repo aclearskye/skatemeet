@@ -1,21 +1,16 @@
-import { VoteButton } from "@/components/common/VoteButton";
-import { toggleSpotVote } from "@/lib/spots/mutations";
+import { EntityPreviewCard } from "@/components/common/EntityPreviewCard";
 import { OsmStore, OsmSpot, SkateSpot } from "@/lib/spots/types";
-import { toggleStoreVote } from "@/lib/stores/mutations";
 import { UserStore } from "@/lib/stores/types";
-import { useAuthContext } from "@/lib/context/use-auth-context";
 import { C, F } from "@/lib/theme";
-import { TYPE_LABELS } from "@/utils/constants";
-import { exhaustiveCheck } from "@/utils/typeGuards";
-import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import { entityDetailRoute } from "@/utils/entityNavigation";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   Animated,
+  Platform,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -35,7 +30,7 @@ type Props = {
 
 export type SkeletonKind = "spot" | "diy" | "store";
 
-export function MapPreviewCardSkeleton({ onDismiss, kind }: { onDismiss: () => void; kind: SkeletonKind }) {
+export function MapPreviewCardSkeleton({ kind }: { kind: SkeletonKind }) {
   const insets = useSafeAreaInsets();
   const pulse = useRef(new Animated.Value(0.5)).current;
 
@@ -54,26 +49,44 @@ export function MapPreviewCardSkeleton({ onDismiss, kind }: { onDismiss: () => v
   const isDiy = kind === "diy";
 
   return (
-    <View style={[styles.wrapper, { bottom: insets.bottom + 64 + 12 }]}>
+    <View
+      style={[
+        styles.wrapper,
+        Platform.OS === "web" && styles.wrapperWeb,
+        { bottom: insets.bottom + 64 + 12 },
+      ]}
+    >
       <View style={styles.card}>
-        <TouchableOpacity style={styles.dismissBtn} onPress={onDismiss} hitSlop={12}>
-          <Ionicons name="close" size={16} color={C.muted} />
-        </TouchableOpacity>
-        <Animated.View style={[styles.topRow, { opacity: pulse }]}>
-          <View style={[styles.thumbImg, styles.skeletonBlock]} />
-          <View style={styles.info}>
-            <View style={[styles.skeletonBlock, { width: "65%", height: 18 }]} />
-            <View style={styles.badgeRow}>
-              <View style={[styles.skeletonBlock, { width: 56, height: 20 }]} />
-              <View style={[styles.skeletonBlock, { width: 44, height: 20 }]} />
+        <View style={styles.topRow}>
+          <Animated.View style={[styles.previewRow, { opacity: pulse }]}>
+            <View style={[styles.thumbImg, styles.skeletonBlock]} />
+            <View style={styles.info}>
+              <View style={[styles.skeletonBlock, { width: "65%", height: 18 }]} />
+              <View style={styles.badgeRow}>
+                <View style={[styles.skeletonBlock, { width: 56, height: 20 }]} />
+                <View style={[styles.skeletonBlock, { width: 44, height: 20 }]} />
+              </View>
+              <View style={[styles.skeletonBlock, { width: "45%", height: 10 }]} />
             </View>
-            <View style={[styles.skeletonBlock, { width: "45%", height: 10 }]} />
+          </Animated.View>
+
+          <View style={[styles.cta, isDiy && styles.ctaDiy, isStore && styles.ctaStore]}>
+            <View style={styles.ctaIconRow}>
+              <MaterialCommunityIcons
+                name={isStore ? "storefront-outline" : "skateboarding"}
+                size={22}
+                color={isDiy ? C.onTertiary : isStore ? C.onSecondary : C.onPrimary}
+              />
+              <Ionicons
+                name="arrow-forward"
+                size={13}
+                color={isDiy ? C.onTertiary : isStore ? C.onSecondary : C.onPrimary}
+              />
+            </View>
+            <Text style={[styles.ctaText, isDiy && styles.ctaTextDiy, isStore && styles.ctaTextStore]}>
+              {isStore ? "VIEW STORE" : "SKATE HERE"}
+            </Text>
           </View>
-        </Animated.View>
-        <View style={[styles.cta, isDiy && styles.ctaDiy, isStore && styles.ctaStore]}>
-          <Text style={[styles.ctaText, isDiy && styles.ctaTextDiy, isStore && styles.ctaTextStore]}>
-            {isStore ? "VIEW STORE" : "SKATE HERE"}
-          </Text>
         </View>
       </View>
     </View>
@@ -83,100 +96,9 @@ export function MapPreviewCardSkeleton({ onDismiss, kind }: { onDismiss: () => v
 export function MapPreviewCard({ item, onDismiss, initialHasVoted }: Props) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { session } = useAuthContext();
-  const userId = session?.user.id ?? null;
-
-  const isSpot = item.kind === "user-spot" || item.kind === "osm-spot";
-
-  let name = "";
-  let photoUrl: string | null = null;
-  let typeLabel = "";
-  let isVerified = false;
-  let upvoteCount: number | null = null;
-  let subtitle = "";
-  let isOsm = false;
-  let isDiy = false;
-  let isStore = false;
-
-  switch (item.kind) {
-    case "user-spot": {
-      const s = item.data;
-      name = s.name;
-      photoUrl = s.photo_url;
-      typeLabel = TYPE_LABELS[s.type] ?? s.type.toUpperCase();
-      isVerified = s.is_verified;
-      upvoteCount = s.upvote_count;
-      isDiy = s.type === "diy";
-      break;
-    }
-    case "osm-spot": {
-      const s = item.data;
-      name = s.name;
-      photoUrl = s.cover_photo_url;
-      typeLabel = TYPE_LABELS[s.spot_type] ?? s.spot_type.toUpperCase();
-      subtitle = s.address;
-      isOsm = true;
-      isDiy = s.spot_type === "diy";
-      upvoteCount = s.upvote_count;
-      break;
-    }
-    case "osm-store": {
-      const s = item.data;
-      name = s.name;
-      photoUrl = s.cover_photo_url;
-      subtitle = s.address;
-      typeLabel = "SKATE STORE";
-      isOsm = true;
-      upvoteCount = s.upvote_count;
-      isStore = true;
-      break;
-    }
-    case "user-store": {
-      const s = item.data;
-      name = s.name;
-      photoUrl = s.photo_url;
-      subtitle = s.address;
-      typeLabel = "SKATE STORE";
-      upvoteCount = s.upvote_count;
-      isStore = true;
-      break;
-    }
-    default:
-      exhaustiveCheck(item);
-  }
-
-  const spotId = item.kind === "user-spot" ? item.data.spot_id : null;
-  const osmSpotId = item.kind === "osm-spot" ? item.data.place_id : null;
-  const storeId = item.kind === "user-store" ? item.data.store_id : null;
-  const osmStoreId = item.kind === "osm-store" ? item.data.place_id : null;
-
-  const [hasVoted, setHasVoted] = useState<boolean | null>(initialHasVoted);
-  const [localCount, setLocalCount] = useState(upvoteCount);
-
-  useEffect(() => { setLocalCount(upvoteCount); }, [upvoteCount]);
-
-  async function handleUpvote() {
-    if (!userId || hasVoted === null) return;
-    const wasVoted = hasVoted;
-    setHasVoted(!wasVoted);
-    setLocalCount((prev) => (prev ?? 0) + (wasVoted ? -1 : 1));
-    try {
-      const result = (spotId || osmSpotId)
-        ? await toggleSpotVote(spotId, osmSpotId, userId)
-        : await toggleStoreVote(storeId, osmStoreId, userId);
-      setHasVoted(result.user_has_voted);
-      setLocalCount(result.upvote_count);
-    } catch {
-      setHasVoted(wasVoted);
-      setLocalCount((prev) => (prev ?? 0) + (wasVoted ? 1 : -1));
-    }
-  }
 
   function handleNavigate() {
-    router.push({
-      pathname: isSpot ? "/spot-detail" : "/store-detail",
-      params: { kind: item.kind, data: JSON.stringify(item.data) },
-    } as any);
+    router.push(entityDetailRoute(item) as any);
     onDismiss();
   }
 
@@ -184,87 +106,11 @@ export function MapPreviewCard({ item, onDismiss, initialHasVoted }: Props) {
     <View
       style={[
         styles.wrapper,
+        Platform.OS === "web" && styles.wrapperWeb,
         { bottom: insets.bottom + 64 + 12 },
       ]}
     >
-      <View style={styles.card}>
-        {/* Dismiss */}
-        <TouchableOpacity style={styles.dismissBtn} onPress={onDismiss} hitSlop={12}>
-          <Ionicons name="close" size={16} color={C.muted} />
-        </TouchableOpacity>
-
-        {/* Top row: photo + info */}
-        <TouchableOpacity style={styles.topRow} onPress={handleNavigate} activeOpacity={0.85}>
-          {/* Thumbnail */}
-          <View style={styles.thumb}>
-            {photoUrl ? (
-              <Image source={{ uri: photoUrl }} style={styles.thumbImg} contentFit="cover" />
-            ) : (
-              <View style={[styles.thumbImg, styles.thumbPlaceholder]}>
-                <Ionicons
-                  name={isSpot ? "location-sharp" : "storefront-outline"}
-                  size={26}
-                  color={C.muted}
-                />
-              </View>
-            )}
-          </View>
-
-          {/* Info block */}
-          <View style={styles.info}>
-            {/* Name + VERIFIED stamp */}
-            <View style={styles.nameRow}>
-              <Text style={styles.name} numberOfLines={1}>{name}</Text>
-              {isVerified && (
-                <View style={styles.verifiedStamp}>
-                  <Text style={styles.verifiedText}>VERIFIED</Text>
-                </View>
-              )}
-            </View>
-
-            {/* Badges + upvote pill */}
-            <View style={styles.badgeRow}>
-              <View style={styles.typeBadge}>
-                <Text style={styles.typeBadgeText}>{typeLabel}</Text>
-              </View>
-              {isOsm && (
-                <View style={styles.osmBadge}>
-                  <Text style={styles.osmBadgeText}>OSM</Text>
-                </View>
-              )}
-              {localCount != null && hasVoted !== null && (
-                <VoteButton
-                  count={localCount}
-                  hasVoted={hasVoted}
-                  accent={isDiy ? C.tertiary : isStore ? C.secondary : C.primary}
-                  onAccent={isDiy ? C.onTertiary : isStore ? C.onSecondary : C.onPrimary}
-                  onPress={handleUpvote}
-                  isLoading={false}
-                  variant="pill"
-                />
-              )}
-            </View>
-
-            {/* Subtitle (address) */}
-            {subtitle !== "" && (
-              <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
-            )}
-
-          </View>
-
-        </TouchableOpacity>
-
-        {/* CTA */}
-        <TouchableOpacity
-          style={[styles.cta, isDiy && styles.ctaDiy, !isSpot && styles.ctaStore]}
-          onPress={handleNavigate}
-          activeOpacity={0.8}
-        >
-          <Text style={[styles.ctaText, isDiy && styles.ctaTextDiy, !isSpot && styles.ctaTextStore]}>
-            {isSpot ? "SKATE HERE" : "VIEW STORE"}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <EntityPreviewCard item={item} onPress={handleNavigate} initialHasVoted={initialHasVoted} />
     </View>
   );
 }
@@ -275,67 +121,39 @@ const styles = StyleSheet.create({
     left: 12,
     right: 12,
   },
+  wrapperWeb: {
+    left: 0,
+    right: 0,
+    width: 560,
+    maxWidth: "90%",
+    marginHorizontal: "auto",
+  },
   card: {
     backgroundColor: C.bgLow,
     borderWidth: 2,
     borderColor: C.border,
   },
-  dismissBtn: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    zIndex: 10,
-    padding: 4,
-  },
   topRow: {
     flexDirection: "row",
+    alignItems: "stretch",
     padding: 12,
-    gap: 12,
+    gap: 10,
     position: "relative",
   },
-  thumb: {
-    width: 88,
-    height: 88,
-    flexShrink: 0,
+  previewRow: {
+    flex: 1,
+    flexDirection: "row",
+    gap: 12,
+    minWidth: 0,
   },
   thumbImg: {
     width: 88,
     height: 88,
   },
-  thumbPlaceholder: {
-    backgroundColor: C.surfaceHigh,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   info: {
     flex: 1,
     gap: 5,
     justifyContent: "center",
-  },
-  nameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flexWrap: "wrap",
-  },
-  name: {
-    fontFamily: F.heading,
-    fontSize: 18,
-    color: C.text,
-    letterSpacing: 0.3,
-    flexShrink: 1,
-  },
-  verifiedStamp: {
-    backgroundColor: C.primary,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    transform: [{ rotate: "-2deg" }],
-  },
-  verifiedText: {
-    fontFamily: F.mono,
-    fontSize: 9,
-    color: C.onPrimary,
-    letterSpacing: 1,
   },
   badgeRow: {
     flexDirection: "row",
@@ -343,53 +161,13 @@ const styles = StyleSheet.create({
     gap: 6,
     justifyContent: "space-between",
   },
-  typeBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    backgroundColor: C.surfaceHigh,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  typeBadgeText: {
-    fontFamily: F.mono,
-    fontSize: 9,
-    color: C.textVariant,
-    letterSpacing: 1,
-  },
-  osmBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  osmBadgeText: {
-    fontFamily: F.mono,
-    fontSize: 9,
-    color: C.muted,
-    letterSpacing: 1,
-  },
-  subtitle: {
-    fontFamily: F.monoRegular,
-    fontSize: 10,
-    color: C.muted,
-    letterSpacing: 0.3,
-  },
-  ratingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-  },
-  ratingTextStore: {
-    fontFamily: F.mono,
-    fontSize: 10,
-    color: C.secondary,
-    marginLeft: 2,
-  },
   cta: {
+    width: 80,
     backgroundColor: C.primary,
-    paddingVertical: 13,
     alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingHorizontal: 6,
   },
   ctaDiy: {
     backgroundColor: C.tertiary,
@@ -397,11 +175,18 @@ const styles = StyleSheet.create({
   ctaStore: {
     backgroundColor: C.secondary,
   },
+  ctaIconRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
   ctaText: {
     fontFamily: F.mono,
-    fontSize: 12,
+    fontSize: 9,
     color: C.onPrimary,
-    letterSpacing: 2,
+    letterSpacing: 0.5,
+    textAlign: "center",
+    lineHeight: 12,
   },
   ctaTextDiy: {
     color: C.onTertiary,
