@@ -38,7 +38,19 @@ const Login = () => {
       password,
     });
     setLoading(false);
-    if (authError) setError(authError.message);
+    if (authError) {
+      // GoTrue's own message for a wrong email/password is a plain
+      // "Invalid login credentials" -- deliberately vague about which field
+      // was wrong (don't reveal whether the email even has an account), so
+      // this just rephrases that same vagueness in friendlier terms rather
+      // than passing through the raw string. Other errors (unconfirmed
+      // email, rate limiting, network) still show GoTrue's own message.
+      setError(
+        authError.message.toLowerCase().includes("invalid login credentials")
+          ? "We don't recognize that email/password pairing."
+          : authError.message
+      );
+    }
   };
 
   return (
