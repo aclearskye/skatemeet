@@ -32,6 +32,7 @@ export const SEARCH_NEARBY_RADIUS_KM = 150;
 // requests per viewport but coarser reuse and bigger per-tile payloads.
 export const MAP_TILE_SIZE_DEG = 0.08;
 export const MAP_TILE_STALE_MS = 5 * 60_000;
+export const LIVE_COUNT_STALE_MS = 25_000;
 
 // ── Map filters ───────────────────────────────────────────────────────────────
 

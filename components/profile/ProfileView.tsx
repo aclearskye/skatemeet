@@ -15,8 +15,8 @@ import {
   fetchProfileClips,
   getProfileClipCount,
   getProfileCrewCount,
-  getProfileSpotCount,
 } from "@/lib/clips/clips";
+import { fetchProfileVisitedCount, fetchUserStreak } from "@/lib/checkins/queries";
 import { type Profile } from "@/lib/context/use-auth-context";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { C, F } from "@/lib/theme";
@@ -28,6 +28,7 @@ import ClipCard, { GAP } from "./ClipCard";
 import ContentTabs from "./ContentTabs";
 import ProfileAvatar from "./ProfileAvatar";
 import ProfileBadges from "./ProfileBadges";
+import { StreakBadge } from "./StreakBadge";
 import StatsRow from "./StatsRow";
 
 type Props = {
@@ -51,7 +52,7 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
     queries: [
       {
         queryKey: [...queryKeys.profileStats(profile.profile_id), "spots"],
-        queryFn: () => getProfileSpotCount(profile.profile_id),
+        queryFn: () => fetchProfileVisitedCount(profile.profile_id),
       },
       {
         queryKey: [...queryKeys.profileStats(profile.profile_id), "clips"],
@@ -76,6 +77,11 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
   const { data: xpState } = useQuery({
     queryKey: queryKeys.profileXp(profile.profile_id),
     queryFn: () => fetchProfileXpState(profile.profile_id),
+  });
+
+  const { data: streak } = useQuery({
+    queryKey: queryKeys.userStreak(profile.profile_id),
+    queryFn: () => fetchUserStreak(profile.profile_id),
   });
 
   const previousLevelRef = useRef<number | null>(null);
@@ -122,6 +128,11 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
             onAvatarUpdated={handleAvatarUpdated}
             size={96}
           />
+          {streak && (
+            <View style={styles.streakBadgeOverlay}>
+              <StreakBadge currentStreak={streak.current_streak} />
+            </View>
+          )}
         </View>
 
         <View style={styles.heroRight}>
@@ -271,7 +282,16 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     gap: 14,
   },
-  heroLeft: {},
+  heroLeft: {
+    position: "relative",
+  },
+  streakBadgeOverlay: {
+    position: "absolute",
+    bottom: 2,
+    right: -6,
+    transform: [{ rotate: "-12deg" }],
+    zIndex: 2,
+  },
   heroRight: {
     flex: 1,
     justifyContent: "center",

@@ -1,4 +1,5 @@
 import { AddReviewSheet } from "@/components/common/AddReviewSheet";
+import { CheckInSection } from "@/components/common/CheckInSection";
 import { DeleteUnverifiedButton } from "@/components/common/DeleteUnverifiedButton";
 import { DetailHeader } from "@/components/common/DetailHeader";
 import { EditMetadataSheet } from "@/components/common/EditMetadataSheet";
@@ -6,6 +7,7 @@ import { EntityMetadataSection } from "@/components/common/EntityMetadataSection
 import { EntityPhotoViewerModal } from "@/components/common/EntityPhotoViewerModal";
 import { ReviewsModal } from "@/components/common/ReviewsModal";
 import { StarRating } from "@/components/common/StarRating";
+import { RequestVerificationButton } from "@/components/spot-detail/RequestVerificationButton";
 import { SpotHero } from "@/components/spot-detail/SpotHero";
 import { SpotInfoBlock } from "@/components/spot-detail/SpotInfoBlock";
 import { SpotReviews } from "@/components/spot-detail/SpotReviews";
@@ -20,6 +22,7 @@ import { useAddSpotPhoto } from "@/lib/spots/useAddSpotPhoto";
 import { useEntityMetadata } from "@/lib/shared/hooks/useEntityMetadata";
 import { openDirections } from "@/lib/shared/openDirections";
 import { ReviewInteractions } from "@/lib/shared/types";
+import { useCheckInSync } from "@/lib/shared/hooks/useCheckInSync";
 import { useEntityPhotos } from "@/lib/shared/useEntityPhotos";
 import { useReviewableEntity } from "@/lib/shared/useReviewableEntity";
 import { C, F } from "@/lib/theme";
@@ -41,6 +44,8 @@ export default function SpotDetailScreen() {
   const router = useRouter();
   const { session } = useAuthContext();
   const { kind, data } = useLocalSearchParams<Params>();
+
+  useCheckInSync();
 
   const spot = useMemo<SkateSpot | OsmSpot | null>(() => {
     if (!data) return null;
@@ -207,6 +212,12 @@ export default function SpotDetailScreen() {
             onEdit={() => setShowEditMetadata(true)}
           />
 
+          <CheckInSection
+            entityRef={{ spotId, osmSpotPlaceId: osmPlaceId, storeId: null, osmStorePlaceId: null }}
+            accent={accent}
+            onAccent={onAccent}
+          />
+
           <SpotVoteSection
             count={localVoteCount}
             hasVoted={userHasVoted}
@@ -216,6 +227,8 @@ export default function SpotDetailScreen() {
             isLoading={isVoting || isLoadingVote}
             showVerifyHint={isUser && !isVerified}
           />
+
+          {isOwner && spotId && <RequestVerificationButton spotId={spotId} accent={accent} />}
 
           {avgRating.count > 0 && (
             <View style={styles.ratingSection}>

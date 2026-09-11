@@ -17,6 +17,7 @@ type Props = {
   visibleUserStores: UserStore[];
   visibleOsmSpots: OsmSpot[];
   visibleUserSpots: SkateSpot[];
+  liveCounts: Map<string, number>;
   pendingPin: { latitude: number; longitude: number } | null;
   previewItem: PreviewItem | null;
   onMarkerPress: (item: PreviewItem) => void;
@@ -28,6 +29,17 @@ type EntityMarkerProps = {
   onPress: () => void;
   children: ReactNode;
 };
+
+// Used to key each marker below: a live-count crossing 0 remounts the
+// marker (see the .map() calls) rather than nudging tracksViewChanges back
+// to true on an already-mounted one, which is a known react-native-maps iOS
+// quirk that can leave the marker blank instead of repainting it. A clean
+// remount goes through useTracksViewChanges' proven mount-time settle path
+// instead. Keyed on presence, not the exact count, so going from e.g. 1
+// live check-in to 2 doesn't remount anything -- the dot looks the same.
+function liveKeySuffix(liveCount: number | undefined): string {
+  return liveCount != null && liveCount > 0 ? ":live" : "";
+}
 
 // Each entity marker needs its own tracksViewChanges lifecycle (see
 // useTracksViewChanges), which means its own hook instance — hence a real
@@ -51,6 +63,7 @@ export function MapMarkers({
   visibleUserStores,
   visibleOsmSpots,
   visibleUserSpots,
+  liveCounts,
   pendingPin,
   previewItem,
   onMarkerPress,
@@ -59,56 +72,60 @@ export function MapMarkers({
     <Fragment>
       {visibleOsmStores.map((store) => {
         const selected = previewItem?.kind === "osm-store" && previewItem.data.place_id === store.place_id;
+        const liveCount = liveCounts.get(store.place_id);
         return (
           <EntityMarker
-            key={store.place_id}
+            key={store.place_id + liveKeySuffix(liveCount)}
             coordinate={{ latitude: store.coordinates.lat, longitude: store.coordinates.lng }}
             selected={selected}
             onPress={() => onMarkerPress({ kind: "osm-store", data: store })}
           >
-            <StoreMarker selected={selected} />
+            <StoreMarker selected={selected} liveCount={liveCount} />
           </EntityMarker>
         );
       })}
 
       {visibleUserStores.map((store) => {
         const selected = previewItem?.kind === "user-store" && previewItem.data.store_id === store.store_id;
+        const liveCount = liveCounts.get(store.store_id);
         return (
           <EntityMarker
-            key={store.store_id}
+            key={store.store_id + liveKeySuffix(liveCount)}
             coordinate={{ latitude: store.latitude, longitude: store.longitude }}
             selected={selected}
             onPress={() => onMarkerPress({ kind: "user-store", data: store })}
           >
-            <StoreMarker selected={selected} />
+            <StoreMarker selected={selected} liveCount={liveCount} />
           </EntityMarker>
         );
       })}
 
       {visibleOsmSpots.map((spot) => {
         const selected = previewItem?.kind === "osm-spot" && previewItem.data.place_id === spot.place_id;
+        const liveCount = liveCounts.get(spot.place_id);
         return (
           <EntityMarker
-            key={spot.place_id}
+            key={spot.place_id + liveKeySuffix(liveCount)}
             coordinate={{ latitude: spot.coordinates.lat, longitude: spot.coordinates.lng }}
             selected={selected}
             onPress={() => onMarkerPress({ kind: "osm-spot", data: spot })}
           >
-            <SpotMarker isDiy={spot.spot_type === "diy"} selected={selected} />
+            <SpotMarker isDiy={spot.spot_type === "diy"} selected={selected} liveCount={liveCount} />
           </EntityMarker>
         );
       })}
 
       {visibleUserSpots.map((spot) => {
         const selected = previewItem?.kind === "user-spot" && previewItem.data.spot_id === spot.spot_id;
+        const liveCount = liveCounts.get(spot.spot_id);
         return (
           <EntityMarker
-            key={spot.spot_id}
+            key={spot.spot_id + liveKeySuffix(liveCount)}
             coordinate={{ latitude: spot.latitude, longitude: spot.longitude }}
             selected={selected}
             onPress={() => onMarkerPress({ kind: "user-spot", data: spot })}
           >
-            <SpotMarker isDiy={spot.type === "diy"} selected={selected} />
+            <SpotMarker isDiy={spot.type === "diy"} selected={selected} liveCount={liveCount} />
           </EntityMarker>
         );
       })}

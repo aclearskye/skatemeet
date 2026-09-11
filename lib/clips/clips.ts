@@ -32,7 +32,6 @@ async function fetchCount(table: string, column: string, value: string): Promise
   return count ?? 0;
 }
 
-export const getProfileSpotCount = (profileId: string) => fetchCount("user_spots", "created_by", profileId);
 export const getProfileClipCount = (profileId: string) => fetchCount("clips", "profile_id", profileId);
 export const getProfileCrewCount = (profileId: string) => fetchCount("crew_follows", "follower_id", profileId);
 

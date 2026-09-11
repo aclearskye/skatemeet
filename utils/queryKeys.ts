@@ -1,4 +1,5 @@
 import { Coordinates, Tile, tileKey } from "@/lib/map/types";
+import { EntityRef } from "@/lib/checkins/types";
 
 export const queryKeys = {
   spotDetail: (spotId: string | null, osmPlaceId: string | null) =>
@@ -32,4 +33,14 @@ export const queryKeys = {
     ["notifications", profileId] as const,
   notificationsUnreadCount: (profileId: string) =>
     ["notifications", profileId, "unreadCount"] as const,
+  checkInStatus: (profileId: string) =>
+    ["checkIn", profileId, "status"] as const,
+  liveCount: (ref: EntityRef) =>
+    ["checkIn", "liveCount", ref.spotId, ref.osmSpotPlaceId, ref.storeId, ref.osmStorePlaceId] as const,
+  liveCountsTile: (tile: Tile) =>
+    ["checkIn", "liveCounts", tileKey(tile)] as const,
+  spotVerificationStatus: (spotId: string) =>
+    ["spot", spotId, "verification"] as const,
+  userStreak: (profileId: string) =>
+    ["profile", profileId, "streak"] as const,
 };

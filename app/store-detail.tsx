@@ -1,4 +1,5 @@
 import { AddReviewSheet } from "@/components/common/AddReviewSheet";
+import { CheckInSection } from "@/components/common/CheckInSection";
 import { DeleteUnverifiedButton } from "@/components/common/DeleteUnverifiedButton";
 import { DetailHeader } from "@/components/common/DetailHeader";
 import { EditMetadataSheet } from "@/components/common/EditMetadataSheet";
@@ -11,6 +12,7 @@ import { StoreInfoBlock } from "@/components/store-detail/StoreInfoBlock";
 import { StoreReviews } from "@/components/store-detail/StoreReviews";
 import { StoreVoteSection } from "@/components/store-detail/StoreVoteSection";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { useCheckInSync } from "@/lib/shared/hooks/useCheckInSync";
 import { useEntityMetadata } from "@/lib/shared/hooks/useEntityMetadata";
 import { openDirections } from "@/lib/shared/openDirections";
 import { ReviewInteractions } from "@/lib/shared/types";
@@ -37,6 +39,8 @@ export default function StoreDetailScreen() {
   const router = useRouter();
   const { session } = useAuthContext();
   const { kind, data } = useLocalSearchParams<Params>();
+
+  useCheckInSync();
 
   const isUserStore = kind === "user-store";
 
@@ -207,6 +211,12 @@ export default function StoreDetailScreen() {
             accent={C.secondary}
             canEdit={session != null}
             onEdit={() => setShowEditMetadata(true)}
+          />
+
+          <CheckInSection
+            entityRef={{ spotId: null, osmSpotPlaceId: null, storeId, osmStorePlaceId: osmPlaceId }}
+            accent={C.secondary}
+            onAccent={C.onSecondary}
           />
 
           <StoreVoteSection

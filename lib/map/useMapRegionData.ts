@@ -1,9 +1,16 @@
+import { fetchLiveCountsInBbox } from "@/lib/checkins/queries";
 import { getCachedLocation, setCachedLocation } from "@/lib/map/locationCache";
 import { loadOsmMarkers, loadUserMarkers } from "@/lib/map/mapData";
 import { Coordinates, dedupeById, latLngToTile, tilesForBbox, tileToBbox } from "@/lib/map/types";
 import { BoundingBox, OsmSpot, OsmStore, regionToBoundingBox, SkateSpot } from "@/lib/spots/types";
 import { UserStore } from "@/lib/stores/types";
-import { MAP_TILE_STALE_MS, MAX_DELTA, SCAN_MIN_MS, SPOTS_DEBOUNCE_MS } from "@/utils/constants";
+import {
+  LIVE_COUNT_STALE_MS,
+  MAP_TILE_STALE_MS,
+  MAX_DELTA,
+  SCAN_MIN_MS,
+  SPOTS_DEBOUNCE_MS,
+} from "@/utils/constants";
 import { queryKeys } from "@/utils/queryKeys";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import * as Location from "expo-location";
@@ -83,6 +90,27 @@ export function useMapRegionData() {
     () => dedupeById(userTileResults.flatMap((r) => r.data?.userSpots ?? []), (s) => s.spot_id),
     [userTileResults]
   );
+
+  // Live "skaters here now" counts, kept as their own per-tile query rather
+  // than folded into the marker payload above: markers are cached for
+  // MAP_TILE_STALE_MS (5 min), fine for entity existence but far too stale
+  // for a live count, so this gets its own short staleTime/refetchInterval.
+  const liveCountTileResults = useQueries({
+    queries: tiles.map((tile) => ({
+      queryKey: queryKeys.liveCountsTile(tile),
+      queryFn: () => fetchLiveCountsInBbox(tileToBbox(tile)),
+      staleTime: LIVE_COUNT_STALE_MS,
+      refetchInterval: LIVE_COUNT_STALE_MS,
+    })),
+  });
+
+  const liveCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const result of liveCountTileResults) {
+      for (const row of result.data ?? []) map.set(row.entity_key, row.live_count);
+    }
+    return map;
+  }, [liveCountTileResults]);
 
   const markersLoading =
     osmTileResults.some((r) => r.isFetching) || userTileResults.some((r) => r.isFetching);
@@ -275,6 +303,7 @@ export function useMapRegionData() {
     osmSpots,
     userSpots,
     userStores,
+    liveCounts,
     prependUserSpot,
     prependUserStore,
     dismissedEmpty,

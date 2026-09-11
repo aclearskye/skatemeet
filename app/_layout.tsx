@@ -3,6 +3,7 @@ import AuthProvider from "@/providers/auth-provider";
 import { DrawerProvider } from "@/lib/context/drawer-context";
 import { ToastProvider } from "@/lib/context/toast-context";
 import { useWelcomeXpToast } from "@/lib/xp/useWelcomeXpToast";
+import { useCheckInSync } from "@/lib/shared/hooks/useCheckInSync";
 import DrawerMenu from "@/components/ui/DrawerMenu";
 import { ToastHost } from "@/components/ui/ToastHost";
 import WebAccountSidebar from "@/components/ui/WebAccountSidebar";
@@ -45,6 +46,7 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
   const router = useRouter();
 
   useWelcomeXpToast(profile);
+  useCheckInSync();
 
   useEffect(() => {
     if (isLoadingAuthContext || !fontsLoaded) return;

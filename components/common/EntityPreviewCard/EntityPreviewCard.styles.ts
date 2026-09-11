@@ -83,6 +83,27 @@ export const styles = StyleSheet.create({
     color: C.textVariant,
     letterSpacing: 1,
   },
+  liveBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    backgroundColor: C.errorContainer,
+  },
+  liveDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: C.error,
+  },
+  liveBadgeText: {
+    fontFamily: F.mono,
+    fontSize: 9,
+    color: C.error,
+    letterSpacing: 1,
+  },
   subtitle: {
     fontFamily: F.monoRegular,
     fontSize: 10,

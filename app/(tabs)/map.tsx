@@ -50,6 +50,7 @@ export default function MapScreen() {
     osmSpots,
     userSpots,
     userStores,
+    liveCounts,
     prependUserSpot,
     prependUserStore,
     dismissedEmpty,
@@ -179,6 +180,7 @@ export default function MapScreen() {
             visibleUserStores={visibleUserStores}
             visibleOsmSpots={visibleOsmSpots}
             visibleUserSpots={visibleUserSpots}
+            liveCounts={liveCounts}
             pendingPin={pendingPin}
             previewItem={previewItem}
             onMarkerPress={handleMarkerSelect}

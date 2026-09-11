@@ -3,6 +3,7 @@ import type { PreviewItem } from "@/components/map/MapPreviewCard";
 import { toggleSpotVote } from "@/lib/spots/mutations";
 import { toggleStoreVote } from "@/lib/stores/mutations";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { useLiveCount } from "@/lib/shared/hooks/useLiveCount";
 import { C } from "@/lib/theme";
 import { TYPE_LABELS } from "@/utils/constants";
 import { exhaustiveCheck } from "@/utils/typeGuards";
@@ -88,6 +89,13 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted, distanceMile
   const storeId = item.kind === "user-store" ? item.data.store_id : null;
   const osmStoreId = item.kind === "osm-store" ? item.data.place_id : null;
 
+  const liveCount = useLiveCount({
+    spotId,
+    osmSpotPlaceId: osmSpotId,
+    storeId,
+    osmStorePlaceId: osmStoreId,
+  });
+
   const [hasVoted, setHasVoted] = useState<boolean | null>(initialHasVoted);
   const [localCount, setLocalCount] = useState(upvoteCount);
 
@@ -132,6 +140,13 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted, distanceMile
 
           {/* Info block */}
           <View style={styles.info}>
+            {liveCount != null && liveCount > 0 && (
+              <View style={styles.liveBadge}>
+                <View style={styles.liveDot} />
+                <Text style={styles.liveBadgeText}>{liveCount} LIVE</Text>
+              </View>
+            )}
+
             {/* Name + VERIFIED stamp */}
             <View style={styles.nameRow}>
               <Text style={styles.name} numberOfLines={1}>{name}</Text>
@@ -142,7 +157,8 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted, distanceMile
               )}
             </View>
 
-            {/* Badges + upvote pill */}
+            {/* Badges + upvote pill -- always includes the vote pill when
+                available, never crowded out by the live badge above. */}
             <View style={styles.badgeRow}>
               <View style={styles.typeBadge}>
                 <Text style={styles.typeBadgeText}>{typeLabel}</Text>
