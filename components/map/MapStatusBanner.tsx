@@ -2,6 +2,7 @@ import { C, F, R } from "@/lib/theme";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type Props = {
+  gettingLocation: boolean;
   tooZoomedOut: boolean;
   markersLoading: boolean;
   scanningMinimum: boolean;
@@ -12,6 +13,7 @@ type Props = {
 };
 
 export function MapStatusBanner({
+  gettingLocation,
   tooZoomedOut,
   markersLoading,
   scanningMinimum,
@@ -21,19 +23,21 @@ export function MapStatusBanner({
   top,
 }: Props) {
   const isScanning = markersLoading || scanningMinimum;
-  const visible = tooZoomedOut || isScanning || (nothingVisible && !dismissedEmpty);
+  const visible = gettingLocation || tooZoomedOut || isScanning || (nothingVisible && !dismissedEmpty);
   if (!visible) return null;
 
-  const dismissible = !tooZoomedOut && !isScanning;
+  const dismissible = !gettingLocation && !tooZoomedOut && !isScanning;
 
   return (
     <View style={[styles.emptyBanner, { top }]}>
       <Text style={styles.emptyText}>
-        {tooZoomedOut
-          ? "ZOOM IN TO SEE SPOTS"
+        {gettingLocation
+          ? "// GETTING YOUR LOCATION…"
+          : tooZoomedOut
+          ? "// ZOOM IN TO SEE SPOTS"
           : isScanning
-          ? "SCANNING NEARBY…"
-          : "NOTHING FOUND NEARBY."}
+          ? "// SCANNING NEARBY…"
+          : "// NOTHING FOUND NEARBY."}
       </Text>
       {dismissible ? (
         <TouchableOpacity onPress={onDismiss} style={styles.emptyDismiss}>

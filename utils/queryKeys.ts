@@ -1,4 +1,4 @@
-import { BoundingBox } from "@/lib/spots/types";
+import { Coordinates, Tile, tileKey } from "@/lib/map/types";
 
 export const queryKeys = {
   spotDetail: (spotId: string | null, osmPlaceId: string | null) =>
@@ -14,11 +14,12 @@ export const queryKeys = {
   storeMetadata: (storeId: string | null, osmPlaceId: string | null) =>
     ["store", storeId, osmPlaceId, "metadata"] as const,
   mapOsmMarkersBase: ["map", "osmMarkers"] as const,
-  mapOsmMarkers: (bbox: BoundingBox | null) =>
-    ["map", "osmMarkers", bbox] as const,
+  mapOsmTile: (tile: Tile) => ["map", "osmMarkers", tileKey(tile)] as const,
   mapUserMarkersBase: ["map", "userMarkers"] as const,
-  mapUserMarkers: (bbox: BoundingBox | null) =>
-    ["map", "userMarkers", bbox] as const,
+  mapUserTile: (tile: Tile) => ["map", "userMarkers", tileKey(tile)] as const,
+  entitySearch: (query: string) => ["search", "entities", query] as const,
+  entitySearchNearby: (query: string, coords: Coordinates) =>
+    ["search", "entitiesNearby", query, coords.lat, coords.lng] as const,
   profileStats: (profileId: string) =>
     ["profile", profileId, "stats"] as const,
   profileClips: (profileId: string) =>

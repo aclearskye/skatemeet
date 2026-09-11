@@ -1,17 +1,34 @@
 import { C, F } from "@/lib/theme";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-type Props = { kind: "loading" | "denied" };
+type Props = { kind: "loading" | "denied" | "error"; onRetry?: () => void };
 
-export function MapStatusScreen({ kind }: Props) {
+export function MapStatusScreen({ kind, onRetry }: Props) {
   if (kind === "loading") {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={C.primary} />
-        <Text style={styles.statusText}>GETTING YOUR LOCATION…</Text>
+        <Text style={styles.statusText}>{"// GETTING YOUR LOCATION…"}</Text>
       </View>
     );
   }
+
+  if (kind === "error") {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorHeading}>COULDN&apos;T GET YOUR LOCATION</Text>
+        <Text style={styles.errorBody}>
+          Check that GPS is on and you have a signal, then try again.
+        </Text>
+        {onRetry && (
+          <TouchableOpacity style={styles.retryButton} onPress={onRetry} activeOpacity={0.85}>
+            <Text style={styles.retryButtonText}>TRY AGAIN</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  }
+
   return (
     <View style={styles.center}>
       <Text style={styles.errorHeading}>LOCATION NEEDED</Text>
@@ -51,5 +68,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     lineHeight: 22,
+  },
+  retryButton: {
+    marginTop: 20,
+    backgroundColor: C.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  retryButtonText: {
+    fontFamily: F.mono,
+    fontSize: 12,
+    letterSpacing: 1,
+    color: C.onPrimary,
   },
 });

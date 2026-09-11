@@ -1,8 +1,7 @@
 import { fetchOsmSpotsInBounds, fetchSpotsInBounds } from "@/lib/spots/queries";
-import { OsmSpot, OsmStore, regionToBoundingBox, SkateSpot } from "@/lib/spots/types";
+import { BoundingBox, OsmSpot, OsmStore, SkateSpot } from "@/lib/spots/types";
 import { fetchOsmStoresInBounds, fetchUserStoresInBounds } from "@/lib/stores/queries";
 import { UserStore } from "@/lib/stores/types";
-import { Region } from "react-native-maps";
 
 export type OsmMarkersResult = {
   osmSpots: OsmSpot[];
@@ -10,13 +9,7 @@ export type OsmMarkersResult = {
   userStores: UserStore[];
 };
 
-export async function loadOsmMarkers(region: Region): Promise<OsmMarkersResult> {
-  const bbox = regionToBoundingBox(
-    region.latitude,
-    region.longitude,
-    region.latitudeDelta,
-    region.longitudeDelta
-  );
+export async function loadOsmMarkers(bbox: BoundingBox): Promise<OsmMarkersResult> {
   const [osmSpots, osmStores, userStores] = await Promise.all([
     fetchOsmSpotsInBounds(bbox),
     fetchOsmStoresInBounds(bbox),
@@ -25,13 +18,7 @@ export async function loadOsmMarkers(region: Region): Promise<OsmMarkersResult> 
   return { osmSpots, osmStores, userStores };
 }
 
-export async function loadUserMarkers(region: Region): Promise<{ userSpots: SkateSpot[] }> {
-  const bbox = regionToBoundingBox(
-    region.latitude,
-    region.longitude,
-    region.latitudeDelta,
-    region.longitudeDelta
-  );
+export async function loadUserMarkers(bbox: BoundingBox): Promise<{ userSpots: SkateSpot[] }> {
   const userSpots = await fetchSpotsInBounds(bbox);
   return { userSpots };
 }
