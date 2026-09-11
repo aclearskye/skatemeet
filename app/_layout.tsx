@@ -39,23 +39,12 @@ SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
-const RootNavigation = () => {
+const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
   const { session, isLoadingAuthContext, profile } = useAuthContext();
   const segments = useSegments();
   const router = useRouter();
 
   useWelcomeXpToast(profile);
-
-  const [fontsLoaded] = useFonts({
-    Anton_400Regular,
-    HankenGrotesk_400Regular,
-    HankenGrotesk_500Medium,
-    HankenGrotesk_600SemiBold,
-    HankenGrotesk_700Bold,
-    HankenGrotesk_800ExtraBold,
-    SpaceMono_400Regular,
-    SpaceMono_700Bold,
-  });
 
   useEffect(() => {
     if (isLoadingAuthContext || !fontsLoaded) return;
@@ -99,6 +88,22 @@ const RootNavigation = () => {
 };
 
 export default function Layout() {
+  // Lifted above RootNavigation so DrawerMenu (a sibling, not a descendant of
+  // RootNavigation) can be gated on it too — otherwise DrawerMenu mounts and
+  // lays out its text against the fallback system font before these custom
+  // fonts finish loading, and Android swaps the glyphs in place afterward
+  // without re-measuring, clipping the wider real glyphs against the stale box.
+  const [fontsLoaded] = useFonts({
+    Anton_400Regular,
+    HankenGrotesk_400Regular,
+    HankenGrotesk_500Medium,
+    HankenGrotesk_600SemiBold,
+    HankenGrotesk_700Bold,
+    HankenGrotesk_800ExtraBold,
+    SpaceMono_400Regular,
+    SpaceMono_700Bold,
+  });
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -112,15 +117,15 @@ export default function Layout() {
                 <WebSidebar />
                 <View style={styles.webBodyOuter}>
                   <View style={[styles.webContentInner, { backgroundColor: C.bg }]}>
-                    <RootNavigation />
+                    <RootNavigation fontsLoaded={fontsLoaded} />
                   </View>
                 </View>
                 <WebAccountSidebar />
               </View>
             ) : (
               <View style={{ flex: 1, backgroundColor: C.bg }}>
-                <RootNavigation />
-                <DrawerMenu />
+                <RootNavigation fontsLoaded={fontsLoaded} />
+                {fontsLoaded && <DrawerMenu />}
               </View>
             )}
             <ToastHost />
