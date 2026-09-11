@@ -83,19 +83,6 @@ export const styles = StyleSheet.create({
     color: C.textVariant,
     letterSpacing: 1,
   },
-  osmBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.borderVariant,
-  },
-  osmBadgeText: {
-    fontFamily: F.mono,
-    fontSize: 9,
-    color: C.muted,
-    letterSpacing: 1,
-  },
   subtitle: {
     fontFamily: F.monoRegular,
     fontSize: 10,
@@ -145,5 +132,13 @@ export const styles = StyleSheet.create({
   },
   ctaTextStore: {
     color: C.onSecondary,
+  },
+  ctaDistanceText: {
+    fontFamily: F.mono,
+    fontSize: 8,
+    color: C.onPrimary,
+    letterSpacing: 0.3,
+    textAlign: "center",
+    opacity: 0.75,
   },
 });

@@ -9,7 +9,6 @@ type Props = {
   typeLabel: string;
   isUser: boolean;
   isVerified: boolean;
-  isOsm: boolean;
   accent: string;
   onAccent: string;
   onDirections: () => void;
@@ -24,7 +23,6 @@ export function SpotInfoBlock({
   typeLabel,
   isUser,
   isVerified,
-  isOsm,
   accent,
   onAccent,
   onDirections,
@@ -47,11 +45,6 @@ export function SpotInfoBlock({
         {isUser && isVerified && (
           <View style={[styles.verifiedBadge, { backgroundColor: accent }]}>
             <Text style={[styles.verifiedBadgeText, { color: onAccent }]}>VERIFIED</Text>
-          </View>
-        )}
-        {isOsm && (
-          <View style={styles.osmBadge}>
-            <Text style={styles.osmBadgeText}>FROM OSM</Text>
           </View>
         )}
       </View>
@@ -93,14 +86,6 @@ const styles = StyleSheet.create({
   typeBadgeText: { fontFamily: F.mono, fontSize: 10, color: C.textVariant, letterSpacing: 1 },
   verifiedBadge: { paddingHorizontal: 10, paddingVertical: 4 },
   verifiedBadgeText: { fontFamily: F.mono, fontSize: 10, letterSpacing: 1 },
-  osmBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.borderVariant,
-  },
-  osmBadgeText: { fontFamily: F.mono, fontSize: 10, color: C.muted, letterSpacing: 1 },
   directionsBtn: {
     flexDirection: "row",
     alignItems: "center",

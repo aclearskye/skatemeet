@@ -16,9 +16,10 @@ type Props = {
   item: PreviewItem;
   onPress: () => void;
   initialHasVoted: boolean | null;
+  distanceMiles?: number;
 };
 
-export function EntityPreviewCard({ item, onPress, initialHasVoted }: Props) {
+export function EntityPreviewCard({ item, onPress, initialHasVoted, distanceMiles }: Props) {
   const { session } = useAuthContext();
   const userId = session?.user.id ?? null;
 
@@ -30,7 +31,6 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted }: Props) {
   let isVerified = false;
   let upvoteCount: number | null = null;
   let subtitle = "";
-  let isOsm = false;
   let isDiy = false;
   let isStore = false;
 
@@ -51,7 +51,6 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted }: Props) {
       photoUrl = s.cover_photo_url ?? s.osm_image_url;
       typeLabel = TYPE_LABELS[s.spot_type] ?? s.spot_type.toUpperCase();
       subtitle = s.address;
-      isOsm = true;
       isDiy = s.spot_type === "diy";
       upvoteCount = s.upvote_count;
       break;
@@ -62,7 +61,6 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted }: Props) {
       photoUrl = s.cover_photo_url ?? s.osm_image_url;
       subtitle = s.address;
       typeLabel = "SKATE STORE";
-      isOsm = true;
       upvoteCount = s.upvote_count;
       isStore = true;
       break;
@@ -80,6 +78,10 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted }: Props) {
     default:
       exhaustiveCheck(item);
   }
+
+  const metaLine = [subtitle, distanceMiles != null ? `${distanceMiles.toFixed(1)} MI AWAY` : ""]
+    .filter(Boolean)
+    .join(" · ");
 
   const spotId = item.kind === "user-spot" ? item.data.spot_id : null;
   const osmSpotId = item.kind === "osm-spot" ? item.data.place_id : null;
@@ -145,11 +147,6 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted }: Props) {
               <View style={styles.typeBadge}>
                 <Text style={styles.typeBadgeText}>{typeLabel}</Text>
               </View>
-              {isOsm && (
-                <View style={styles.osmBadge}>
-                  <Text style={styles.osmBadgeText}>OSM</Text>
-                </View>
-              )}
               {localCount != null && hasVoted !== null && (
                 <VoteButton
                   count={localCount}
@@ -163,9 +160,9 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted }: Props) {
               )}
             </View>
 
-            {/* Subtitle (address) */}
-            {subtitle !== "" && (
-              <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
+            {/* Subtitle (address, and/or distance when sorted by nearest) */}
+            {metaLine !== "" && (
+              <Text style={styles.subtitle} numberOfLines={1}>{metaLine}</Text>
             )}
           </View>
         </TouchableOpacity>
@@ -191,6 +188,11 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted }: Props) {
           <Text style={[styles.ctaText, isDiy && styles.ctaTextDiy, !isSpot && styles.ctaTextStore]}>
             {isSpot ? "SKATE HERE" : "VIEW STORE"}
           </Text>
+          {distanceMiles != null && (
+            <Text style={[styles.ctaDistanceText, isDiy && styles.ctaTextDiy, !isSpot && styles.ctaTextStore]}>
+              {`~${distanceMiles.toFixed(1)}MI`}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>

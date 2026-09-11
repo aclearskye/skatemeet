@@ -190,7 +190,6 @@ export default function SpotDetailScreen() {
             typeLabel={typeLabel}
             isUser={isUser}
             isVerified={isVerified}
-            isOsm={isOsm}
             accent={accent}
             onAccent={onAccent}
             onDirections={handleDirections}

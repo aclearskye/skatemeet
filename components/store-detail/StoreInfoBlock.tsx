@@ -7,7 +7,6 @@ import { Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 
 type Props = {
   name: string;
-  isOsm: boolean;
   osmRating: number | null;
   onDirections: () => void;
   onAddPhoto: () => void;
@@ -21,7 +20,6 @@ type Props = {
 
 export function StoreInfoBlock({
   name,
-  isOsm,
   osmRating,
   onDirections,
   onAddPhoto,
@@ -43,11 +41,6 @@ export function StoreInfoBlock({
         <View style={styles.typeBadge}>
           <Text style={styles.typeBadgeText}>SKATE STORE</Text>
         </View>
-        {isOsm && (
-          <View style={styles.osmBadge}>
-            <Text style={styles.osmBadgeText}>FROM OSM</Text>
-          </View>
-        )}
       </View>
 
       {osmRating != null && <StarRating rating={osmRating} accent={C.secondary} />}
@@ -115,14 +108,6 @@ const styles = StyleSheet.create({
     borderColor: C.borderVariant,
   },
   typeBadgeText: { fontFamily: F.mono, fontSize: 10, color: C.textVariant, letterSpacing: 1 },
-  osmBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.borderVariant,
-  },
-  osmBadgeText: { fontFamily: F.mono, fontSize: 10, color: C.muted, letterSpacing: 1 },
   directionsBtn: {
     flexDirection: "row",
     alignItems: "center",

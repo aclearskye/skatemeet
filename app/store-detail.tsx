@@ -74,7 +74,6 @@ export default function StoreDetailScreen() {
   const website = store && "website" in store ? (store as OsmStore | UserStore).website : null;
   const hours = store && "opening_hours" in store ? (store as OsmStore | UserStore).opening_hours : null;
   const description = store && "description" in store ? (store as OsmStore | UserStore).description : null;
-  const isOsm = kind === "osm-store" || kind === "skate-store";
 
   const [showAddReview, setShowAddReview] = useState(false);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
@@ -191,7 +190,6 @@ export default function StoreDetailScreen() {
         <View style={styles.body}>
           <StoreInfoBlock
             name={name}
-            isOsm={isOsm}
             osmRating={osmRating}
             onDirections={handleDirections}
             onAddPhoto={addPhoto}
