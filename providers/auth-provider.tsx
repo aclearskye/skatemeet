@@ -7,6 +7,7 @@ import { PropsWithChildren, useCallback, useEffect, useRef, useState } from "rea
 export default function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | undefined | null>();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isBanned, setIsBanned] = useState(false);
   const [isLoadingAuthContext, setIsLoadingAuthContext] =
     useState<boolean>(true);
   const sessionRef = useRef<Session | null | undefined>(session);
@@ -26,8 +27,16 @@ export default function AuthProvider({ children }: PropsWithChildren) {
       } else {
         setProfile(data as Profile | null);
       }
+
+      // The sole ban-enforcement mechanism: a banned account can still sign
+      // in (see 20260927000000_bans_without_auth_lockout.sql), so this check
+      // -- combined with app/_layout.tsx's redirect to app/banned.tsx -- is
+      // what actually confines it, rather than a backup for an Auth-level lock.
+      const { data: banned } = await supabase.rpc("is_banned", { p_profile_id: s.user.id });
+      setIsBanned(banned === true);
     } else {
       setProfile(null);
+      setIsBanned(false);
     }
   }, []);
 
@@ -90,6 +99,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         isLoadingAuthContext,
         profile,
         isLoggedIn: session !== undefined && session !== null,
+        isBanned,
         refreshProfile,
       }}
     >

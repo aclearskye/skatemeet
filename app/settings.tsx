@@ -1,6 +1,7 @@
 import { C, F } from "@/lib/theme";
 import { StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { DeactivateAccountButton } from "@/components/common/DeactivateAccountButton";
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -12,6 +13,11 @@ export default function SettingsScreen() {
       </View>
       <View style={styles.body}>
         <Text style={styles.placeholder}>PROFILE SETTINGS WILL APPEAR HERE.</Text>
+      </View>
+
+      <View style={styles.dangerZone}>
+        <Text style={styles.dangerLabel}>DANGER ZONE</Text>
+        <DeactivateAccountButton />
       </View>
     </View>
   );
@@ -41,5 +47,17 @@ const styles = StyleSheet.create({
     fontFamily: F.mono,
     fontSize: 11,
     letterSpacing: 2,
+  },
+  dangerZone: {
+    padding: 16,
+    gap: 10,
+    borderTopWidth: 1,
+    borderTopColor: C.borderVariant,
+  },
+  dangerLabel: {
+    fontFamily: F.mono,
+    fontSize: 11,
+    color: C.muted,
+    letterSpacing: 1,
   },
 });

@@ -1,0 +1,1 @@
+export { UserSearchResultCard } from "./UserSearchResultCard";

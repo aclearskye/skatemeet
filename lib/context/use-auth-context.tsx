@@ -19,6 +19,7 @@ export type Profile = {
   bio: string | null;
   pronouns: string | null;
   avatar_url: string | null;
+  is_admin: boolean;
 };
 
 export type AuthData = {
@@ -26,6 +27,7 @@ export type AuthData = {
   profile?: Profile | null;
   isLoadingAuthContext: boolean;
   isLoggedIn: boolean;
+  isBanned: boolean;
   refreshProfile: () => Promise<void>;
 };
 
@@ -34,6 +36,7 @@ export const AuthContext = createContext<AuthData>({
   profile: undefined,
   isLoadingAuthContext: true,
   isLoggedIn: false,
+  isBanned: false,
   refreshProfile: async () => {},
 });
 

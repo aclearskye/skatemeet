@@ -45,4 +45,22 @@ export const queryKeys = {
     ["profile", profileId, "streak"] as const,
   hasManualCheckIn: (entityKey: string) =>
     ["checkIn", entityKey, "hasManual"] as const,
+  adminVerificationQueue: () =>
+    ["admin", "verificationQueue"] as const,
+  adminPhotoReports: () =>
+    ["admin", "photoReports"] as const,
+  adminReviewReports: () =>
+    ["admin", "reviewReports"] as const,
+  adminBanHistory: (profileId: string) =>
+    ["admin", "banHistory", profileId] as const,
+  adminProfileReports: () =>
+    ["admin", "profileReports"] as const,
+  adminBanAppeals: () =>
+    ["admin", "banAppeals"] as const,
+  adminDeletionEligible: () =>
+    ["admin", "deletionEligible"] as const,
+  profileReportStatus: (profileId: string) =>
+    ["profile", profileId, "reportStatus"] as const,
+  banAppealStatus: (profileId: string) =>
+    ["profile", profileId, "banAppealStatus"] as const,
 };

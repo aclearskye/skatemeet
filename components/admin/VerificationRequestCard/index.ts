@@ -1,0 +1,1 @@
+export { VerificationRequestCard } from "./VerificationRequestCard";

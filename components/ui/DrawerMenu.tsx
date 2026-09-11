@@ -41,7 +41,7 @@ export const NAV_ITEMS: NavItem[] = [
 
 export default function DrawerMenu() {
   const { isOpen, closeDrawer } = useDrawer();
-  const { profile } = useAuthContext();
+  const { profile, isBanned } = useAuthContext();
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
@@ -179,8 +179,16 @@ export default function DrawerMenu() {
         {/* Pushed to the bottom of the panel via dividerBottom's marginTop: "auto" */}
         <View style={[styles.divider, styles.dividerBottom]} />
 
-        {/* Business account section */}
-        {accountType === "user" && (
+        {profile?.is_admin && (
+          <TouchableOpacity style={styles.navItem} onPress={() => navigate("/admin")} activeOpacity={0.7}>
+            <Ionicons name="shield-checkmark-outline" size={18} color={C.muted} />
+            <Text style={styles.navLabel}>ADMIN PANEL</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Business account section -- hidden for a banned account, which is
+        confined to app/banned.tsx and shouldn't reach any other flow. */}
+        {accountType === "user" && !isBanned && (
           <TouchableOpacity style={styles.navItem} onPress={openBizModal} activeOpacity={0.7}>
             <Ionicons name="briefcase-outline" size={18} color={C.muted} />
             <Text style={styles.navLabel}>SWITCH TO BUSINESS</Text>

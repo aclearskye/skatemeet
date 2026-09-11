@@ -41,7 +41,7 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
-  const { session, isLoadingAuthContext, profile } = useAuthContext();
+  const { session, isLoadingAuthContext, profile, isBanned } = useAuthContext();
   const segments = useSegments();
   const router = useRouter();
 
@@ -53,8 +53,15 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
 
     const inOnboardingGroup = segments[0] === "(onboarding)";
     const inPublicScreen = segments[0] === "Login" || segments[0] === "SignUp";
+    const inBannedScreen = segments[0] === "banned";
+    const inAccountDeletedScreen = segments[0] === "account-deleted";
 
-    if (!session && !inPublicScreen) {
+    if (session && isBanned && !inBannedScreen) {
+      // The only ban enforcement -- a banned account can still authenticate,
+      // it's just confined here instead of being rejected at sign-in (see
+      // AuthProvider and 20260927000000_bans_without_auth_lockout.sql).
+      router.replace("/banned");
+    } else if (!session && !inPublicScreen && !inBannedScreen && !inAccountDeletedScreen) {
       router.replace("/Login");
     } else if (session && profile === null && !inPublicScreen && !inOnboardingGroup) {
       router.replace("/(onboarding)");
@@ -65,7 +72,7 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
     }
 
     SplashScreen.hideAsync();
-  }, [session, isLoadingAuthContext, profile, segments, router, fontsLoaded]);
+  }, [session, isLoadingAuthContext, profile, isBanned, segments, router, fontsLoaded]);
 
   if (!fontsLoaded) {
     return <View style={{ flex: 1, backgroundColor: C.bg }} />;
@@ -84,6 +91,9 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
         <Stack.Screen name="settings" />
         <Stack.Screen name="favourites" />
         <Stack.Screen name="notifications" />
+        <Stack.Screen name="admin" />
+        <Stack.Screen name="banned" />
+        <Stack.Screen name="account-deleted" />
       </Stack>
     </ErrorBoundary>
   );

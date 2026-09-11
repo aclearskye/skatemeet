@@ -1,0 +1,1 @@
+export { PhotoReportCard } from "./PhotoReportCard";

@@ -1,0 +1,1 @@
+export { BanAppealCard } from "./BanAppealCard";

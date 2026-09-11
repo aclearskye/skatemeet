@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -19,10 +20,13 @@ import {
 import { fetchProfileVisitedCount, fetchUserStreak } from "@/lib/checkins/queries";
 import { type Profile } from "@/lib/context/use-auth-context";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { useReportProfile } from "@/lib/profiles/hooks/useReportProfile";
+import { PROFILE_REPORT_REASONS, type ProfileReportReason } from "@/lib/shared/types";
 import { C, F } from "@/lib/theme";
 import { fetchProfileXpState } from "@/lib/xp/queries";
 import { queryKeys } from "@/utils/queryKeys";
 import BurgerButton from "@/components/ui/BurgerButton";
+import { ReportReasonSheet } from "@/components/common/ReportReasonSheet";
 import { ExpBar } from "@/components/profile/ExpBar";
 import ClipCard, { GAP } from "./ClipCard";
 import ContentTabs from "./ContentTabs";
@@ -39,11 +43,18 @@ type Props = {
 export default function ProfileView({ profile, isOwnProfile }: Props) {
   const { refreshProfile } = useAuthContext();
   const insets = useSafeAreaInsets();
+  const { hasReported, report, isReporting } = useReportProfile(profile.profile_id);
 
   const [activeTab, setActiveTab] = useState(0);
+  const [showReportReasons, setShowReportReasons] = useState(false);
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(
     profile.avatar_url
   );
+
+  function handleSelectReportReason(reason: string) {
+    setShowReportReasons(false);
+    report(reason as ProfileReportReason);
+  }
 
   const displayName =
     profile.display_name?.trim() || `${profile.first_name} ${profile.last_name}`.trim();
@@ -110,9 +121,24 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
   }
 
   return (
+    <>
     <ScrollView style={styles.bg} contentContainerStyle={styles.scrollContent}>
       {/* Top bar */}
       <View style={[styles.topBar, { paddingTop: insets.top + 12 }]}>
+        {!isOwnProfile && (
+          <TouchableOpacity
+            onPress={() => !hasReported && !isReporting && setShowReportReasons(true)}
+            disabled={hasReported || isReporting}
+            style={styles.reportBtn}
+            hitSlop={8}
+          >
+            <Ionicons
+              name={hasReported ? "flag" : "flag-outline"}
+              size={18}
+              color={hasReported ? C.error : C.muted}
+            />
+          </TouchableOpacity>
+        )}
         <BurgerButton />
       </View>
 
@@ -239,6 +265,21 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
         </View>
       )}
     </ScrollView>
+
+    <Modal
+      visible={showReportReasons}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setShowReportReasons(false)}
+    >
+      <ReportReasonSheet
+        title="WHY ARE YOU REPORTING THIS ACCOUNT?"
+        reasons={PROFILE_REPORT_REASONS}
+        onSelect={handleSelectReportReason}
+        onCancel={() => setShowReportReasons(false)}
+      />
+    </Modal>
+    </>
   );
 }
 
@@ -272,8 +313,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-end",
     alignItems: "center",
+    gap: 16,
     paddingHorizontal: 16,
     paddingBottom: 12,
+  },
+  reportBtn: {
+    padding: 2,
   },
 
   hero: {

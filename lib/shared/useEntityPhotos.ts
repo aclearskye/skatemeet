@@ -47,12 +47,12 @@ export function useEntityPhotos<TPhoto extends EntityPhoto>(
   const queryClient = useQueryClient();
   const userId = session?.user.id;
 
-  const { data: photos = [], isLoading } = useQuery({
+  const { data: allPhotos = [], isLoading } = useQuery({
     queryKey: queryKeyBase,
     queryFn: () => adapter.fetchPhotos(id, osmId),
   });
 
-  const photoIds = photos.map((p) => p.photo_id);
+  const photoIds = allPhotos.map((p) => p.photo_id);
   const voteKey = [...queryKeyBase, "voteStatuses"];
   const reportKey = [...queryKeyBase, "reportStatuses"];
 
@@ -67,6 +67,11 @@ export function useEntityPhotos<TPhoto extends EntityPhoto>(
     queryFn: () => adapter.getReportStatuses(photoIds, userId!),
     enabled: !!userId && photoIds.length > 0,
   });
+
+  // Once you've reported a photo, stop showing it to you — you shouldn't
+  // have to keep looking at something you found objectionable while it
+  // waits on admin review or a global report threshold.
+  const photos = allPhotos.filter((p) => !reportStatuses[p.photo_id]);
 
   const voteMutation = useMutation({
     mutationFn: ({ photoId, voteValue }: { photoId: string; voteValue: 1 | -1 }) =>

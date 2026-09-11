@@ -34,6 +34,18 @@ export const REVIEW_REPORT_REASONS = [
 
 export type ReviewReportReason = (typeof REVIEW_REPORT_REASONS)[number]["code"];
 
+// Kept in sync with the CHECK constraint in
+// supabase/migrations/20260925000000_profile_reports_and_appeals.sql.
+export const PROFILE_REPORT_REASONS = [
+  { code: "harassment", label: "Bullying or harassment" },
+  { code: "spam", label: "Spam or irrelevant" },
+  { code: "impersonation", label: "Impersonating someone" },
+  { code: "inappropriate_content", label: "Inappropriate content" },
+  { code: "other", label: "Other" },
+] as const;
+
+export type ProfileReportReason = (typeof PROFILE_REPORT_REASONS)[number]["code"];
+
 export type ReportReason = { code: string; label: string };
 
 // Kept in sync with the CHECK constraint in

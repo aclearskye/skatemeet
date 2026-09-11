@@ -13,7 +13,7 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function WebAccountSidebar() {
-  const { profile, session } = useAuthContext();
+  const { profile, session, isBanned } = useAuthContext();
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
@@ -86,7 +86,16 @@ export default function WebAccountSidebar() {
       {/* Pushed to the bottom via dividerBottom's marginTop: "auto" */}
       <View style={[styles.divider, styles.dividerBottom]} />
 
-      {accountType === "user" && (
+      {profile.is_admin && (
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push("/admin")} activeOpacity={0.7}>
+          <Ionicons name="shield-checkmark-outline" size={18} color={C.muted} />
+          <Text style={styles.navLabel}>ADMIN PANEL</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Hidden for a banned account, which is confined to app/banned.tsx and
+      shouldn't reach any other flow. */}
+      {accountType === "user" && !isBanned && (
         <TouchableOpacity style={styles.navItem} onPress={() => setBizModalVisible(true)} activeOpacity={0.7}>
           <Ionicons name="briefcase-outline" size={18} color={C.muted} />
           <Text style={styles.navLabel}>SWITCH TO BUSINESS</Text>
