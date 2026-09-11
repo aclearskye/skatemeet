@@ -28,7 +28,12 @@ export function useMarkerPreview(userId: string | null) {
       lastMarkerPressAt.current = Date.now();
 
       const requestId = ++previewRequestId.current;
-      setPreviewItem(null);
+      // Set to the raw (unenriched) item immediately, not null — MapMarkers
+      // derives each marker's `selected` look from previewItem's kind/id, so
+      // this is what makes the tapped marker toggle instantly instead of
+      // waiting on the vote-count fetch below. The skeleton (gated on
+      // previewLoading) covers the card itself until enriched data lands.
+      setPreviewItem(item);
       setPreviewLoading(true);
       setPreviewKind(
         item.kind === "osm-store" || item.kind === "user-store"
