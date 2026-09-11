@@ -59,8 +59,18 @@ async function nearestRoad(lat, lng) {
   }
 }
 
+// `image` is also commonly set to a Commons file-*page* link (not the raw
+// file), so that needs rewriting too; and OSM's semicolon convention for
+// multi-value tags means `image` can hold more than one URL, so only the
+// first is used.
+function resolveCommonsPageLink(url) {
+  const match = url.match(/^https?:\/\/commons\.wikimedia\.org\/wiki\/File:(.+)$/i);
+  return match ? `https://commons.wikimedia.org/wiki/Special:FilePath/${match[1]}` : url;
+}
+
 function extractImageUrl(tags) {
-  if (tags["image"]) return tags["image"];
+  const image = tags["image"]?.split(";")[0]?.trim();
+  if (image) return resolveCommonsPageLink(image);
   const commons = tags["wikimedia_commons"];
   if (commons?.startsWith("File:")) {
     return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(commons.slice(5))}`;
@@ -82,14 +92,31 @@ function yesNo(value) {
   return value === "yes" ? true : value === "no" ? false : null;
 }
 
-async function seedSpotMetadata(rows) {
+// Insert-only, so a spot a user has already annotated is never clobbered.
+// spot_metadata_osm_place_id_unique is a *partial* unique index (WHERE
+// osm_place_id IS NOT NULL), which Postgres won't match against a plain
+// `.upsert(..., { onConflict: "osm_place_id" })` — so instead we look up which
+// place_ids already have a row and only insert the ones that don't.
+async function seedSpotMetadata(allRows) {
+  // A node matching multiple query clauses (e.g. leisure=skatepark AND
+  // sport=skateboard) can appear twice — dedupe so a single insert never
+  // conflicts with itself.
+  const rows = allRows.filter((r, i, arr) => arr.findIndex((x) => x.osm_place_id === r.osm_place_id) === i);
   if (rows.length === 0) return;
+  const placeIds = rows.map((r) => r.osm_place_id);
+  const { data: existing, error: selectError } = await supabase
+    .from("spot_metadata")
+    .select("osm_place_id")
+    .in("osm_place_id", placeIds);
+  if (selectError) throw new Error(`Metadata seed failed: ${selectError.message}`);
+  const existingIds = new Set((existing ?? []).map((r) => r.osm_place_id));
+  const toInsert = rows.filter((r) => !existingIds.has(r.osm_place_id));
+  if (toInsert.length === 0) return;
+
   const CHUNK = 500;
-  for (let i = 0; i < rows.length; i += CHUNK) {
-    const chunk = rows.slice(i, i + CHUNK);
-    const { error } = await supabase
-      .from("spot_metadata")
-      .upsert(chunk, { onConflict: "osm_place_id", ignoreDuplicates: true });
+  for (let i = 0; i < toInsert.length; i += CHUNK) {
+    const chunk = toInsert.slice(i, i + CHUNK);
+    const { error } = await supabase.from("spot_metadata").insert(chunk);
     if (error) throw new Error(`Metadata seed failed: ${error.message}`);
   }
 }

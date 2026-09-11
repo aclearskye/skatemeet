@@ -98,7 +98,14 @@ const CITIES = [
   { name: "Manchester",        lat: 53.48,  lng:   -2.24 },
   { name: "Birmingham",        lat: 52.48,  lng:   -1.90 },
   { name: "Bristol",           lat: 51.45,  lng:   -2.59 },
+  { name: "Liverpool",         lat: 53.41,  lng:   -2.98 },
+  { name: "Leeds",             lat: 53.80,  lng:   -1.55 },
+  { name: "Sheffield",         lat: 53.38,  lng:   -1.47 },
+  { name: "Newcastle",         lat: 54.98,  lng:   -1.61 },
+  { name: "Cardiff",           lat: 51.48,  lng:   -3.18 },
+  { name: "Belfast",           lat: 54.60,  lng:   -5.93 },
   { name: "Edinburgh",         lat: 55.95,  lng:   -3.19 },
+  { name: "Glasgow",           lat: 55.86,  lng:   -4.25 },
   { name: "Dublin",            lat: 53.33,  lng:   -6.25 },
   { name: "Paris",             lat: 48.85,  lng:    2.35 },
   { name: "Lyon",              lat: 45.74,  lng:    4.83 },
@@ -226,11 +233,14 @@ out center;
 const DELAY_MS = 2000;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function fetchFromOverpass(query, attempt = 1) {
+// Buffers its progress lines into `log` instead of writing straight to
+// stdout — several cities now run concurrently (see CONCURRENCY), and
+// interleaved partial-line writes from parallel calls would garble the
+// output. The caller prints `log` as one block once the city is done.
+async function fetchFromOverpass(query, log, attempt = 1) {
   const body = `data=${encodeURIComponent(query)}`;
   for (const mirror of OVERPASS_MIRRORS) {
     try {
-      process.stdout.write(`  POST ${mirror}... `);
       const res = await fetch(mirror, {
         method: "POST",
         headers: {
@@ -239,24 +249,32 @@ async function fetchFromOverpass(query, attempt = 1) {
         },
         body,
       });
-      if (!res.ok) { console.log(`HTTP ${res.status} — trying next mirror`); continue; }
+      if (!res.ok) { log.push(`  POST ${mirror} — HTTP ${res.status}, trying next mirror`); continue; }
       const data = await res.json();
       // Overpass returns HTTP 200 even on timeout/memory errors; detect via remark
       if (data.remark && /runtime error|timeout|out of memory/i.test(data.remark)) {
-        console.log(`Overpass error: ${data.remark.trim()} — trying next mirror`);
+        log.push(`  POST ${mirror} — Overpass error: ${data.remark.trim()}, trying next mirror`);
         continue;
       }
-      console.log(`OK (${(data.elements ?? []).length} elements)`);
+      const elementCount = (data.elements ?? []).length;
+      // A "successful" empty response after other mirrors failed is usually a
+      // weak/incomplete mirror silently returning nothing, not genuinely zero
+      // results — keep trying the rest before accepting it.
+      if (elementCount === 0 && mirror !== OVERPASS_MIRRORS[OVERPASS_MIRRORS.length - 1]) {
+        log.push(`  POST ${mirror} — OK but 0 elements, trying next mirror to confirm`);
+        continue;
+      }
+      log.push(`  POST ${mirror} — OK (${elementCount} elements)`);
       return data;
     } catch (e) {
-      console.log(`${e.message} — trying next mirror`);
+      log.push(`  POST ${mirror} — ${e.message}, trying next mirror`);
     }
   }
   // Retry once with a longer pause before giving up
   if (attempt < 2) {
-    console.log(`  All mirrors failed, waiting 10s then retrying...`);
+    log.push(`  All mirrors failed, waiting 10s then retrying...`);
     await sleep(10000);
-    return fetchFromOverpass(query, attempt + 1);
+    return fetchFromOverpass(query, log, attempt + 1);
   }
   throw new Error("All Overpass mirrors failed after retry");
 }
@@ -274,31 +292,56 @@ function formatAddress(tags) {
   return parts.length > 0 ? parts.join(", ") : tags["addr:full"] ?? "";
 }
 
-// Nominatim usage policy caps public API use at ~1 request/second — throttle
-// every call through this single gate so batch geocoding (below) never bursts.
+// Nominatim usage policy caps public API use at ~1 request/second. With
+// several cities now processed concurrently (see CONCURRENCY), a plain
+// "check the last call time" gate would race — two callers could both read
+// the same timestamp before either updates it. Chaining every call onto a
+// single promise serializes them properly regardless of how many callers
+// arrive at once.
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse";
 let lastNominatimCall = 0;
+let nominatimQueue = Promise.resolve();
+function throttledNominatim(fn) {
+  const run = nominatimQueue.then(async () => {
+    const wait = 1100 - (Date.now() - lastNominatimCall);
+    if (wait > 0) await sleep(wait);
+    lastNominatimCall = Date.now();
+    return fn();
+  });
+  nominatimQueue = run.catch(() => {});
+  return run;
+}
+
 async function nearestRoad(lat, lng) {
-  const wait = 1100 - (Date.now() - lastNominatimCall);
-  if (wait > 0) await sleep(wait);
-  lastNominatimCall = Date.now();
-  try {
-    const url = `${NOMINATIM_URL}?lat=${lat}&lon=${lng}&format=json&zoom=16`;
-    const res = await fetch(url, { headers: { "User-Agent": "SkateMeet/1.0 (seed-script)" } });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const addr = data?.address ?? {};
-    return addr.road ?? addr.pedestrian ?? addr.path ?? addr.footway ?? null;
-  } catch {
-    return null;
-  }
+  return throttledNominatim(async () => {
+    try {
+      const url = `${NOMINATIM_URL}?lat=${lat}&lon=${lng}&format=json&zoom=16`;
+      const res = await fetch(url, { headers: { "User-Agent": "SkateMeet/1.0 (seed-script)" } });
+      if (!res.ok) return null;
+      const data = await res.json();
+      const addr = data?.address ?? {};
+      return addr.road ?? addr.pedestrian ?? addr.path ?? addr.footway ?? null;
+    } catch {
+      return null;
+    }
+  });
 }
 
 // `image` is sometimes a direct URL; `wikimedia_commons` usually names a
 // "File:...jpg" page — Commons' Special:FilePath redirect resolves either
 // straight to the raw file, so it works as an <img> src with no extra API call.
+// `image` itself is also commonly set to a Commons file-*page* link (not the
+// raw file) by contributors, so that needs the same rewrite; and OSM's
+// semicolon convention for multi-value tags means `image` can hold more than
+// one URL, so only the first is used.
+function resolveCommonsPageLink(url) {
+  const match = url.match(/^https?:\/\/commons\.wikimedia\.org\/wiki\/File:(.+)$/i);
+  return match ? `https://commons.wikimedia.org/wiki/Special:FilePath/${match[1]}` : url;
+}
+
 function extractImageUrl(tags) {
-  if (tags["image"]) return tags["image"];
+  const image = tags["image"]?.split(";")[0]?.trim();
+  if (image) return resolveCommonsPageLink(image);
   const commons = tags["wikimedia_commons"];
   if (commons?.startsWith("File:")) {
     return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(commons.slice(5))}`;
@@ -377,55 +420,92 @@ async function upsertSpots(spots) {
     const chunk = spots.slice(i, i + CHUNK);
     const { error } = await supabase.from("osm_spots").upsert(chunk, { onConflict: "place_id" });
     if (error) throw new Error(`Upsert failed: ${error.message}`);
-    process.stdout.write(`  Saved ${Math.min(i + CHUNK, spots.length)}/${spots.length}\r`);
   }
-  console.log();
 }
 
-// Insert-only: `ignoreDuplicates` makes this a plain INSERT ... ON CONFLICT DO
-// NOTHING against spot_metadata_osm_place_id_unique, so a spot a user has
-// already annotated is never clobbered by a later re-seed.
-async function seedSpotMetadata(rows) {
+// Insert-only, so a spot a user has already annotated is never clobbered by a
+// later re-seed. spot_metadata_osm_place_id_unique is a *partial* unique index
+// (WHERE osm_place_id IS NOT NULL), which Postgres won't match against a plain
+// `.upsert(..., { onConflict: "osm_place_id" })` — so instead we look up which
+// place_ids already have a row and only insert the ones that don't.
+async function seedSpotMetadata(allRows) {
+  // A node matching multiple query clauses (e.g. leisure=skatepark AND
+  // sport=skateboard) can appear twice — dedupe so a single insert never
+  // conflicts with itself.
+  const rows = allRows.filter((r, i, arr) => arr.findIndex((x) => x.osm_place_id === r.osm_place_id) === i);
   if (rows.length === 0) return;
+  const placeIds = rows.map((r) => r.osm_place_id);
+  const { data: existing, error: selectError } = await supabase
+    .from("spot_metadata")
+    .select("osm_place_id")
+    .in("osm_place_id", placeIds);
+  if (selectError) throw new Error(`Metadata seed failed: ${selectError.message}`);
+  const existingIds = new Set((existing ?? []).map((r) => r.osm_place_id));
+  const toInsert = rows.filter((r) => !existingIds.has(r.osm_place_id));
+  if (toInsert.length === 0) return;
+
   const CHUNK = 500;
-  for (let i = 0; i < rows.length; i += CHUNK) {
-    const chunk = rows.slice(i, i + CHUNK);
-    const { error } = await supabase
-      .from("spot_metadata")
-      .upsert(chunk, { onConflict: "osm_place_id", ignoreDuplicates: true });
+  for (let i = 0; i < toInsert.length; i += CHUNK) {
+    const chunk = toInsert.slice(i, i + CHUNK);
+    const { error } = await supabase.from("spot_metadata").insert(chunk);
     if (error) throw new Error(`Metadata seed failed: ${error.message}`);
   }
+}
+
+// Bounded worker pool: several cities in flight at once for a real speedup,
+// but capped low enough to stay polite to the shared public Overpass mirrors
+// (a full 134-at-once burst would just get us rate-limited). Each lane still
+// paces itself with DELAY_MS between its own successive cities, same as the
+// original fully-sequential version did.
+const CONCURRENCY = 4;
+
+async function processCity(city, index) {
+  const { name, lat: cLat, lng: cLng } = city;
+  const log = [`\n[${index + 1}/${CITIES.length}] ${name}`];
+  try {
+    const query = buildRadiusQuery(cLat, cLng, GLOBAL_RADIUS);
+    const osm = await fetchFromOverpass(query, log);
+    const { spots, metadata } = await elementsToSpots(osm.elements ?? []);
+    log.push(`  Found ${spots.length} spots`);
+    await upsertSpots(spots);
+    await seedSpotMetadata(metadata);
+    log.push(`  Saved ${spots.length}/${spots.length}`);
+    return spots.length;
+  } catch (err) {
+    log.push(`  Skipping ${name}: ${err.message}`);
+    return 0;
+  } finally {
+    console.log(log.join("\n"));
+  }
+}
+
+async function runCitiesWithConcurrency(cities, limit) {
+  let nextIndex = 0;
+  let totalSaved = 0;
+  async function lane() {
+    while (nextIndex < cities.length) {
+      const i = nextIndex++;
+      totalSaved += await processCity(cities[i], i);
+      if (nextIndex < cities.length) await sleep(DELAY_MS);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, cities.length) }, lane));
+  return totalSaved;
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
   if (isGlobal) {
-    console.log(`\nGlobal seed — querying ${CITIES.length} cities (r=${GLOBAL_RADIUS / 1000}km)\n`);
-    let totalSaved = 0;
-
-    for (let i = 0; i < CITIES.length; i++) {
-      const { name, lat: cLat, lng: cLng } = CITIES[i];
-      console.log(`\n[${i + 1}/${CITIES.length}] ${name}`);
-      try {
-        const query = buildRadiusQuery(cLat, cLng, GLOBAL_RADIUS);
-        const osm = await fetchFromOverpass(query);
-        const { spots, metadata } = await elementsToSpots(osm.elements ?? []);
-        console.log(`  Found ${spots.length} spots`);
-        await upsertSpots(spots);
-        await seedSpotMetadata(metadata);
-        totalSaved += spots.length;
-      } catch (err) {
-        console.error(`  Skipping ${name}: ${err.message}`);
-      }
-      if (i < CITIES.length - 1) await sleep(DELAY_MS);
-    }
-
+    console.log(`\nGlobal seed — querying ${CITIES.length} cities (r=${GLOBAL_RADIUS / 1000}km, concurrency=${CONCURRENCY})\n`);
+    const totalSaved = await runCitiesWithConcurrency(CITIES, CONCURRENCY);
     console.log(`\nDone! ${totalSaved} spots seeded globally.\n`);
   } else {
     console.log(`\nSeeding around ${lat}, ${lng} (radius: ${radius}m)\n`);
     const query = buildRadiusQuery(lat, lng, radius);
-    const osm = await fetchFromOverpass(query);
+    const log = [];
+    const osm = await fetchFromOverpass(query, log);
+    console.log(log.join("\n"));
     const { spots, metadata } = await elementsToSpots(osm.elements ?? []);
     console.log(`  Found ${spots.length} spots`);
     await upsertSpots(spots);
