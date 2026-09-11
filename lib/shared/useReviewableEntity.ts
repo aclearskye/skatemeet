@@ -3,7 +3,7 @@ import { ReviewReportReason } from "@/lib/shared/types";
 import { queryKeys } from "@/utils/queryKeys";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-type ReviewBase = { review_id: string; upvote_count: number; is_verified: boolean };
+type ReviewBase = { review_id: string; upvote_count: number };
 
 export type ReviewPayload = { heading: string; rating: number | null; comment: string };
 
@@ -28,12 +28,7 @@ export type ReviewableEntityAdapter<TReview extends ReviewBase, TReviewWithProfi
   ) => Promise<{ upvote_count: number; user_has_voted: boolean }>;
   getReviewVoteStatuses: (reviewIds: string[], userId: string) => Promise<Record<string, boolean>>;
   getReportStatuses: (reviewIds: string[], userId: string) => Promise<Record<string, boolean>>;
-  createReview: (
-    id: string | null,
-    osmId: string | null,
-    payload: ReviewPayload,
-    userId: string
-  ) => Promise<TReview>;
+  createReview: (id: string | null, osmId: string | null, payload: ReviewPayload) => Promise<TReview>;
   report: (reviewId: string, reason: ReviewReportReason) => Promise<void>;
   deleteReview: (reviewId: string, userId: string) => Promise<void>;
 };
@@ -165,7 +160,7 @@ export function useReviewableEntity<TReview extends ReviewBase, TReviewWithProfi
           (old ?? []).map((r) => {
             if (r.review_id !== reviewId) return r;
             const newCount = r.upvote_count + (optimistic ? 1 : -1);
-            return { ...r, upvote_count: newCount, is_verified: newCount >= 3 };
+            return { ...r, upvote_count: newCount };
           })
       );
       return { prevReviews, prevReviewVotes };
@@ -181,8 +176,7 @@ export function useReviewableEntity<TReview extends ReviewBase, TReviewWithProfi
   });
 
   const createReviewMutation = useMutation({
-    mutationFn: (payload: ReviewPayload) =>
-      adapter.createReview(entityId, osmPlaceId, payload, userId!),
+    mutationFn: (payload: ReviewPayload) => adapter.createReview(entityId, osmPlaceId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "reviews"] });
       queryClient.invalidateQueries({ queryKey: [...queryKeyBase, "reviewVotes"] });

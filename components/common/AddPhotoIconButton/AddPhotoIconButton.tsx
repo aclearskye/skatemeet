@@ -6,14 +6,15 @@ type Props = {
   onPress: () => void;
   isLoading: boolean;
   accent: string;
+  disabled?: boolean;
 };
 
-export function AddPhotoIconButton({ onPress, isLoading, accent }: Props) {
+export function AddPhotoIconButton({ onPress, isLoading, accent, disabled }: Props) {
   return (
     <TouchableOpacity
-      style={[styles.btn, { borderColor: accent }]}
+      style={[styles.btn, { borderColor: accent }, disabled && styles.btnDisabled]}
       onPress={onPress}
-      disabled={isLoading}
+      disabled={isLoading || disabled}
       activeOpacity={0.75}
       hitSlop={8}
     >

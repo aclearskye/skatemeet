@@ -43,4 +43,6 @@ export const queryKeys = {
     ["spot", spotId, "verification"] as const,
   userStreak: (profileId: string) =>
     ["profile", profileId, "streak"] as const,
+  hasManualCheckIn: (entityKey: string) =>
+    ["checkIn", entityKey, "hasManual"] as const,
 };

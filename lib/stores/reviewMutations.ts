@@ -1,18 +1,20 @@
 import { supabase } from "@/lib/supabaseClient";
 import { toggleVoteRow, getVoteCount } from "@/lib/shared/votes";
+import { toCheckInRequiredError } from "@/lib/shared/checkInRequiredError";
 import { ReviewReportReason } from "@/lib/shared/types";
 import type { CreateStoreReviewPayload, StoreReview } from "./types";
 
-export async function createStoreReview(
-  payload: CreateStoreReviewPayload,
-  userId: string
-): Promise<StoreReview> {
+export async function createStoreReview(payload: CreateStoreReviewPayload): Promise<StoreReview> {
   const { data, error } = await supabase
-    .from("store_reviews")
-    .insert({ ...payload, profile_id: userId })
-    .select()
+    .rpc("create_store_review", {
+      p_store_id: payload.store_id,
+      p_osm_place_id: payload.osm_place_id,
+      p_heading: payload.heading,
+      p_rating: payload.rating,
+      p_comment: payload.comment,
+    })
     .single();
-  if (error) throw error;
+  if (error) throw toCheckInRequiredError(error, "leave a review");
   return data as StoreReview;
 }
 

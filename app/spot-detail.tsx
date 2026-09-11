@@ -23,6 +23,7 @@ import { useEntityMetadata } from "@/lib/shared/hooks/useEntityMetadata";
 import { openDirections } from "@/lib/shared/openDirections";
 import { ReviewInteractions } from "@/lib/shared/types";
 import { useCheckInSync } from "@/lib/shared/hooks/useCheckInSync";
+import { useHasManualCheckIn } from "@/lib/shared/hooks/useHasManualCheckIn";
 import { useEntityPhotos } from "@/lib/shared/useEntityPhotos";
 import { useReviewableEntity } from "@/lib/shared/useReviewableEntity";
 import { C, F } from "@/lib/theme";
@@ -148,6 +149,13 @@ export default function SpotDetailScreen() {
     isDeleting: isDeletingPhoto,
   } = useEntityPhotos(spotId, osmPlaceId, spotPhotosAdapter, queryKeys.spotPhotos(spotId, osmPlaceId));
 
+  const { hasCheckedIn } = useHasManualCheckIn({
+    spotId,
+    osmSpotPlaceId: osmPlaceId,
+    storeId: null,
+    osmStorePlaceId: null,
+  });
+
   // photos[0] is always the current highest-voted, non-hidden photo (same
   // ordering the DB's cover-photo trigger uses) — falls back to the
   // route-param snapshot only until that query resolves on first mount.
@@ -200,6 +208,7 @@ export default function SpotDetailScreen() {
             onDirections={handleDirections}
             onAddPhoto={addPhoto}
             isAddingPhoto={isAddingPhoto}
+            canAddPhoto={hasCheckedIn}
             description={description}
             address={address}
           />
@@ -245,6 +254,7 @@ export default function SpotDetailScreen() {
             onAccent={onAccent}
             onAddReview={() => setShowAddReview(true)}
             onSeeMore={() => setShowReviewsModal(true)}
+            canReview={hasCheckedIn}
           />
 
           {isOwner && !isVerified && (

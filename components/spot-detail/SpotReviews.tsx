@@ -13,6 +13,7 @@ type Props = {
   onAccent: string;
   onAddReview: () => void;
   onSeeMore: () => void;
+  canReview: boolean;
 };
 
 export function SpotReviews({
@@ -23,6 +24,7 @@ export function SpotReviews({
   onAccent,
   onAddReview,
   onSeeMore,
+  canReview,
 }: Props) {
   const topReviews = reviews.slice(0, 3);
 
@@ -58,13 +60,19 @@ export function SpotReviews({
       )}
 
       <TouchableOpacity
-        style={[styles.addReviewBtn, { backgroundColor: accent }]}
+        style={[
+          styles.addReviewBtn,
+          { backgroundColor: accent },
+          !canReview && styles.addReviewBtnDisabled,
+        ]}
         onPress={onAddReview}
         activeOpacity={0.85}
+        disabled={!canReview}
       >
         <Ionicons name="add" size={16} color={onAccent} />
         <Text style={[styles.addReviewBtnText, { color: onAccent }]}>ADD REVIEW</Text>
       </TouchableOpacity>
+      {!canReview && <Text style={styles.hint}>CHECK IN HERE TO LEAVE A REVIEW</Text>}
     </View>
   );
 }
@@ -95,4 +103,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   addReviewBtnText: { fontFamily: F.mono, fontSize: 12, letterSpacing: 1 },
+  addReviewBtnDisabled: { opacity: 0.5 },
+  hint: {
+    fontFamily: F.monoRegular,
+    fontSize: 10,
+    color: C.muted,
+    letterSpacing: 0.3,
+    textAlign: "center",
+  },
 });

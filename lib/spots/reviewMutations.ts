@@ -1,18 +1,20 @@
 import { supabase } from "@/lib/supabaseClient";
 import { toggleVoteRow, getVoteCount } from "@/lib/shared/votes";
+import { toCheckInRequiredError } from "@/lib/shared/checkInRequiredError";
 import { ReviewReportReason } from "@/lib/shared/types";
 import type { CreateSpotReviewPayload, SpotReview } from "./types";
 
-export async function createSpotReview(
-  payload: CreateSpotReviewPayload,
-  userId: string
-): Promise<SpotReview> {
+export async function createSpotReview(payload: CreateSpotReviewPayload): Promise<SpotReview> {
   const { data, error } = await supabase
-    .from("spot_reviews")
-    .insert({ ...payload, profile_id: userId })
-    .select()
+    .rpc("create_spot_review", {
+      p_spot_id: payload.spot_id,
+      p_osm_place_id: payload.osm_place_id,
+      p_heading: payload.heading,
+      p_rating: payload.rating,
+      p_comment: payload.comment,
+    })
     .single();
-  if (error) throw error;
+  if (error) throw toCheckInRequiredError(error, "leave a review");
   return data as SpotReview;
 }
 

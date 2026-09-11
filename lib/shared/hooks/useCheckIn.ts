@@ -1,6 +1,6 @@
 import { checkIn, CheckInError, checkOut } from "@/lib/checkins/mutations";
 import { fetchActiveCheckIn, fetchUserStreak } from "@/lib/checkins/queries";
-import { EntityRef, isSameEntity } from "@/lib/checkins/types";
+import { EntityRef, entityKeyOf, isSameEntity } from "@/lib/checkins/types";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { useToast } from "@/lib/context/toast-context";
 import { useLiveCount } from "@/lib/shared/hooks/useLiveCount";
@@ -40,6 +40,11 @@ export function useCheckIn(ref: EntityRef) {
   function invalidateAfterChange() {
     queryClient.invalidateQueries({ queryKey: queryKeys.checkInStatus(profileId ?? "") });
     queryClient.invalidateQueries({ queryKey: queryKeys.liveCount(ref) });
+    // A *manual* check-in (not checking out) is what unlocks review/photo
+    // eligibility (useHasManualCheckIn) -- without this, "ADD REVIEW"/the
+    // photo button stayed disabled until leaving and re-entering the screen
+    // remounted that query fresh.
+    queryClient.invalidateQueries({ queryKey: queryKeys.hasManualCheckIn(entityKeyOf(ref) ?? "") });
     // The map's per-tile live counts (useMapRegionData.ts) are a separate
     // cache from the single-entity query above -- without this, a marker's
     // dot wouldn't catch up until its next ~25s poll if the map happened to

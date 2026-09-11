@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabaseClient";
 import { toggleVoteRow } from "@/lib/shared/votes";
+import { toCheckInRequiredError } from "@/lib/shared/checkInRequiredError";
 import { getSpotVoteCount } from "./queries";
 import type { CreateSpotPayload, SkateSpot } from "./types";
 
@@ -43,7 +44,7 @@ export async function linkSpotPhoto(
     p_osm_place_id: "osmPlaceId" in target ? target.osmPlaceId : null,
     p_media_url: mediaUrl,
   });
-  if (error) throw error;
+  if (error) throw toCheckInRequiredError(error, "add a photo");
 }
 
 export async function addSpotPhoto(

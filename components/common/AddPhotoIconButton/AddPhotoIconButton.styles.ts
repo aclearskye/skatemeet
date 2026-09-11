@@ -9,4 +9,5 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  btnDisabled: { opacity: 0.4 },
 });

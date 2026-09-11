@@ -11,9 +11,17 @@ type Props = {
   interactions: ReviewInteractions;
   onAddReview: () => void;
   onSeeMore: () => void;
+  canReview: boolean;
 };
 
-export function StoreReviews({ reviews, isLoading, interactions, onAddReview, onSeeMore }: Props) {
+export function StoreReviews({
+  reviews,
+  isLoading,
+  interactions,
+  onAddReview,
+  onSeeMore,
+  canReview,
+}: Props) {
   const topReviews = reviews.slice(0, 3);
 
   return (
@@ -47,10 +55,16 @@ export function StoreReviews({ reviews, isLoading, interactions, onAddReview, on
         ))
       )}
 
-      <TouchableOpacity style={styles.addReviewBtn} onPress={onAddReview} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={[styles.addReviewBtn, !canReview && styles.addReviewBtnDisabled]}
+        onPress={onAddReview}
+        activeOpacity={0.85}
+        disabled={!canReview}
+      >
         <Ionicons name="add" size={16} color={C.onSecondary} />
         <Text style={styles.addReviewBtnText}>ADD REVIEW</Text>
       </TouchableOpacity>
+      {!canReview && <Text style={styles.hint}>CHECK IN HERE TO LEAVE A REVIEW</Text>}
     </View>
   );
 }
@@ -82,4 +96,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   addReviewBtnText: { fontFamily: F.mono, fontSize: 12, color: C.onSecondary, letterSpacing: 1 },
+  addReviewBtnDisabled: { opacity: 0.5 },
+  hint: {
+    fontFamily: F.monoRegular,
+    fontSize: 10,
+    color: C.muted,
+    letterSpacing: 0.3,
+    textAlign: "center",
+  },
 });

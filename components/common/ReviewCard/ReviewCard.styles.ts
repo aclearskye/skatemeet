@@ -23,19 +23,6 @@ export const styles = StyleSheet.create({
     letterSpacing: 0.3,
     flex: 1,
   },
-  needsVotesBadge: {
-    backgroundColor: C.surfaceHigh,
-    borderWidth: 1,
-    borderColor: C.borderVariant,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  needsVotesText: {
-    fontFamily: F.mono,
-    fontSize: 9,
-    color: C.muted,
-    letterSpacing: 1,
-  },
   starsRow: { flexDirection: "row", gap: 3 },
   comment: {
     fontFamily: F.body,

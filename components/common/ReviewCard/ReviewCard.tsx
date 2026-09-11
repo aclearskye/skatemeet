@@ -11,12 +11,11 @@ export type ReviewableCard = {
   review_id: string;
   profile_id: string;
   heading: string;
-  is_verified: boolean;
   upvote_count: number;
   rating: number | null;
   comment: string;
   created_at: string;
-  profiles: { username: string; display_name: string | null };
+  profiles: { username: string; display_name: string | null } | null;
 };
 
 type Props = {
@@ -58,11 +57,6 @@ export function ReviewCard({
     <View style={styles.container}>
       <View style={styles.topRow}>
         <Text style={styles.heading}>{review.heading}</Text>
-        {!review.is_verified && (
-          <View style={styles.needsVotesBadge}>
-            <Text style={styles.needsVotesText}>NEEDS VOTES {review.upvote_count}/3</Text>
-          </View>
-        )}
       </View>
 
       {review.rating != null && (
@@ -82,7 +76,7 @@ export function ReviewCard({
 
       <View style={styles.metaRow}>
         <Text style={styles.author}>
-          {review.profiles.display_name ?? review.profiles.username}
+          {review.profiles?.display_name ?? review.profiles?.username ?? "Unknown skater"}
         </Text>
         <View style={styles.metaRight}>
           <Text style={styles.date}>

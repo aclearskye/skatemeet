@@ -14,6 +14,7 @@ type Props = {
   onDirections: () => void;
   onAddPhoto: () => void;
   isAddingPhoto: boolean;
+  canAddPhoto: boolean;
   description: string | null;
   address: string | null;
 };
@@ -28,14 +29,21 @@ export function SpotInfoBlock({
   onDirections,
   onAddPhoto,
   isAddingPhoto,
+  canAddPhoto,
   description,
   address,
 }: Props) {
   return (
     <Fragment>
+      {!canAddPhoto && <Text style={styles.photoHint}>CHECK IN HERE TO ADD A PHOTO</Text>}
       <View style={styles.nameRow}>
         <Text style={styles.name}>{name}</Text>
-        <AddPhotoIconButton onPress={onAddPhoto} isLoading={isAddingPhoto} accent={accent} />
+        <AddPhotoIconButton
+          onPress={onAddPhoto}
+          isLoading={isAddingPhoto}
+          disabled={!canAddPhoto}
+          accent={accent}
+        />
       </View>
 
       <View style={styles.badgeRow}>
@@ -75,6 +83,12 @@ export function SpotInfoBlock({
 const styles = StyleSheet.create({
   nameRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
   name: { fontFamily: F.heading, fontSize: 28, color: C.text, letterSpacing: 0.5, flexShrink: 1 },
+  photoHint: {
+    fontFamily: F.monoRegular,
+    fontSize: 10,
+    color: C.muted,
+    letterSpacing: 0.3,
+  },
   badgeRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   typeBadge: {
     paddingHorizontal: 10,

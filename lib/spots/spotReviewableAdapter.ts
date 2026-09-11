@@ -26,8 +26,8 @@ export const spotReviewableAdapter: ReviewableEntityAdapter<SpotReview, SpotRevi
   toggleReviewVote: toggleSpotReviewVote,
   getReviewVoteStatuses: getSpotReviewVoteStatuses,
   getReportStatuses: getSpotReviewReportStatuses,
-  createReview: (spotId, osmPlaceId, payload, userId) =>
-    createSpotReview({ spot_id: spotId, osm_place_id: osmPlaceId, ...payload }, userId),
+  createReview: (spotId, osmPlaceId, payload) =>
+    createSpotReview({ spot_id: spotId, osm_place_id: osmPlaceId, ...payload }),
   report: reportSpotReview,
   deleteReview: deleteSpotReview,
 };

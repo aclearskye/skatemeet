@@ -28,7 +28,6 @@ export async function fetchStoreAverageRating(
     .from("store_reviews")
     .select("rating")
     .eq(col, val)
-    .eq("is_verified", true)
     .not("rating", "is", null);
   if (error) throw error;
   return computeAverageRating((data ?? []) as { rating: number }[]);

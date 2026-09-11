@@ -26,8 +26,8 @@ export const storeReviewableAdapter: ReviewableEntityAdapter<StoreReview, StoreR
   toggleReviewVote: toggleStoreReviewVote,
   getReviewVoteStatuses: getStoreReviewVoteStatuses,
   getReportStatuses: getStoreReviewReportStatuses,
-  createReview: (storeId, osmPlaceId, payload, userId) =>
-    createStoreReview({ store_id: storeId, osm_place_id: osmPlaceId, ...payload }, userId),
+  createReview: (storeId, osmPlaceId, payload) =>
+    createStoreReview({ store_id: storeId, osm_place_id: osmPlaceId, ...payload }),
   report: reportStoreReview,
   deleteReview: deleteStoreReview,
 };

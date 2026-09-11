@@ -71,12 +71,11 @@ export type SpotReview = {
   comment: string;
   upvote_count: number;
   report_count: number;
-  is_verified: boolean;
   created_at: string;
 };
 
 export type SpotReviewWithProfile = SpotReview & {
-  profiles: { username: string; display_name: string | null };
+  profiles: { username: string; display_name: string | null } | null;
 };
 
 export type CreateSpotReviewPayload = {

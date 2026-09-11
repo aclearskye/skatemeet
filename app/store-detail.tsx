@@ -14,6 +14,7 @@ import { StoreVoteSection } from "@/components/store-detail/StoreVoteSection";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { useCheckInSync } from "@/lib/shared/hooks/useCheckInSync";
 import { useEntityMetadata } from "@/lib/shared/hooks/useEntityMetadata";
+import { useHasManualCheckIn } from "@/lib/shared/hooks/useHasManualCheckIn";
 import { openDirections } from "@/lib/shared/openDirections";
 import { ReviewInteractions } from "@/lib/shared/types";
 import { useEntityPhotos } from "@/lib/shared/useEntityPhotos";
@@ -97,6 +98,13 @@ export default function StoreDetailScreen() {
     deletePhoto,
     isDeleting: isDeletingPhoto,
   } = useEntityPhotos(storeId, osmPlaceId, storePhotosAdapter, queryKeys.storePhotos(storeId, osmPlaceId));
+
+  const { hasCheckedIn } = useHasManualCheckIn({
+    spotId: null,
+    osmSpotPlaceId: null,
+    storeId,
+    osmStorePlaceId: osmPlaceId,
+  });
 
   // photos[0] is always the current highest-voted, non-hidden photo (same
   // ordering the DB's cover-photo trigger uses) — falls back to the
@@ -198,6 +206,7 @@ export default function StoreDetailScreen() {
             onDirections={handleDirections}
             onAddPhoto={addPhoto}
             isAddingPhoto={isAddingPhoto}
+            canAddPhoto={hasCheckedIn}
             address={address}
             hours={hours}
             phone={phone}
@@ -239,6 +248,7 @@ export default function StoreDetailScreen() {
             interactions={reviewInteractions}
             onAddReview={() => setShowAddReview(true)}
             onSeeMore={() => setShowReviewsModal(true)}
+            canReview={hasCheckedIn}
           />
 
           {isOwner && !isVerified && (

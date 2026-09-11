@@ -24,7 +24,6 @@ export async function fetchSpotAverageRating(
     .from("spot_reviews")
     .select("rating")
     .eq(spotId ? "spot_id" : "osm_place_id", spotId ?? osmPlaceId)
-    .eq("is_verified", true)
     .not("rating", "is", null);
   if (error) throw error;
   return computeAverageRating((data ?? []) as { rating: number }[]);

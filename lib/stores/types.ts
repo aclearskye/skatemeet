@@ -48,12 +48,11 @@ export type StoreReview = {
   comment: string;
   upvote_count: number;
   report_count: number;
-  is_verified: boolean;
   created_at: string;
 };
 
 export type StoreReviewWithProfile = StoreReview & {
-  profiles: { username: string; display_name: string | null };
+  profiles: { username: string; display_name: string | null } | null;
 };
 
 export type CreateStoreReviewPayload = {
