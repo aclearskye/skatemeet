@@ -3,31 +3,24 @@ import { getVoteStatus, getVoteCount } from "@/lib/shared/votes";
 import { BOUNDS_ROW_LIMIT } from "@/utils/constants";
 import type { BoundingBox, OsmSpot, SkateSpot } from "./types";
 
-export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[]> {
-  const { data, error } = await supabase
-    .from("osm_spots")
-    .select(
-      "place_id, name, address, spot_type, latitude, longitude, upvote_count, cover_photo_url, description, osm_image_url"
-    )
-    .gte("latitude", bbox.minLat)
-    .lte("latitude", bbox.maxLat)
-    .gte("longitude", bbox.minLng)
-    .lte("longitude", bbox.maxLng)
-    .limit(BOUNDS_ROW_LIMIT);
-  if (error) throw error;
-  type Row = {
-    place_id: string;
-    name: string;
-    address: string;
-    spot_type: OsmSpot["spot_type"];
-    latitude: number;
-    longitude: number;
-    upvote_count: number;
-    cover_photo_url: string | null;
-    description: string | null;
-    osm_image_url: string | null;
-  };
-  return (data as Row[]).map((row) => ({
+const OSM_SPOT_COLUMNS =
+  "place_id, name, address, spot_type, latitude, longitude, upvote_count, cover_photo_url, description, osm_image_url";
+
+type OsmSpotRow = {
+  place_id: string;
+  name: string;
+  address: string;
+  spot_type: OsmSpot["spot_type"];
+  latitude: number;
+  longitude: number;
+  upvote_count: number;
+  cover_photo_url: string | null;
+  description: string | null;
+  osm_image_url: string | null;
+};
+
+function toOsmSpot(row: OsmSpotRow): OsmSpot {
+  return {
     place_id: row.place_id,
     name: row.name,
     address: row.address,
@@ -37,7 +30,35 @@ export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[
     cover_photo_url: row.cover_photo_url,
     description: row.description,
     osm_image_url: row.osm_image_url,
-  }));
+  };
+}
+
+export async function fetchOsmSpotsInBounds(bbox: BoundingBox): Promise<OsmSpot[]> {
+  const { data, error } = await supabase
+    .from("osm_spots")
+    .select(OSM_SPOT_COLUMNS)
+    .gte("latitude", bbox.minLat)
+    .lte("latitude", bbox.maxLat)
+    .gte("longitude", bbox.minLng)
+    .lte("longitude", bbox.maxLng)
+    .limit(BOUNDS_ROW_LIMIT);
+  if (error) throw error;
+  return (data as OsmSpotRow[]).map(toOsmSpot);
+}
+
+export async function searchOsmSpotsByName(
+  query: string,
+  offset: number,
+  limit: number
+): Promise<OsmSpot[]> {
+  const { data, error } = await supabase
+    .from("osm_spots")
+    .select(OSM_SPOT_COLUMNS)
+    .ilike("name", `%${query}%`)
+    .order("upvote_count", { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (error) throw error;
+  return (data as OsmSpotRow[]).map(toOsmSpot);
 }
 
 export async function fetchSpotsInBounds(bbox: BoundingBox): Promise<SkateSpot[]> {
@@ -49,6 +70,21 @@ export async function fetchSpotsInBounds(bbox: BoundingBox): Promise<SkateSpot[]
     .gte("longitude", bbox.minLng)
     .lte("longitude", bbox.maxLng)
     .limit(BOUNDS_ROW_LIMIT);
+  if (error) throw error;
+  return data as SkateSpot[];
+}
+
+export async function searchUserSpotsByName(
+  query: string,
+  offset: number,
+  limit: number
+): Promise<SkateSpot[]> {
+  const { data, error } = await supabase
+    .from("user_spots")
+    .select("*")
+    .ilike("name", `%${query}%`)
+    .order("upvote_count", { ascending: false })
+    .range(offset, offset + limit - 1);
   if (error) throw error;
   return data as SkateSpot[];
 }
@@ -85,34 +121,10 @@ export async function fetchOsmSpotsByIds(placeIds: string[]): Promise<OsmSpot[]>
   if (placeIds.length === 0) return [];
   const { data, error } = await supabase
     .from("osm_spots")
-    .select(
-      "place_id, name, address, spot_type, latitude, longitude, upvote_count, cover_photo_url, description, osm_image_url"
-    )
+    .select(OSM_SPOT_COLUMNS)
     .in("place_id", placeIds);
   if (error) throw error;
-  type Row = {
-    place_id: string;
-    name: string;
-    address: string;
-    spot_type: OsmSpot["spot_type"];
-    latitude: number;
-    longitude: number;
-    upvote_count: number;
-    cover_photo_url: string | null;
-    description: string | null;
-    osm_image_url: string | null;
-  };
-  return (data as Row[]).map((row) => ({
-    place_id: row.place_id,
-    name: row.name,
-    address: row.address,
-    spot_type: row.spot_type,
-    coordinates: { lat: row.latitude, lng: row.longitude },
-    upvote_count: row.upvote_count,
-    cover_photo_url: row.cover_photo_url,
-    description: row.description,
-    osm_image_url: row.osm_image_url,
-  }));
+  return (data as OsmSpotRow[]).map(toOsmSpot);
 }
 
 export async function getSpotFavoriteStatus(

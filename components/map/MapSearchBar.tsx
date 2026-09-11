@@ -1,7 +1,7 @@
 import BurgerButton from "@/components/ui/BurgerButton";
 import { C, F } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 
 type Props = {
   value: string;
@@ -20,8 +20,17 @@ export function MapSearchBar({ value, onChangeText }: Props) {
           value={value}
           onChangeText={onChangeText}
           returnKeyType="search"
-          clearButtonMode="while-editing"
         />
+        {/* clearButtonMode is iOS-only, so Android/web need an explicit button */}
+        {value.length > 0 && (
+          <TouchableOpacity
+            onPress={() => onChangeText("")}
+            hitSlop={8}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="close-circle" size={16} color={C.muted} />
+          </TouchableOpacity>
+        )}
       </View>
       <BurgerButton />
     </View>

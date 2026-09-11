@@ -27,16 +27,22 @@ export function filterVisibleMarkers(
     name.toLowerCase().includes(q) ||
     (address !== undefined && address.toLowerCase().includes(q));
 
-  const visibleOsmStores = filters.has("stores")
-    ? data.osmStores.filter((s) => matches(s.name, s.address))
-    : [];
+  // "userSpots" ("User Uploaded" in the UI) excludes every OSM-sourced
+  // entity — spots and stores alike — on top of (not instead of) the
+  // spots/diys/stores type filters above.
+  const visibleOsmStores =
+    filters.has("stores") && !filters.has("userSpots")
+      ? data.osmStores.filter((s) => matches(s.name, s.address))
+      : [];
 
-  const visibleOsmSpots = data.osmSpots.filter((s) => {
-    const typeMatch =
-      (filters.has("spots") && (s.spot_type === "park" || s.spot_type === "street")) ||
-      (filters.has("diys") && s.spot_type === "diy");
-    return typeMatch && matches(s.name);
-  });
+  const visibleOsmSpots = filters.has("userSpots")
+    ? []
+    : data.osmSpots.filter((s) => {
+        const typeMatch =
+          (filters.has("spots") && (s.spot_type === "park" || s.spot_type === "street")) ||
+          (filters.has("diys") && s.spot_type === "diy");
+        return typeMatch && matches(s.name);
+      });
 
   const visibleUserSpots = data.userSpots.filter((s) => {
     const typeMatch =
