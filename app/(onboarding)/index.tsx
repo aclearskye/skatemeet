@@ -1,3 +1,4 @@
+import { consumeAgePassedOnDevice } from "@/lib/auth/ageGate";
 import { sanitizeDisplayName, sanitizeUsername } from "@/lib/auth/sanitizeUsername";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { supabase } from "@/lib/supabaseClient";
@@ -147,6 +148,9 @@ export default function Onboarding() {
 
     setLoading(true);
     setError(null);
+    // Passed the age gate on this device during sign-up -- stamp it now that
+    // the profile exists, so the one-time age screen isn't shown as well.
+    const agePassed = await consumeAgePassedOnDevice();
     const { error: updateError } = await supabase
       .from("profiles")
       .update({
@@ -159,6 +163,7 @@ export default function Onboarding() {
         city: data.city.trim() || null,
         bio: data.bio.trim() || null,
         onboarding_completed: true,
+        ...(agePassed ? { age_confirmed_at: new Date().toISOString() } : {}),
       })
       .eq("profile_id", session.user.id);
     if (updateError) {

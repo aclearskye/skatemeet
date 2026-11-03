@@ -1,6 +1,15 @@
+import {
+  ageFromDateOfBirth,
+  isUnderageLocked,
+  MIN_AGE,
+  recordAgePassedOnDevice,
+  recordUnderageAttempt,
+  type DateOfBirth,
+} from "@/lib/auth/ageGate";
 import createUser from "@/lib/auth/createUser";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { C, F, R } from "@/lib/theme";
+import { DateOfBirthInput } from "@/components/common/DateOfBirthInput";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -17,6 +26,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Deliberately doesn't name the minimum age.
+const NOT_ELIGIBLE = "Sorry, you can't create a SkateMeet account.";
 
 const SignUp = () => {
   const router = useRouter();
@@ -31,6 +42,7 @@ const SignUp = () => {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [confirmFocused, setConfirmFocused] = useState(false);
+  const [dateOfBirth, setDateOfBirth] = useState<DateOfBirth>({ day: "", month: "", year: "" });
 
   const handleSignUp = async () => {
     if (!email || !password || !confirmPassword) {
@@ -49,9 +61,26 @@ const SignUp = () => {
       setError("Passwords don't match");
       return;
     }
+    // Checked on the device before signUp, so an underage attempt never
+    // creates an account. Only the outcome is ever stored, never the date.
+    const age = ageFromDateOfBirth(dateOfBirth);
+    if (age === null) {
+      setError("Please enter a valid date of birth");
+      return;
+    }
+    if (await isUnderageLocked()) {
+      setError(NOT_ELIGIBLE);
+      return;
+    }
+    if (age < MIN_AGE) {
+      await recordUnderageAttempt();
+      setError(NOT_ELIGIBLE);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
+      await recordAgePassedOnDevice();
       const result = await createUser(email, password);
       if (result.needsEmailConfirmation) {
         setEmailSent(true);
@@ -203,8 +232,15 @@ const SignUp = () => {
               />
             </View>
 
+            <View style={styles.dobWrap}>
+              <DateOfBirthInput value={dateOfBirth} onChange={setDateOfBirth} />
+            </View>
+
             <Text style={styles.hint}>
               You'll set up your skate profile right after this.
+            </Text>
+            <Text style={styles.publicNote}>
+              Your profile is public. You can make it private anytime in Settings.
             </Text>
 
             <TouchableOpacity
@@ -225,6 +261,9 @@ const SignUp = () => {
               <Text style={styles.footerLink}>Sign in</Text>
             </TouchableOpacity>
           </View>
+          <TouchableOpacity style={styles.policyLink} onPress={() => router.push("/privacy" as any)}>
+            <Text style={styles.policyLinkText}>By creating an account you agree to our Privacy Policy</Text>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -343,6 +382,26 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 0.5,
     textTransform: "uppercase",
+  },
+  dobWrap: {
+    marginBottom: 20,
+  },
+  publicNote: {
+    color: C.muted,
+    fontFamily: F.body,
+    fontSize: 12,
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  policyLink: {
+    alignItems: "center",
+    marginTop: 14,
+  },
+  policyLinkText: {
+    color: C.muted,
+    fontFamily: F.body,
+    fontSize: 12,
+    textDecorationLine: "underline",
   },
   primaryBtn: {
     backgroundColor: C.primary,

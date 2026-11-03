@@ -74,3 +74,10 @@ export async function deactivateAccount(): Promise<void> {
     await supabase.auth.signOut();
   }
 }
+
+// Records that the signed-in user passed the 16+ age gate. Only the
+// timestamp is stored, never the date of birth.
+export async function confirmAge(): Promise<void> {
+  const { error } = await supabase.rpc("confirm_age");
+  if (error) throw error;
+}

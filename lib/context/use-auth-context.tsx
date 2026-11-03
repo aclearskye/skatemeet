@@ -21,6 +21,7 @@ export type Profile = {
   avatar_url: string | null;
   is_admin: boolean;
   is_private: boolean;
+  age_confirmed_at: string | null;
 };
 
 export type AuthData = {
