@@ -77,3 +77,26 @@ export type DeletionEligibleItem = {
   bannedAt: string;
   eligibleSince: string;
 };
+
+export type MessageReportItem = {
+  reportId: string;
+  // null once the message itself is gone (removed, or cleared by everyone).
+  messageId: string | null;
+  senderId: string;
+  senderUsername: string;
+  senderBanned: boolean;
+  reason: string;
+  details: string | null;
+  createdAt: string;
+};
+
+export type MessageReportContext = {
+  senderId: string;
+  body: string | null;
+  createdAt: string;
+};
+
+export type MessageReportDetail = {
+  body: string | null;
+  context: MessageReportContext[];
+};

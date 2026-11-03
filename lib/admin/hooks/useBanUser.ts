@@ -11,8 +11,9 @@ export function useBanUser() {
     onSuccess: (_result, { profileId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.adminBanHistory(profileId) });
       // admin_ban_user auto-resolves any open profile_reports on the banned
-      // profile as a side effect (see the report+ban migration's comment).
+      // profile, and any message reports against them, as a side effect.
       queryClient.invalidateQueries({ queryKey: queryKeys.adminProfileReports() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminMessageReports() });
     },
   });
 }

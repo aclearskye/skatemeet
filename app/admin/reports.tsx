@@ -6,9 +6,11 @@ import { useRouter } from "expo-router";
 import { useBanAppealsQueue } from "@/lib/admin/hooks/useBanAppealsQueue";
 import { useBanUser } from "@/lib/admin/hooks/useBanUser";
 import { useDismissProfileReport } from "@/lib/admin/hooks/useDismissProfileReport";
+import { useMessageReportsQueue } from "@/lib/admin/hooks/useMessageReportsQueue";
 import { usePhotoReportsQueue } from "@/lib/admin/hooks/usePhotoReportsQueue";
 import { useProfileReportsQueue } from "@/lib/admin/hooks/useProfileReportsQueue";
 import { useResolveBanAppeal } from "@/lib/admin/hooks/useResolveBanAppeal";
+import { useResolveMessageReport } from "@/lib/admin/hooks/useResolveMessageReport";
 import { useResolvePhotoReport } from "@/lib/admin/hooks/useResolvePhotoReport";
 import { useResolveReviewReport } from "@/lib/admin/hooks/useResolveReviewReport";
 import { useReviewReportsQueue } from "@/lib/admin/hooks/useReviewReportsQueue";
@@ -17,6 +19,7 @@ import type { AdminEntityKind, BanAppealItem, ProfileReportItem, ReportResolutio
 import { C, F } from "@/lib/theme";
 import { BanAppealCard } from "@/components/admin/BanAppealCard";
 import { BanUserSheet } from "@/components/admin/BanUserSheet";
+import { MessageReportCard } from "@/components/admin/MessageReportCard";
 import { PhotoReportCard } from "@/components/admin/PhotoReportCard";
 import { ProfileReportCard } from "@/components/admin/ProfileReportCard";
 import { ReviewReportCard } from "@/components/admin/ReviewReportCard";
@@ -27,13 +30,16 @@ export default function AdminReportsScreen() {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
-  const [banTarget, setBanTarget] = useState<ProfileReportItem | null>(null);
+  // Both report kinds ban the same way; only the profile and name differ.
+  const [banTarget, setBanTarget] = useState<{ profileId: string; username: string } | null>(null);
   const [reinstateTarget, setReinstateTarget] = useState<BanAppealItem | null>(null);
 
   const { data: photoReports = [], isLoading: photosLoading, isError: photosError } = usePhotoReportsQueue();
   const { data: reviewReports = [], isLoading: reviewsLoading, isError: reviewsError } = useReviewReportsQueue();
   const { data: profileReports = [], isLoading: profilesLoading, isError: profilesError } = useProfileReportsQueue();
   const { data: banAppeals = [], isLoading: appealsLoading, isError: appealsError } = useBanAppealsQueue();
+  const { data: messageReports = [], isLoading: messagesLoading, isError: messagesError } = useMessageReportsQueue();
+  const resolveMessage = useResolveMessageReport();
   const resolvePhoto = useResolvePhotoReport();
   const resolveReview = useResolveReviewReport();
   const dismissProfileReport = useDismissProfileReport();
@@ -69,6 +75,24 @@ export default function AdminReportsScreen() {
       onError: handleError,
       onSettled: () => setPendingId(null),
     });
+  };
+
+  const handleDismissMessageReport = (reportId: string) => {
+    setErrorMessage(null);
+    setPendingId(reportId);
+    resolveMessage.mutate(
+      { action: "dismiss", reportId },
+      { onError: handleError, onSettled: () => setPendingId(null) }
+    );
+  };
+
+  const handleRemoveMessage = (reportId: string, messageId: string) => {
+    setErrorMessage(null);
+    setPendingId(reportId);
+    resolveMessage.mutate(
+      { action: "remove", messageId },
+      { onError: handleError, onSettled: () => setPendingId(null) }
+    );
   };
 
   async function handleBanSubmit(reason: string) {
@@ -116,7 +140,7 @@ export default function AdminReportsScreen() {
         <View style={styles.headerText}>
           <Text style={styles.heading}>REPORTS</Text>
           <Text style={styles.subheading} numberOfLines={1}>
-            {"// reported photos and reviews"}
+            {"// reported photos, reviews, profiles and messages"}
           </Text>
         </View>
       </View>
@@ -182,8 +206,32 @@ export default function AdminReportsScreen() {
                 key={item.profileId}
                 item={item}
                 onDismiss={handleDismissProfileReport}
-                onBan={setBanTarget}
+                onBan={(target: ProfileReportItem) =>
+                  setBanTarget({ profileId: target.profileId, username: target.username })
+                }
                 isBusy={pendingId === item.profileId}
+              />
+            ))}
+          </View>
+        )}
+
+        <Text style={[styles.sectionLabel, styles.sectionSpacing]}>MESSAGES</Text>
+        {messagesLoading ? (
+          <ActivityIndicator color={C.primary} style={styles.sectionSpinner} />
+        ) : messagesError ? (
+          <Text style={styles.emptyLabel}>FAILED TO LOAD MESSAGE REPORTS</Text>
+        ) : messageReports.length === 0 ? (
+          <Text style={styles.emptyLabel}>NO REPORTED MESSAGES</Text>
+        ) : (
+          <View style={styles.list}>
+            {messageReports.map((item) => (
+              <MessageReportCard
+                key={item.reportId}
+                item={item}
+                onDismiss={handleDismissMessageReport}
+                onRemove={(messageId) => handleRemoveMessage(item.reportId, messageId)}
+                onBan={(target) => setBanTarget({ profileId: target.senderId, username: target.senderUsername })}
+                isBusy={pendingId === item.reportId || pendingId === item.senderId}
               />
             ))}
           </View>
