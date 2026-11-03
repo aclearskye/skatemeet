@@ -1,6 +1,7 @@
 import { onSignOutButtonPress } from "@/lib/auth/onSignOutButtonPress";
 import { useDrawer } from "@/lib/context/drawer-context";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { useUnreadChatCount } from "@/lib/messages/hooks/useUnreadChatCount";
 import { fetchUnreadNotificationCount } from "@/lib/notifications/queries";
 import { avatarColor, C, F } from "@/lib/theme";
 import { queryKeys } from "@/utils/queryKeys";
@@ -30,13 +31,20 @@ type NavItem = {
   icon: keyof typeof Ionicons.glyphMap;
   path: string;
   match: string;
+  // Also active on nested routes under this prefix (e.g. /chat/<id>).
+  matchPrefix?: string;
 };
+
+export function isNavItemActive(item: NavItem, pathname: string): boolean {
+  return pathname === item.match || (item.matchPrefix != null && pathname.startsWith(item.matchPrefix));
+}
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "FEED",       icon: "home-outline",   path: "/",           match: "/"           },
   { label: "MAP",        icon: "map-outline",    path: "/map",        match: "/map"        },
   { label: "FAVOURITES", icon: "heart-outline",  path: "/favourites", match: "/favourites" },
   { label: "SEARCH",     icon: "search-outline", path: "/search",     match: "/search"     },
+  { label: "CHATS",      icon: "chatbubbles-outline", path: "/chats", match: "/chats", matchPrefix: "/chat/" },
   { label: "PROFILE",    icon: "person-outline", path: "/profile",    match: "/profile"    },
 ];
 
@@ -55,6 +63,7 @@ export default function DrawerMenu() {
     queryFn: () => fetchUnreadNotificationCount(profile!.profile_id),
     enabled: !!profile,
   });
+  const unreadChatCount = useUnreadChatCount();
 
   const openBizModal = () => {
     closeDrawer();
@@ -155,14 +164,19 @@ export default function DrawerMenu() {
               hasBadge={unreadCount > 0}
               onPress={() => navigate("/notifications")}
             />
-            <IconBadgeButton icon="mail-outline" hasBadge={false} />
+            <IconBadgeButton
+              icon="mail-outline"
+              hasBadge={unreadChatCount > 0}
+              onPress={() => navigate("/chats")}
+            />
           </View>
         </View>
 
         <View style={styles.divider} />
         <View style={styles.navSection}>
-          {NAV_ITEMS.map(({ label, icon, path, match }) => {
-            const active = pathname === match;
+          {NAV_ITEMS.map((item) => {
+            const { label, icon, path } = item;
+            const active = isNavItemActive(item, pathname);
             return (
               <TouchableOpacity
                 key={path}
@@ -172,6 +186,7 @@ export default function DrawerMenu() {
               >
                 <Ionicons name={icon} size={18} color={active ? C.primary : C.muted} />
                 <Text style={[styles.navLabel, active && styles.navLabelActive]}>{label}</Text>
+                {path === "/chats" && unreadChatCount > 0 && <View style={styles.navBadge} />}
               </TouchableOpacity>
             );
           })}
@@ -334,6 +349,13 @@ const styles = StyleSheet.create({
   },
   navLabelActive: {
     color: C.primary,
+  },
+  navBadge: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: C.tertiary,
+    marginLeft: "auto",
   },
   pendingRow: {
     flexDirection: "row",

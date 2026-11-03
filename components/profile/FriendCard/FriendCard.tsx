@@ -88,8 +88,7 @@ export function FriendCard({ friend, onViewProfile }: Props) {
         </View>
 
         <View style={styles.actionRow}>
-          {/* Friends can always message, even when this friend is private. */}
-          <MessageButton isPrivate={friend.isPrivate} friendStatus="friends" />
+          <MessageButton profileId={friend.profileId} friendStatus="friends" />
           <DuctTapeLabel
             color={C.secondary}
             style={styles.unfriendBtn}

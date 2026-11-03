@@ -65,8 +65,11 @@ export function useRespondToFriendRequest() {
       // viewer's list.
       queryClient.invalidateQueries({ queryKey: queryKeys.profileStats(profileId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.friendsList(profileId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.chatList(profileId) });
       if (otherProfileId) {
         queryClient.invalidateQueries({ queryKey: queryKeys.profileStats(otherProfileId) });
+        // Accepting a private skater makes their full profile readable.
+        queryClient.invalidateQueries({ queryKey: queryKeys.userProfile(otherProfileId) });
       }
     },
   });

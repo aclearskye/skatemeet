@@ -4,6 +4,7 @@ import { DrawerProvider } from "@/lib/context/drawer-context";
 import { ToastProvider } from "@/lib/context/toast-context";
 import { useWelcomeXpToast } from "@/lib/xp/useWelcomeXpToast";
 import { useCheckInSync } from "@/lib/shared/hooks/useCheckInSync";
+import { useChatRealtime } from "@/lib/messages/hooks/useChatRealtime";
 import DrawerMenu from "@/components/ui/DrawerMenu";
 import { ToastHost } from "@/components/ui/ToastHost";
 import WebAccountSidebar from "@/components/ui/WebAccountSidebar";
@@ -47,12 +48,17 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
 
   useWelcomeXpToast(profile);
   useCheckInSync();
+  useChatRealtime();
 
   useEffect(() => {
     if (isLoadingAuthContext || !fontsLoaded) return;
 
     const inOnboardingGroup = segments[0] === "(onboarding)";
     const inPublicScreen = segments[0] === "Login" || segments[0] === "SignUp";
+    // Readable signed in or out -- SignUp links to it.
+    const inPrivacyScreen = segments[0] === "privacy";
+    const inAgeCheckScreen = segments[0] === "age-check";
+    const needsAgeCheck = !!profile?.onboarding_completed && !profile.age_confirmed_at;
     const inBannedScreen = segments[0] === "banned";
     const inAccountDeletedScreen = segments[0] === "account-deleted";
 
@@ -61,13 +67,21 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
       // it's just confined here instead of being rejected at sign-in (see
       // AuthProvider and 20260927000000_bans_without_auth_lockout.sql).
       router.replace("/banned");
-    } else if (!session && !inPublicScreen && !inBannedScreen && !inAccountDeletedScreen) {
+    } else if (!session && !inPublicScreen && !inBannedScreen && !inAccountDeletedScreen && !inPrivacyScreen) {
       router.replace("/Login");
     } else if (session && profile === null && !inPublicScreen && !inOnboardingGroup) {
       router.replace("/(onboarding)");
     } else if (profile && !inOnboardingGroup && !profile.onboarding_completed) {
       router.replace("/(onboarding)");
-    } else if (session && profile?.onboarding_completed && (inOnboardingGroup || inPublicScreen || segments[0] === undefined)) {
+    } else if (session && needsAgeCheck && !inAgeCheckScreen && !inPrivacyScreen && !inAccountDeletedScreen) {
+      // One-time 16+ check for accounts that never passed the sign-up gate.
+      router.replace("/age-check" as any);
+    } else if (
+      session &&
+      profile?.onboarding_completed &&
+      !needsAgeCheck &&
+      (inOnboardingGroup || inPublicScreen || inAgeCheckScreen || segments[0] === undefined)
+    ) {
       router.replace("/(tabs)");
     }
 
@@ -91,6 +105,11 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
         <Stack.Screen name="settings" />
         <Stack.Screen name="favourites" />
         <Stack.Screen name="friends" />
+        <Stack.Screen name="chats" />
+        <Stack.Screen name="chat/[conversationId]" />
+        <Stack.Screen name="blocked" />
+        <Stack.Screen name="privacy" />
+        <Stack.Screen name="age-check" />
         <Stack.Screen name="notifications" />
         <Stack.Screen name="admin" />
         <Stack.Screen name="banned" />

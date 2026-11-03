@@ -66,10 +66,35 @@ export const queryKeys = {
     ["profile", profileId, "reportStatus"] as const,
   banAppealStatus: (profileId: string) =>
     ["profile", profileId, "banAppealStatus"] as const,
-  userSearch: (query: string) =>
-    ["search", "users", query] as const,
+  // Per viewer: results depend on who's searching (privacy, blocks, self).
+  userSearch: (profileId: string, query: string) =>
+    ["search", "users", profileId, query] as const,
   friendStatus: (profileId: string, otherId: string) =>
     ["profile", profileId, "friendStatus", otherId] as const,
   friendsList: (profileId: string) =>
     ["profile", profileId, "friends"] as const,
+  chatList: (profileId: string) =>
+    ["chats", profileId, "list"] as const,
+  chatSummary: (conversationId: string) =>
+    ["chat", conversationId, "summary"] as const,
+  chatMessages: (conversationId: string) =>
+    ["chat", conversationId, "messages"] as const,
+  chatReadReceipt: (conversationId: string) =>
+    ["chat", conversationId, "readReceipt"] as const,
+  chatUnreadCount: (profileId: string) =>
+    ["chats", profileId, "unreadCount"] as const,
+  blockStatus: (profileId: string, otherId: string) =>
+    ["profile", profileId, "blockStatus", otherId] as const,
+  myBlocks: (profileId: string) =>
+    ["profile", profileId, "blocks"] as const,
+  profileCard: (profileId: string) =>
+    ["profile", profileId, "card"] as const,
+  // Another user's full row -- null while RLS hides it (private non-friend,
+  // blocked or deleted).
+  userProfile: (profileId: string) =>
+    ["profile", profileId, "full"] as const,
+  adminMessageReports: () =>
+    ["admin", "messageReports"] as const,
+  adminMessageReportDetail: (reportId: string) =>
+    ["admin", "messageReports", reportId] as const,
 };

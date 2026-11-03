@@ -40,9 +40,16 @@ export function useRemoveFriend(otherProfileId: string) {
       queryClient.invalidateQueries({ queryKey });
       // Both sides' friend counts change, and the viewer's list loses a row.
       queryClient.invalidateQueries({ queryKey: queryKeys.profileStats(otherProfileId) });
+      // Unfriending a private skater locks their profile again.
+      queryClient.invalidateQueries({ queryKey: queryKeys.userProfile(otherProfileId) });
       if (!viewerId) return;
       queryClient.invalidateQueries({ queryKey: queryKeys.profileStats(viewerId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.friendsList(viewerId) });
+      // Chats with them stay but lock, and a "Say hi" card disappears.
+      queryClient.invalidateQueries({ queryKey: queryKeys.chatList(viewerId) });
+      queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey[0] === "chat" && query.queryKey[2] === "summary",
+      });
     },
   });
 

@@ -1,5 +1,6 @@
-import { NAV_ITEMS } from "@/components/ui/DrawerMenu";
+import { isNavItemActive, NAV_ITEMS } from "@/components/ui/DrawerMenu";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { useUnreadChatCount } from "@/lib/messages/hooks/useUnreadChatCount";
 import { C, F } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
@@ -11,6 +12,7 @@ export default function WebSidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
+  const unreadChatCount = useUnreadChatCount();
 
   // No app nav on auth/onboarding screens — this sidebar is for the logged-in app only.
   if (!session || !profile?.onboarding_completed) return null;
@@ -22,8 +24,9 @@ export default function WebSidebar() {
       <View style={styles.divider} />
 
       <View style={styles.nav}>
-        {NAV_ITEMS.map(({ label, icon, path, match }) => {
-          const active = pathname === match;
+        {NAV_ITEMS.map((item) => {
+          const { label, icon, path } = item;
+          const active = isNavItemActive(item, pathname);
           return (
             <TouchableOpacity
               key={path}
@@ -33,6 +36,7 @@ export default function WebSidebar() {
             >
               <Ionicons name={icon} size={18} color={active ? C.primary : C.muted} />
               <Text style={[styles.navLabel, active && styles.navLabelActive]}>{label}</Text>
+              {path === "/chats" && unreadChatCount > 0 && <View style={styles.navBadge} />}
             </TouchableOpacity>
           );
         })}
@@ -84,5 +88,12 @@ const styles = StyleSheet.create({
   },
   navLabelActive: {
     color: C.primary,
+  },
+  navBadge: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: C.tertiary,
+    marginLeft: "auto",
   },
 });

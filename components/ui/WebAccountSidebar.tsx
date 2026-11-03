@@ -1,5 +1,6 @@
 import { onSignOutButtonPress } from "@/lib/auth/onSignOutButtonPress";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { useUnreadChatCount } from "@/lib/messages/hooks/useUnreadChatCount";
 import { fetchUnreadNotificationCount } from "@/lib/notifications/queries";
 import { avatarColor, C, F } from "@/lib/theme";
 import { queryKeys } from "@/utils/queryKeys";
@@ -25,6 +26,7 @@ export default function WebAccountSidebar() {
     queryFn: () => fetchUnreadNotificationCount(profile!.profile_id),
     enabled: !!profile,
   });
+  const unreadChatCount = useUnreadChatCount();
 
   // No account sidebar on auth/onboarding screens — this is for the logged-in app only.
   if (!session || !profile?.onboarding_completed) return null;
@@ -68,7 +70,11 @@ export default function WebAccountSidebar() {
             hasBadge={unreadCount > 0}
             onPress={() => router.push("/notifications")}
           />
-          <IconBadgeButton icon="mail-outline" hasBadge={false} />
+          <IconBadgeButton
+            icon="mail-outline"
+            hasBadge={unreadChatCount > 0}
+            onPress={() => router.push("/chats")}
+          />
         </View>
       </View>
 
