@@ -1,10 +1,12 @@
 import { AuthContext, Profile } from "@/lib/context/use-auth-context";
 import { supabase } from "@/lib/supabaseClient";
 import type { Session } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { AppState, AppStateStatus } from "react-native";
 import { PropsWithChildren, useCallback, useEffect, useRef, useState } from "react";
 
 export default function AuthProvider({ children }: PropsWithChildren) {
+  const queryClient = useQueryClient();
   const [session, setSession] = useState<Session | undefined | null>();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isBanned, setIsBanned] = useState(false);
@@ -57,7 +59,11 @@ export default function AuthProvider({ children }: PropsWithChildren) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      // Several cached queries aren't keyed by viewer (another user's full
+      // profile, a chat thread), so the next account on this device must
+      // not inherit what the previous one could see.
+      if (event === "SIGNED_OUT") queryClient.clear();
       // Signal loading so the UI doesn't flash a stale profile between auth events
       setIsLoadingAuthContext(true);
       setSession(session);
@@ -66,7 +72,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [queryClient]);
 
   // Single source of truth for the loading → profile fetch → done cycle
   useEffect(() => {
