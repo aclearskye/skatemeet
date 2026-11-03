@@ -1,0 +1,1 @@
+export { DuctTapeLabel } from "./DuctTapeLabel";

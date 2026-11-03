@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native";
-import { C, F, TAPE } from "@/lib/theme";
+import { C, F } from "@/lib/theme";
 
 export const styles = StyleSheet.create({
   loading: { marginVertical: 12 },
@@ -22,8 +22,6 @@ export const styles = StyleSheet.create({
   facilityChip: {
     paddingHorizontal: 10,
     paddingVertical: 5,
-    backgroundColor: C.primary,
-    transform: [{ rotate: TAPE.rotatePrimary }],
   },
   facilityChipText: { fontFamily: F.mono, fontSize: 10, color: C.onPrimary, letterSpacing: 0.5 },
   parkingChip: {
@@ -33,8 +31,6 @@ export const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    backgroundColor: C.tertiary,
-    transform: [{ rotate: TAPE.rotateTertiary }],
   },
   parkingChipText: { fontFamily: F.body, fontSize: 13, color: C.onTertiary },
   badgeOn: {
@@ -43,8 +39,6 @@ export const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    backgroundColor: C.secondary,
-    transform: [{ rotate: TAPE.rotateSecondary }],
   },
   badgeOnText: { fontFamily: F.mono, fontSize: 10, color: C.onSecondary, letterSpacing: 0.5 },
   badgeOff: {

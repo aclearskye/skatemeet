@@ -49,6 +49,23 @@ export const C = {
   tertiary: "#35E8FF",
   onTertiary: "#0A0A0A",
 
+  // Gold (Competitions) — not one of the core three neons (design system
+  // 2.3's "one neon dominates" rule is about primary/secondary/tertiary),
+  // reserved for competition/trophy surfaces (e.g. COMP/UPCOMING badges).
+  // Sourced from the actual trophy icon art, not picked independently.
+  gold: "#F6C64B",
+  onGold: "#372807",
+
+  // Duct Tape (physical-tape-texture accents, outside the core neon trio).
+  // tape is the neutral label chip; tapeOrange/tapeRed step up in urgency
+  // for a "gaffer tape" warning and a "busted/alert" strip.
+  tape: "#E8E4D8",
+  onTape: "#0A0A0A",
+  tapeOrange: "#FF8A3D",
+  onTapeOrange: "#0A0A0A",
+  tapeRed: "#C8302A",
+  onTapeRed: "#F2F2F0",
+
   // Semantic — danger aliases to orange per design system 2.2 ("--danger
   // points to --orange"), not a separate hue.
   error: "#FF5C1F",
@@ -85,13 +102,14 @@ export const TS = {
 };
 
 // Duct tape label recipe (docs/theme/sk8meet-theme-sheet.html — "Component
-// recipes" section). Rotation is fixed per accent color, never randomized,
-// and only ever applied to the filled/active state of a chip.
-export const TAPE = {
-  rotatePrimary: "-1.5deg",
-  rotateSecondary: "1.2deg",
-  rotateTertiary: "-0.8deg",
-};
+// recipes" section). Used only by components/common/DuctTapeLabel, which
+// memoizes the result per mount so it stays put across re-renders but comes
+// out different on every remount (e.g. a page refresh re-rolls every tape
+// label's angle, and same-color labels in a row no longer all match).
+export function randomTapeRotation(): string {
+  const deg = -2 + Math.random() * 4; // -2deg..2deg
+  return `${deg.toFixed(2)}deg`;
+}
 
 // Spacing scale — 4px base unit
 export const SP = {

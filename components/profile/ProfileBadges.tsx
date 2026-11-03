@@ -1,5 +1,6 @@
+import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
 import { C } from "@/lib/theme";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text } from "react-native";
 import { styles } from "./ProfileBadges.styles";
 
 type Props = {
@@ -19,23 +20,23 @@ export default function ProfileBadges({ skillLevel, disciplines, pronouns }: Pro
       contentContainerStyle={styles.row}
     >
       {skillLevel && (
-        <View style={[styles.badge, styles.badgeSkill]}>
+        <DuctTapeLabel color={C.secondary} style={styles.badge}>
           <Text style={[styles.label, { color: C.onSecondary }]}>
             {skillLevel.toUpperCase()}
           </Text>
-        </View>
+        </DuctTapeLabel>
       )}
       {disciplines?.map((d) => (
-        <View key={d} style={[styles.badge, styles.badgeDiscipline]}>
+        <DuctTapeLabel key={d} color={C.primary} style={styles.badge}>
           <Text style={[styles.label, { color: C.onPrimary }]}>{d.toUpperCase()}</Text>
-        </View>
+        </DuctTapeLabel>
       ))}
       {pronouns && (
-        <View style={[styles.badge, styles.badgePronouns]}>
+        <DuctTapeLabel color={C.tertiary} style={styles.badge}>
           <Text style={[styles.label, { color: C.onTertiary }]}>
             {pronouns.toUpperCase()}
           </Text>
-        </View>
+        </DuctTapeLabel>
       )}
     </ScrollView>
   );

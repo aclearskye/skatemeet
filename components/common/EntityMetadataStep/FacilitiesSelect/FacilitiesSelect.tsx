@@ -1,4 +1,5 @@
 import { FACILITIES, FACILITY_LABELS, Facility } from "@/lib/shared/types";
+import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
 import { Text, TouchableOpacity, View } from "react-native";
 import { styles } from "./FacilitiesSelect.styles";
 
@@ -7,10 +8,9 @@ type Props = {
   onChange: (value: Facility[]) => void;
   accent: string;
   onAccent: string;
-  rotate: string;
 };
 
-export function FacilitiesSelect({ value, onChange, accent, onAccent, rotate }: Props) {
+export function FacilitiesSelect({ value, onChange, accent, onAccent }: Props) {
   function toggle(facility: Facility) {
     onChange(
       value.includes(facility) ? value.filter((f) => f !== facility) : [...value, facility]
@@ -21,23 +21,27 @@ export function FacilitiesSelect({ value, onChange, accent, onAccent, rotate }: 
     <View style={styles.grid}>
       {FACILITIES.map((facility) => {
         const selected = value.includes(facility);
+        const label = FACILITY_LABELS[facility].toUpperCase();
+        if (selected) {
+          return (
+            <DuctTapeLabel
+              key={facility}
+              color={accent}
+              style={[styles.chip, { borderColor: accent }]}
+              onPress={() => toggle(facility)}
+            >
+              <Text style={[styles.chipText, { color: onAccent }]}>{label}</Text>
+            </DuctTapeLabel>
+          );
+        }
         return (
           <TouchableOpacity
             key={facility}
-            style={[
-              styles.chip,
-              selected && {
-                backgroundColor: accent,
-                borderColor: accent,
-                transform: [{ rotate }],
-              },
-            ]}
+            style={styles.chip}
             onPress={() => toggle(facility)}
             activeOpacity={0.75}
           >
-            <Text style={[styles.chipText, selected && { color: onAccent }]}>
-              {FACILITY_LABELS[facility].toUpperCase()}
-            </Text>
+            <Text style={styles.chipText}>{label}</Text>
           </TouchableOpacity>
         );
       })}

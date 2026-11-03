@@ -1,5 +1,5 @@
 import { TriStateToggle } from "@/components/common/TriStateToggle";
-import { C, TAPE } from "@/lib/theme";
+import { C } from "@/lib/theme";
 import { Text, TouchableOpacity, View } from "react-native";
 import { FacilitiesSelect } from "./FacilitiesSelect";
 import { OpeningHoursInput } from "./OpeningHoursInput";
@@ -36,7 +36,6 @@ export function EntityMetadataStep({ value, onChange, accent, onSkip }: Props) {
         onChange={(facilities) => onChange({ ...value, facilities })}
         accent={C.primary}
         onAccent={C.onPrimary}
-        rotate={TAPE.rotatePrimary}
       />
 
       <Text style={[styles.fieldLabel, styles.spaced]}>PARKING</Text>
@@ -45,7 +44,6 @@ export function EntityMetadataStep({ value, onChange, accent, onSkip }: Props) {
         onChange={(parking) => onChange({ ...value, parking })}
         accent={C.tertiary}
         onAccent={C.onTertiary}
-        rotate={TAPE.rotateTertiary}
       />
 
       <View style={styles.toggles}>

@@ -5,6 +5,7 @@ import {
   WEEKDAYS,
   WEEKDAY_LABELS,
 } from "@/lib/shared/types";
+import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
 import { C } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
@@ -98,28 +99,28 @@ export function EntityMetadataSection({ metadata, isLoading, accent, canEdit, on
       {metadata && metadata.facilities.length > 0 && (
         <View style={styles.chipRow}>
           {metadata.facilities.map((facility) => (
-            <View key={facility} style={styles.facilityChip}>
+            <DuctTapeLabel key={facility} color={C.primary} style={styles.facilityChip}>
               <Text style={styles.facilityChipText}>{FACILITY_LABELS[facility]}</Text>
-            </View>
+            </DuctTapeLabel>
           ))}
         </View>
       )}
 
       {metadata?.parking && (
-        <View style={styles.parkingChip}>
+        <DuctTapeLabel color={C.tertiary} style={styles.parkingChip}>
           <Ionicons name="car-outline" size={15} color={C.onTertiary} />
           <Text style={styles.parkingChipText}>{PARKING_LABELS[metadata.parking]}</Text>
-        </View>
+        </DuctTapeLabel>
       )}
 
       {visibleBadges.length > 0 && (
         <View style={styles.chipRow}>
           {visibleBadges.map((badge) =>
             badge.value ? (
-              <View key={badge.label} style={styles.badgeOn}>
+              <DuctTapeLabel key={badge.label} color={C.secondary} style={styles.badgeOn}>
                 <Ionicons name="checkmark" size={12} color={C.onSecondary} />
                 <Text style={styles.badgeOnText}>{badge.label}</Text>
-              </View>
+              </DuctTapeLabel>
             ) : (
               <View key={badge.label} style={styles.badgeOff}>
                 <Ionicons name="close" size={12} color={C.muted} />

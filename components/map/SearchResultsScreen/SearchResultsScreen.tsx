@@ -1,3 +1,4 @@
+import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
 import { EntityPreviewCard } from "@/components/common/EntityPreviewCard";
 import type { PreviewItem } from "@/components/map/MapPreviewCard";
 import { coordinatesOf, haversineDistanceKm, kmToMiles, type Coordinates } from "@/lib/map/types";
@@ -52,35 +53,62 @@ export function SearchResultsScreen({
   return (
     <View style={[styles.container, { paddingTop: insets.top + 116 }]}>
       <View style={styles.sortRow}>
-        <TouchableOpacity
-          style={[styles.chip, sortMode === "upvotes" && styles.chipActive]}
-          onPress={() => toggleSort("upvotes")}
-          activeOpacity={0.75}
-        >
-          <Text style={[styles.chipText, sortMode === "upvotes" && styles.chipTextActive]}>
-            MOST UPVOTED
-          </Text>
-        </TouchableOpacity>
-        {hasUserLocation && (
+        {sortMode === "upvotes" ? (
+          <DuctTapeLabel
+            color={C.primary}
+            style={[styles.chip, { borderColor: C.primary }]}
+            onPress={() => toggleSort("upvotes")}
+          >
+            <Text style={[styles.chipText, styles.chipTextActive]}>MOST UPVOTED</Text>
+          </DuctTapeLabel>
+        ) : (
           <TouchableOpacity
-            style={[styles.chip, sortMode === "distance" && styles.chipActiveNearest]}
-            onPress={() => toggleSort("distance")}
+            style={styles.chip}
+            onPress={() => toggleSort("upvotes")}
             activeOpacity={0.75}
           >
-            <Text style={[styles.chipText, sortMode === "distance" && styles.chipTextActiveNearest]}>
-              NEAREST
-            </Text>
+            <Text style={styles.chipText}>MOST UPVOTED</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity
-          style={[styles.chip, userUploadedOnly && styles.chipActiveUserUploaded]}
-          onPress={onToggleUserUploadedOnly}
-          activeOpacity={0.75}
-        >
-          <Text style={[styles.chipText, userUploadedOnly && styles.chipTextActiveUserUploaded]}>
-            USER UPLOADED
-          </Text>
-        </TouchableOpacity>
+        {hasUserLocation &&
+          (sortMode === "distance" ? (
+            <DuctTapeLabel
+              color={C.secondary}
+              style={[styles.chip, { borderColor: C.secondary }]}
+              onPress={() => toggleSort("distance")}
+            >
+              <Text style={[styles.chipText, styles.chipTextActiveNearest]}>NEAREST</Text>
+            </DuctTapeLabel>
+          ) : (
+            <TouchableOpacity
+              style={styles.chip}
+              onPress={() => toggleSort("distance")}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.chipText}>NEAREST</Text>
+            </TouchableOpacity>
+          ))}
+        {userUploadedOnly ? (
+          // The design system's closest accent to "blue" is the cyan
+          // tertiary token — there's no separate blue in the palette.
+          <DuctTapeLabel
+            color={C.tertiary}
+            style={[styles.chip, { borderColor: C.tertiary }]}
+            onPress={onToggleUserUploadedOnly}
+          >
+            <Text style={[styles.chipText, styles.chipTextActiveUserUploaded]}>
+              USER UPLOADED
+            </Text>
+          </DuctTapeLabel>
+        ) : (
+          <TouchableOpacity
+            style={styles.chip}
+            onPress={onToggleUserUploadedOnly}
+            activeOpacity={0.75}
+          >
+            <Text style={styles.chipText}>USER UPLOADED</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {isSearching ? (

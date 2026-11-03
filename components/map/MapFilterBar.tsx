@@ -1,4 +1,5 @@
-import { C, TAPE } from "@/lib/theme";
+import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
+import { C } from "@/lib/theme";
 import { FilterKey } from "@/utils/constants";
 import { ScrollView, Text, TouchableOpacity } from "react-native";
 import { styles } from "./MapFilterBar.styles";
@@ -21,27 +22,26 @@ export function MapFilterBar({ filters, activeFilters, onToggle }: Props) {
         const accentBg = key === "stores" ? C.secondary : key === "diys" ? C.tertiary : C.primary;
         const accentText =
           key === "stores" ? C.onSecondary : key === "diys" ? C.onTertiary : C.onPrimary;
-        const accentRotate =
-          key === "stores"
-            ? TAPE.rotateSecondary
-            : key === "diys"
-              ? TAPE.rotateTertiary
-              : TAPE.rotatePrimary;
+        if (active) {
+          return (
+            <DuctTapeLabel
+              key={key}
+              color={accentBg}
+              style={[styles.chip, { borderColor: accentBg }]}
+              onPress={() => onToggle(key)}
+            >
+              <Text style={[styles.chipText, { color: accentText }]}>{label}</Text>
+            </DuctTapeLabel>
+          );
+        }
         return (
           <TouchableOpacity
             key={key}
-            style={[
-              styles.chip,
-              active && {
-                backgroundColor: accentBg,
-                borderColor: accentBg,
-                transform: [{ rotate: accentRotate }],
-              },
-            ]}
+            style={styles.chip}
             onPress={() => onToggle(key)}
             activeOpacity={0.75}
           >
-            <Text style={[styles.chipText, active && { color: accentText }]}>{label}</Text>
+            <Text style={styles.chipText}>{label}</Text>
           </TouchableOpacity>
         );
       })}

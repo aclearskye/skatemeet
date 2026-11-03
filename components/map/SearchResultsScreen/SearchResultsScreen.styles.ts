@@ -1,4 +1,4 @@
-import { C, F, TAPE } from "@/lib/theme";
+import { C, F } from "@/lib/theme";
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
@@ -10,23 +10,6 @@ export const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: C.border,
     backgroundColor: C.bg,
-  },
-  chipActive: {
-    backgroundColor: C.primary,
-    borderColor: C.primary,
-    transform: [{ rotate: TAPE.rotatePrimary }],
-  },
-  chipActiveNearest: {
-    backgroundColor: C.secondary,
-    borderColor: C.secondary,
-    transform: [{ rotate: TAPE.rotateSecondary }],
-  },
-  // The design system's closest accent to "blue" is the cyan tertiary token —
-  // there's no separate blue in the palette, so this reuses it.
-  chipActiveUserUploaded: {
-    backgroundColor: C.tertiary,
-    borderColor: C.tertiary,
-    transform: [{ rotate: TAPE.rotateTertiary }],
   },
   chipText: {
     fontFamily: F.mono,

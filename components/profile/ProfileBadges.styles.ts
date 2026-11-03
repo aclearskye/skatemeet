@@ -1,4 +1,4 @@
-import { C, TAPE, TS } from "@/lib/theme";
+import { TS } from "@/lib/theme";
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
@@ -11,18 +11,6 @@ export const styles = StyleSheet.create({
   badge: {
     paddingHorizontal: 14,
     paddingVertical: 5,
-  },
-  badgeSkill: {
-    backgroundColor: C.secondary,
-    transform: [{ rotate: TAPE.rotateSecondary }],
-  },
-  badgeDiscipline: {
-    backgroundColor: C.primary,
-    transform: [{ rotate: TAPE.rotatePrimary }],
-  },
-  badgePronouns: {
-    backgroundColor: C.tertiary,
-    transform: [{ rotate: TAPE.rotateTertiary }],
   },
   label: {
     ...TS.labelTape,
