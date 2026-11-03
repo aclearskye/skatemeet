@@ -23,6 +23,9 @@ export const queryKeys = {
     ["search", "entitiesNearby", query, coords.lat, coords.lng] as const,
   profileStats: (profileId: string) =>
     ["profile", profileId, "stats"] as const,
+  // Nested under profileStats so invalidating that prefix still covers it.
+  friendCount: (profileId: string) =>
+    ["profile", profileId, "stats", "friends"] as const,
   profileClips: (profileId: string) =>
     ["profile", profileId, "clips"] as const,
   profileFavorites: (profileId: string) =>
@@ -63,4 +66,10 @@ export const queryKeys = {
     ["profile", profileId, "reportStatus"] as const,
   banAppealStatus: (profileId: string) =>
     ["profile", profileId, "banAppealStatus"] as const,
+  userSearch: (query: string) =>
+    ["search", "users", query] as const,
+  friendStatus: (profileId: string, otherId: string) =>
+    ["profile", profileId, "friendStatus", otherId] as const,
+  friendsList: (profileId: string) =>
+    ["profile", profileId, "friends"] as const,
 };

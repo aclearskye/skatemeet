@@ -15,3 +15,9 @@ export async function deleteNotification(notificationId: string): Promise<void> 
     .eq("notification_id", notificationId);
   if (error) throw error;
 }
+
+export async function deleteNotifications(notificationIds: string[]): Promise<void> {
+  if (notificationIds.length === 0) return;
+  const { error } = await supabase.from("notifications").delete().in("notification_id", notificationIds);
+  if (error) throw error;
+}

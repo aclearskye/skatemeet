@@ -12,14 +12,13 @@ import {
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  fetchProfileClips,
-  getProfileClipCount,
-  getProfileCrewCount,
-} from "@/lib/clips/clips";
+import { useRouter } from "expo-router";
+import { fetchProfileClips, getProfileClipCount } from "@/lib/clips/clips";
 import { fetchProfileVisitedCount, fetchUserStreak } from "@/lib/checkins/queries";
 import { type Profile } from "@/lib/context/use-auth-context";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { useFriendStatus } from "@/lib/friendRequests/hooks/useFriendStatus";
+import { getFriendCount } from "@/lib/friendRequests/queries";
 import { useReportProfile } from "@/lib/profiles/hooks/useReportProfile";
 import { PROFILE_REPORT_REASONS, type ProfileReportReason } from "@/lib/shared/types";
 import { C, F } from "@/lib/theme";
@@ -27,7 +26,10 @@ import { fetchProfileXpState } from "@/lib/xp/queries";
 import { queryKeys } from "@/utils/queryKeys";
 import BurgerButton from "@/components/ui/BurgerButton";
 import { ReportReasonSheet } from "@/components/common/ReportReasonSheet";
+import { AddFriendButton } from "@/components/profile/AddFriendButton";
 import { ExpBar } from "@/components/profile/ExpBar";
+import { MessageButton } from "@/components/profile/MessageButton";
+import { PrivateProfileLock } from "@/components/profile/PrivateProfileLock";
 import ClipCard, { GAP } from "./ClipCard";
 import ContentTabs from "./ContentTabs";
 import ProfileAvatar from "./ProfileAvatar";
@@ -42,8 +44,11 @@ type Props = {
 
 export default function ProfileView({ profile, isOwnProfile }: Props) {
   const { refreshProfile } = useAuthContext();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { hasReported, report, isReporting } = useReportProfile(profile.profile_id);
+  const { data: friendStatusResult } = useFriendStatus(profile.profile_id);
+  const friendStatus = friendStatusResult?.status ?? "none";
 
   const [activeTab, setActiveTab] = useState(0);
   const [showReportReasons, setShowReportReasons] = useState(false);
@@ -70,15 +75,15 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
         queryFn: () => getProfileClipCount(profile.profile_id),
       },
       {
-        queryKey: [...queryKeys.profileStats(profile.profile_id), "crew"],
-        queryFn: () => getProfileCrewCount(profile.profile_id),
+        queryKey: queryKeys.friendCount(profile.profile_id),
+        queryFn: () => getFriendCount(profile.profile_id),
       },
     ],
   });
   const loadingStats = statsQueries.some((q) => q.isLoading);
   const spotCount = statsQueries[0].data ?? 0;
   const clipCount = statsQueries[1].data ?? 0;
-  const crewCount = statsQueries[2].data ?? 0;
+  const friendCount = statsQueries[2].data ?? 0;
 
   const { data: clips = [], isLoading: loadingClips } = useQuery({
     queryKey: queryKeys.profileClips(profile.profile_id),
@@ -124,23 +129,36 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
     <>
     <ScrollView style={styles.bg} contentContainerStyle={styles.scrollContent}>
       {/* Top bar */}
-      <View style={[styles.topBar, { paddingTop: insets.top + 12 }]}>
-        {!isOwnProfile && (
-          <TouchableOpacity
-            onPress={() => !hasReported && !isReporting && setShowReportReasons(true)}
-            disabled={hasReported || isReporting}
-            style={styles.reportBtn}
-            hitSlop={8}
-          >
-            <Ionicons
-              name={hasReported ? "flag" : "flag-outline"}
-              size={18}
-              color={hasReported ? C.error : C.muted}
-            />
-          </TouchableOpacity>
-        )}
-        <BurgerButton />
-      </View>
+      {isOwnProfile ? (
+        <View style={[styles.topBar, { paddingTop: insets.top + 12 }]}>
+          <BurgerButton />
+        </View>
+      ) : (
+        <>
+          {/* Breadcrumb: back button + centered @username, eases nav back
+              out of another user's profile (e.g. from search results). */}
+          <View style={[styles.breadcrumb, { paddingTop: insets.top + 12 }]}>
+            <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+              <Ionicons name="arrow-back" size={22} color={C.text} />
+            </TouchableOpacity>
+            <Text style={styles.breadcrumbTitle} numberOfLines={1}>
+              @{profile.username}
+            </Text>
+            <TouchableOpacity
+              onPress={() => !hasReported && !isReporting && setShowReportReasons(true)}
+              disabled={hasReported || isReporting}
+              style={styles.reportBtn}
+              hitSlop={12}
+            >
+              <Ionicons
+                name={hasReported ? "flag" : "flag-outline"}
+                size={18}
+                color={hasReported ? C.error : C.muted}
+              />
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
 
       {/* Hero */}
       <View style={styles.hero}>
@@ -166,10 +184,18 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
             <Text style={styles.displayName} numberOfLines={1}>
               {displayName.toUpperCase()}
             </Text>
-            {isOwnProfile && (
-              <TouchableOpacity style={styles.editBtn} activeOpacity={0.7}>
-                <Ionicons name="pencil" size={14} color={C.muted} />
-              </TouchableOpacity>
+            {isOwnProfile ? (
+              <>
+                <TouchableOpacity style={styles.editBtn} activeOpacity={0.7}>
+                  <Ionicons name="pencil" size={14} color={C.muted} />
+                </TouchableOpacity>
+                <PrivateProfileLock />
+              </>
+            ) : (
+              <View style={styles.actionIcons}>
+                <AddFriendButton profileId={profile.profile_id} username={profile.username} />
+                <MessageButton isPrivate={profile.is_private} friendStatus={friendStatus} />
+              </View>
             )}
           </View>
 
@@ -226,7 +252,12 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
           <ActivityIndicator color={C.primary} size="small" />
         </View>
       ) : (
-        <StatsRow spots={spotCount} clips={clipCount} crew={crewCount} />
+        <StatsRow
+          spots={spotCount}
+          clips={clipCount}
+          friends={friendCount}
+          onFriendsPress={isOwnProfile ? () => router.push("/friends" as any) : undefined}
+        />
       )}
 
       {/* Content tabs */}
@@ -318,7 +349,27 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   reportBtn: {
-    padding: 2,
+    width: 30,
+    alignItems: "flex-end",
+  },
+
+  breadcrumb: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  backBtn: {
+    width: 30,
+  },
+  breadcrumbTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontFamily: F.mono,
+    fontSize: 13,
+    color: C.text,
+    letterSpacing: 1,
   },
 
   hero: {
@@ -357,6 +408,11 @@ const styles = StyleSheet.create({
   },
   editBtn: {
     padding: 4,
+  },
+  actionIcons: {
+    flexDirection: "row",
+    gap: 8,
+    marginLeft: "auto",
   },
 
   metaRow: {

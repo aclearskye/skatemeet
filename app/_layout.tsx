@@ -90,6 +90,7 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
         <Stack.Screen name="user/[userId]" />
         <Stack.Screen name="settings" />
         <Stack.Screen name="favourites" />
+        <Stack.Screen name="friends" />
         <Stack.Screen name="notifications" />
         <Stack.Screen name="admin" />
         <Stack.Screen name="banned" />

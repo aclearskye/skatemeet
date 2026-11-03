@@ -20,6 +20,7 @@ export type Profile = {
   pronouns: string | null;
   avatar_url: string | null;
   is_admin: boolean;
+  is_private: boolean;
 };
 
 export type AuthData = {

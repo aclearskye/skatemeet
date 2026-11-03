@@ -36,6 +36,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "FEED",       icon: "home-outline",   path: "/",           match: "/"           },
   { label: "MAP",        icon: "map-outline",    path: "/map",        match: "/map"        },
   { label: "FAVOURITES", icon: "heart-outline",  path: "/favourites", match: "/favourites" },
+  { label: "SEARCH",     icon: "search-outline", path: "/search",     match: "/search"     },
   { label: "PROFILE",    icon: "person-outline", path: "/profile",    match: "/profile"    },
 ];
 
@@ -178,6 +179,21 @@ export default function DrawerMenu() {
 
         {/* Pushed to the bottom of the panel via dividerBottom's marginTop: "auto" */}
         <View style={[styles.divider, styles.dividerBottom]} />
+
+        <TouchableOpacity
+          style={[styles.navItem, pathname === "/settings" && styles.navItemActive]}
+          onPress={() => navigate("/settings")}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="settings-outline"
+            size={18}
+            color={pathname === "/settings" ? C.primary : C.muted}
+          />
+          <Text style={[styles.navLabel, pathname === "/settings" && styles.navLabelActive]}>
+            SETTINGS
+          </Text>
+        </TouchableOpacity>
 
         {profile?.is_admin && (
           <TouchableOpacity style={styles.navItem} onPress={() => navigate("/admin")} activeOpacity={0.7}>

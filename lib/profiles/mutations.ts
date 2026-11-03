@@ -6,6 +6,19 @@ export async function reportProfile(profileId: string, reason: ProfileReportReas
   if (error) throw error;
 }
 
+export async function updateProfilePrivacy(profileId: string, isPrivate: boolean): Promise<void> {
+  // Reads the row back so an update that matched zero rows (e.g. blocked by
+  // RLS, which Postgres reports as success) surfaces as an error via
+  // .single() instead of silently leaving the old value in place.
+  const { error } = await supabase
+    .from("profiles")
+    .update({ is_private: isPrivate })
+    .eq("profile_id", profileId)
+    .select("is_private")
+    .single();
+  if (error) throw error;
+}
+
 export type BanAppealErrorCode = "NO_ACTIVE_BAN" | "TESTIMONY_REQUIRED" | "ALREADY_APPEALED" | "UNKNOWN";
 
 const BAN_APPEAL_MESSAGES: Record<BanAppealErrorCode, string> = {
