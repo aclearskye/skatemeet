@@ -27,7 +27,7 @@ export async function fetchNotifications(profileId: string): Promise<Notificatio
     // !related_profile_id disambiguates the embed from the profile_id FK,
     // which also points at profiles.
     .select(
-      "notification_id, message, label, variant, source, dedup_key, related_profile_id, read_at, created_at, related_profile:profiles!related_profile_id(username, display_name, avatar_url)"
+      "notification_id, message, label, variant, source, dedup_key, related_profile_id, read_at, created_at, related_profile:profile_cards!related_profile_id(username, display_name, avatar_url)"
     )
     .eq("profile_id", profileId)
     .order("created_at", { ascending: false });

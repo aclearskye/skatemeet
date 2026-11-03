@@ -1,35 +1,22 @@
 import ProfileView from "@/components/profile/ProfileView";
-import { type Profile } from "@/lib/context/use-auth-context";
-import { supabase } from "@/lib/supabaseClient";
+import { PrivateProfileView } from "@/components/profile/PrivateProfileView";
+import { useProfileCard } from "@/lib/profiles/hooks/useProfileCard";
+import { useUserProfile } from "@/lib/profiles/hooks/useUserProfile";
 import { C, F } from "@/lib/theme";
 import { useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: profile, isLoading, isError } = useUserProfile(userId ?? null);
 
-  useEffect(() => {
-    if (!userId) return;
-    supabase
-      .from("profiles")
-      .select("*")
-      .eq("profile_id", userId)
-      .single()
-      .then(({ data, error: err }) => {
-        if (err || !data) {
-          setError("Profile not found.");
-        } else {
-          setProfile(data as Profile);
-        }
-        setLoading(false);
-      });
-  }, [userId]);
+  // RLS hides a private non-friend's or a blocked pair's full row; the card
+  // then tells the two apart (no card = blocked or deleted, deliberately
+  // indistinguishable).
+  const isHidden = !isLoading && !isError && profile === null;
+  const { data: card, isLoading: cardLoading } = useProfileCard(userId ?? null, isHidden);
 
-  if (loading) {
+  if (isLoading || (isHidden && cardLoading)) {
     return (
       <View style={styles.center}>
         <ActivityIndicator color={C.primary} />
@@ -37,15 +24,15 @@ export default function UserProfileScreen() {
     );
   }
 
-  if (error || !profile) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>{error ?? "Something went wrong."}</Text>
-      </View>
-    );
-  }
+  if (profile) return <ProfileView profile={profile} isOwnProfile={false} />;
 
-  return <ProfileView profile={profile} isOwnProfile={false} />;
+  if (isHidden && card) return <PrivateProfileView card={card} />;
+
+  return (
+    <View style={styles.center}>
+      <Text style={styles.errorText}>{isError ? "Something went wrong." : "This skater isn't available."}</Text>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

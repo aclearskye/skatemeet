@@ -1,0 +1,1 @@
+export { PrivateProfileView } from "./PrivateProfileView";

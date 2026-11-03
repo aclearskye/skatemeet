@@ -50,8 +50,8 @@ export function PrivateProfileLock() {
             </View>
             <Text style={styles.title}>YOUR PROFILE IS PRIVATE</Text>
             <Text style={styles.message}>
-              Only your friends can message you right now. Make your profile public to let
-              anyone on SkateMeet message you.
+              Only your friends can see your profile or find you in search. Make it public to
+              let anyone on SkateMeet see it. Messaging stays friends-only either way.
             </Text>
             <View style={styles.buttonRow}>
               <TouchableOpacity

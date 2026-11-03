@@ -14,9 +14,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { fetchProfileClips, getProfileClipCount } from "@/lib/clips/clips";
+import { useBlockProfile } from "@/lib/blocks/hooks/useBlockProfile";
 import { fetchProfileVisitedCount, fetchUserStreak } from "@/lib/checkins/queries";
 import { type Profile } from "@/lib/context/use-auth-context";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { useToast } from "@/lib/context/toast-context";
 import { useFriendStatus } from "@/lib/friendRequests/hooks/useFriendStatus";
 import { getFriendCount } from "@/lib/friendRequests/queries";
 import { useReportProfile } from "@/lib/profiles/hooks/useReportProfile";
@@ -25,6 +27,7 @@ import { C, F } from "@/lib/theme";
 import { fetchProfileXpState } from "@/lib/xp/queries";
 import { queryKeys } from "@/utils/queryKeys";
 import BurgerButton from "@/components/ui/BurgerButton";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ReportReasonSheet } from "@/components/common/ReportReasonSheet";
 import { AddFriendButton } from "@/components/profile/AddFriendButton";
 import { ExpBar } from "@/components/profile/ExpBar";
@@ -49,9 +52,12 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
   const { hasReported, report, isReporting } = useReportProfile(profile.profile_id);
   const { data: friendStatusResult } = useFriendStatus(profile.profile_id);
   const friendStatus = friendStatusResult?.status ?? "none";
+  const { block, isUpdating: isBlocking } = useBlockProfile(profile.profile_id);
+  const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState(0);
   const [showReportReasons, setShowReportReasons] = useState(false);
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(
     profile.avatar_url
   );
@@ -59,6 +65,18 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
   function handleSelectReportReason(reason: string) {
     setShowReportReasons(false);
     report(reason as ProfileReportReason);
+  }
+
+  // A block hides each profile from the other, so this screen can't stay.
+  function handleBlock() {
+    setShowBlockConfirm(false);
+    block({
+      onSuccess: () => {
+        showToast({ message: `@${(profile.username ?? "").toUpperCase()} BLOCKED`, variant: "info" });
+        router.back();
+      },
+      onError: (err) => showToast({ message: err.message.toUpperCase(), variant: "danger" }),
+    });
   }
 
   const displayName =
@@ -145,6 +163,15 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
               @{profile.username}
             </Text>
             <TouchableOpacity
+              onPress={() => setShowBlockConfirm(true)}
+              disabled={isBlocking}
+              style={styles.blockBtn}
+              hitSlop={12}
+              accessibilityLabel={`Block @${profile.username}`}
+            >
+              <Ionicons name="ban" size={18} color={C.muted} />
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={() => !hasReported && !isReporting && setShowReportReasons(true)}
               disabled={hasReported || isReporting}
               style={styles.reportBtn}
@@ -194,7 +221,7 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
             ) : (
               <View style={styles.actionIcons}>
                 <AddFriendButton profileId={profile.profile_id} username={profile.username} />
-                <MessageButton isPrivate={profile.is_private} friendStatus={friendStatus} />
+                <MessageButton profileId={profile.profile_id} friendStatus={friendStatus} />
               </View>
             )}
           </View>
@@ -310,6 +337,17 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
         onCancel={() => setShowReportReasons(false)}
       />
     </Modal>
+
+    {!isOwnProfile && (
+      <ConfirmDialog
+        visible={showBlockConfirm}
+        title={`BLOCK @${(profile.username ?? "").toUpperCase()}?`}
+        message="You'll stop being friends, neither of you can message or send friend requests, and your profiles are hidden from each other. You can unblock them in Settings."
+        confirmLabel="BLOCK"
+        onConfirm={handleBlock}
+        onCancel={() => setShowBlockConfirm(false)}
+      />
+    )}
     </>
   );
 }
@@ -349,6 +387,10 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   reportBtn: {
+    width: 30,
+    alignItems: "flex-end",
+  },
+  blockBtn: {
     width: 30,
     alignItems: "flex-end",
   },

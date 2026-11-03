@@ -10,7 +10,7 @@ export async function fetchStoreReviews(
   const val = storeId ?? osmPlaceId;
   const { data, error } = await supabase
     .from("store_reviews")
-    .select("*, profiles(username, display_name)")
+    .select("*, profiles:profile_cards(username, display_name)")
     .eq(col, val)
     .order("upvote_count", { ascending: false })
     .order("created_at", { ascending: false });

@@ -8,7 +8,7 @@ export async function fetchSpotReviews(
 ): Promise<SpotReviewWithProfile[]> {
   const { data, error } = await supabase
     .from("spot_reviews")
-    .select("*, profiles(username, display_name)")
+    .select("*, profiles:profile_cards(username, display_name)")
     .eq(spotId ? "spot_id" : "osm_place_id", spotId ?? osmPlaceId)
     .order("upvote_count", { ascending: false })
     .order("created_at", { ascending: false });

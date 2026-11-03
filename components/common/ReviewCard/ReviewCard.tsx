@@ -76,7 +76,7 @@ export function ReviewCard({
 
       <View style={styles.metaRow}>
         <Text style={styles.author}>
-          {review.profiles?.display_name ?? review.profiles?.username ?? "Unknown skater"}
+          {review.profiles?.display_name ?? review.profiles?.username ?? "Unavailable skater"}
         </Text>
         <View style={styles.metaRight}>
           <Text style={styles.date}>
