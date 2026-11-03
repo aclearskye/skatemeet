@@ -1,0 +1,11 @@
+-- 20261006000000 meant to add a defaulted p_related_profile_id to
+-- create_notification "in place", but CREATE OR REPLACE with a different
+-- argument list creates a second overload instead. With both present, every
+-- call that passes six or fewer arguments is ambiguous and fails with
+-- "function create_notification(...) is not unique" -- which currently
+-- breaks award_account_created_xp, _perform_check_in's community-verified
+-- notification and _handle_spot_verification_review.
+--
+-- Dropping the old six-argument version leaves the seven-argument one, whose
+-- trailing default makes every existing call resolve to it.
+DROP FUNCTION create_notification(UUID, TEXT, TEXT, TEXT, TEXT, TEXT);
