@@ -10,14 +10,18 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  dayLabel: {
-    width: 34,
+  // Fixed width so the time buttons line up whichever days are taped.
+  dayChip: { width: 58 },
+  timeRow: { flexDirection: "row", alignItems: "center", gap: 6, flex: 1 },
+  // Fills the time row's slot (and height) when the day is closed.
+  closedText: {
+    flex: 1,
     fontFamily: F.mono,
     fontSize: 11,
-    color: C.text,
+    color: C.muted,
     letterSpacing: 1,
+    paddingVertical: 10,
   },
-  timeRow: { flexDirection: "row", alignItems: "center", gap: 6, flex: 1 },
   timeSep: { fontFamily: F.mono, fontSize: 12, color: C.muted },
   // Trigger recipe from the theme sheet's "Dropdown": surface-2 bg, 2px ink
   // border, solid chartreuse caret (a real triangle, not an icon glyph).
@@ -31,7 +35,6 @@ export const styles = StyleSheet.create({
     borderColor: C.border,
     backgroundColor: C.surfaceHigh,
   },
-  timeBtnDisabled: { opacity: 0.4 },
   timeBtnText: { fontFamily: F.body, fontSize: 13, color: C.text },
   caret: {
     width: 0,
@@ -43,9 +46,6 @@ export const styles = StyleSheet.create({
     borderRightColor: "transparent",
     borderTopColor: C.primary,
   },
-  closedToggle: { flexDirection: "row", alignItems: "center", gap: 6 },
-  closedLabel: { fontFamily: F.mono, fontSize: 9, color: C.muted, letterSpacing: 1 },
-  closedLabelOn: { color: C.text },
   pickerOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: "flex-end",

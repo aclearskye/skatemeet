@@ -106,8 +106,10 @@ export const TS = {
 // memoizes the result per mount so it stays put across re-renders but comes
 // out different on every remount (e.g. a page refresh re-rolls every tape
 // label's angle, and same-color labels in a row no longer all match).
-export function randomTapeRotation(): string {
-  const deg = -2 + Math.random() * 4; // -2deg..2deg
+// maxDeg caps the tilt either way; wide strips (full-width CTAs) pass a
+// smaller cap, since the same angle swings their ends much further.
+export function randomTapeRotation(maxDeg = 2): string {
+  const deg = -maxDeg + Math.random() * maxDeg * 2;
   return `${deg.toFixed(2)}deg`;
 }
 

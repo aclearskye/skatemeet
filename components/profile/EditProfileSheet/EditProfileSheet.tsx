@@ -18,7 +18,7 @@ import { DISCIPLINES, SKILL_LEVELS } from "@/lib/profiles/profileOptions";
 import { useKeyboardHeight } from "@/lib/shared/hooks/useKeyboardHeight";
 import { parseTapeLabels, type TapeLabel } from "@/lib/shared/tapeLabels";
 import { C } from "@/lib/theme";
-import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
+import { TapeChip } from "@/components/common/TapeChip";
 import { TapeLabelInput } from "@/components/common/TapeLabelInput";
 import ProfileBadges from "@/components/profile/ProfileBadges";
 import { styles } from "./EditProfileSheet.styles";
@@ -235,33 +235,18 @@ type OptionChipProps = {
   onPress: () => void;
 };
 
-// One pickable option: an outline chip, or a solid duct-tape strip once
-// picked (same look as the badge it becomes on the profile).
+// One pickable option: the outline chip, or the tape once picked (same
+// look as the badge it becomes on the profile).
 function OptionChip({ label, accessibilityLabel, selected, color, onColor, role, onPress }: OptionChipProps) {
-  if (selected) {
-    return (
-      <DuctTapeLabel
-        color={color}
-        style={[styles.chip, { borderColor: color }]}
-        onPress={onPress}
-        accessibilityRole={role}
-        accessibilityState={{ checked: true }}
-        accessibilityLabel={accessibilityLabel}
-      >
-        <Text style={[styles.chipText, { color: onColor }]}>{label}</Text>
-      </DuctTapeLabel>
-    );
-  }
   return (
-    <TouchableOpacity
-      style={styles.chip}
+    <TapeChip
+      text={label}
+      colors={{ bg: color, fg: onColor }}
+      active={selected}
       onPress={onPress}
-      activeOpacity={0.75}
       accessibilityRole={role}
-      accessibilityState={{ checked: false }}
+      accessibilityState={{ checked: selected }}
       accessibilityLabel={accessibilityLabel}
-    >
-      <Text style={styles.chipText}>{label}</Text>
-    </TouchableOpacity>
+    />
   );
 }

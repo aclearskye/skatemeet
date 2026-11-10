@@ -1,6 +1,6 @@
+import { View } from "react-native";
 import { PARKING_LABELS, PARKING_OPTIONS, ParkingType } from "@/lib/shared/types";
-import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
-import { Text, TouchableOpacity, View } from "react-native";
+import { TapeChip } from "@/components/common/TapeChip";
 import { styles } from "./ParkingSelect.styles";
 
 type Props = {
@@ -15,35 +15,17 @@ export function ParkingSelect({ value, onChange, accent, onAccent }: Props) {
     <View style={styles.row} accessibilityRole="radiogroup" accessibilityLabel="Parking">
       {PARKING_OPTIONS.map((option) => {
         const selected = value === option;
-        const label = PARKING_LABELS[option].toUpperCase();
-        if (selected) {
-          return (
-            <DuctTapeLabel
-              key={option}
-              color={accent}
-              style={[styles.chip, { borderColor: accent }]}
-              onPress={() => onChange(null)}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: true }}
-              accessibilityLabel={PARKING_LABELS[option]}
-              accessibilityHint="Double-tap to clear"
-            >
-              <Text style={[styles.chipText, { color: onAccent }]}>{label}</Text>
-            </DuctTapeLabel>
-          );
-        }
         return (
-          <TouchableOpacity
+          <TapeChip
             key={option}
-            style={styles.chip}
-            onPress={() => onChange(option)}
-            activeOpacity={0.75}
+            text={PARKING_LABELS[option]}
+            colors={{ bg: accent, fg: onAccent }}
+            active={selected}
+            onPress={() => onChange(selected ? null : option)}
             accessibilityRole="radio"
-            accessibilityState={{ checked: false }}
-            accessibilityLabel={PARKING_LABELS[option]}
-          >
-            <Text style={styles.chipText}>{label}</Text>
-          </TouchableOpacity>
+            accessibilityState={{ checked: selected }}
+            accessibilityHint={selected ? "Double-tap to clear" : undefined}
+          />
         );
       })}
     </View>

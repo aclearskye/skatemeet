@@ -1,7 +1,8 @@
-import { Switch } from "@/components/common/Switch";
-import { OpeningHours, WEEKDAYS, WEEKDAY_LABELS, Weekday } from "@/lib/shared/types";
 import { useState } from "react";
 import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { OpeningHours, WEEKDAYS, WEEKDAY_LABELS, Weekday } from "@/lib/shared/types";
+import { C } from "@/lib/theme";
+import { TapeChip } from "@/components/common/TapeChip";
 import { styles } from "./OpeningHoursInput.styles";
 
 const TIME_SLOTS = Array.from({ length: 48 }, (_, i) => {
@@ -10,18 +11,19 @@ const TIME_SLOTS = Array.from({ length: 48 }, (_, i) => {
   return `${hours}:${minutes}`;
 });
 
+const DAY_TAPE = { bg: C.tape, fg: C.onTape };
+
 type OpenField = { day: Weekday; field: "open" | "close" } | null;
 
-type TimeButtonProps = { label: string; disabled?: boolean; onPress: () => void };
+type TimeButtonProps = { label: string; onPress: () => void };
 
 // File-local: only used by the two time slots in each of the 7 rows below.
 // Trigger recipe from docs/theme/sk8meet-theme-sheet.html "Dropdown".
-function TimeButton({ label, disabled, onPress }: TimeButtonProps) {
+function TimeButton({ label, onPress }: TimeButtonProps) {
   return (
     <TouchableOpacity
-      style={[styles.timeBtn, disabled && styles.timeBtnDisabled]}
+      style={styles.timeBtn}
       onPress={onPress}
-      disabled={disabled}
       activeOpacity={0.75}
     >
       <Text style={styles.timeBtnText}>{label}</Text>
@@ -54,28 +56,34 @@ export function OpeningHoursInput({ value, onChange }: Props) {
         const hours = value[day];
         return (
           <View key={day} style={styles.row}>
-            <Text style={styles.dayLabel}>{WEEKDAY_LABELS[day].slice(0, 3).toUpperCase()}</Text>
+            {/* The day itself is the open/closed toggle: bone tape when
+                open, the untaped outline chip when closed. */}
+            <TapeChip
+              text={WEEKDAY_LABELS[day].slice(0, 3)}
+              colors={DAY_TAPE}
+              active={!hours.closed}
+              onPress={() => updateDay(day, { closed: !hours.closed })}
+              style={styles.dayChip}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: !hours.closed }}
+              accessibilityLabel={`Open on ${WEEKDAY_LABELS[day]}`}
+            />
 
-            <View style={styles.timeRow}>
-              <TimeButton
-                label={hours.closed ? "—" : (hours.open ?? "OPEN")}
-                disabled={hours.closed}
-                onPress={() => setOpenField({ day, field: "open" })}
-              />
-              <Text style={styles.timeSep}>–</Text>
-              <TimeButton
-                label={hours.closed ? "—" : (hours.close ?? "CLOSE")}
-                disabled={hours.closed}
-                onPress={() => setOpenField({ day, field: "close" })}
-              />
-            </View>
-
-            <View style={styles.closedToggle}>
-              <Text style={[styles.closedLabel, hours.closed && styles.closedLabelOn]}>
-                CLOSED
-              </Text>
-              <Switch value={hours.closed} onValueChange={(closed) => updateDay(day, { closed })} />
-            </View>
+            {hours.closed ? (
+              <Text style={styles.closedText}>CLOSED</Text>
+            ) : (
+              <View style={styles.timeRow}>
+                <TimeButton
+                  label={hours.open ?? "OPEN"}
+                  onPress={() => setOpenField({ day, field: "open" })}
+                />
+                <Text style={styles.timeSep}>–</Text>
+                <TimeButton
+                  label={hours.close ?? "CLOSE"}
+                  onPress={() => setOpenField({ day, field: "close" })}
+                />
+              </View>
+            )}
           </View>
         );
       })}

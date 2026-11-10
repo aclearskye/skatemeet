@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import {
   EntityMetadataBase,
   FACILITY_LABELS,
@@ -5,11 +8,8 @@ import {
   WEEKDAYS,
   WEEKDAY_LABELS,
 } from "@/lib/shared/types";
-import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
 import { C } from "@/lib/theme";
-import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { TapeChip } from "@/components/common/TapeChip";
 import { styles } from "./EntityMetadataSection.styles";
 
 type Props = {
@@ -19,6 +19,10 @@ type Props = {
   canEdit: boolean;
   onEdit: () => void;
 };
+
+const FACILITY_COLORS = { bg: C.primary, fg: C.onPrimary };
+const PARKING_COLORS = { bg: C.tertiary, fg: C.onTertiary };
+const BADGE_COLORS = { bg: C.secondary, fg: C.onSecondary };
 
 function todayIndex(): number {
   return (new Date().getDay() + 6) % 7; // JS Sun=0..Sat=6 -> our mon=0..sun=6
@@ -36,11 +40,13 @@ export function EntityMetadataSection({ metadata, isLoading, accent, canEdit, on
   const today = WEEKDAYS[todayIndex()];
   const todayHours = metadata?.opening_hours?.[today];
   const hasHours = metadata?.opening_hours != null;
-  const badges: { label: string; value: boolean | null }[] = metadata
+  // Unknown (null) shows nothing. Yes and no both get the orange tape, each
+  // with its own wording, so the row never needs a tick or cross icon.
+  const badges: { yes: string; no: string; value: boolean | null }[] = metadata
     ? [
-        { label: "PET FRIENDLY", value: metadata.pet_friendly },
-        { label: "PAID", value: metadata.paid },
-        { label: "WELL LIT", value: metadata.well_lit },
+        { yes: "Pet friendly", no: "No pets", value: metadata.pet_friendly },
+        { yes: "Paid", no: "Free", value: metadata.paid },
+        { yes: "Well lit", no: "Not lit", value: metadata.well_lit },
       ]
     : [];
   const visibleBadges = badges.filter((b) => b.value != null);
@@ -96,58 +102,31 @@ export function EntityMetadataSection({ metadata, isLoading, accent, canEdit, on
         </View>
       )}
 
-      {metadata && metadata.facilities.length > 0 && (
+      {metadata && (metadata.facilities.length > 0 || metadata.parking || visibleBadges.length > 0) && (
         <View style={styles.chipRow}>
           {metadata.facilities.map((facility) => (
-            <DuctTapeLabel
+            <TapeChip
               key={facility}
-              color={C.primary}
-              style={styles.facilityChip}
+              text={FACILITY_LABELS[facility]}
+              colors={FACILITY_COLORS}
               accessibilityLabel={`Facility: ${FACILITY_LABELS[facility]}`}
-            >
-              <Text style={styles.facilityChipText}>{FACILITY_LABELS[facility]}</Text>
-            </DuctTapeLabel>
+            />
           ))}
-        </View>
-      )}
-
-      {metadata?.parking && (
-        <DuctTapeLabel
-          color={C.tertiary}
-          style={styles.parkingChip}
-          accessibilityLabel={`Parking: ${PARKING_LABELS[metadata.parking]}`}
-        >
-          <Ionicons name="car-outline" size={15} color={C.onTertiary} />
-          <Text style={styles.parkingChipText}>{PARKING_LABELS[metadata.parking]}</Text>
-        </DuctTapeLabel>
-      )}
-
-      {visibleBadges.length > 0 && (
-        <View style={styles.chipRow}>
-          {visibleBadges.map((badge) =>
-            badge.value ? (
-              <DuctTapeLabel
-                key={badge.label}
-                color={C.secondary}
-                style={styles.badgeOn}
-                accessibilityLabel={`${badge.label}: yes`}
-              >
-                <Ionicons name="checkmark" size={12} color={C.onSecondary} />
-                <Text style={styles.badgeOnText}>{badge.label}</Text>
-              </DuctTapeLabel>
-            ) : (
-              <View
-                key={badge.label}
-                style={styles.badgeOff}
-                accessible
-                accessibilityRole="text"
-                accessibilityLabel={`${badge.label}: no`}
-              >
-                <Ionicons name="close" size={12} color={C.muted} />
-                <Text style={styles.chipText}>{badge.label}</Text>
-              </View>
-            )
+          {metadata.parking && (
+            <TapeChip
+              text={PARKING_LABELS[metadata.parking]}
+              colors={PARKING_COLORS}
+              accessibilityLabel={`Parking: ${PARKING_LABELS[metadata.parking]}`}
+            />
           )}
+          {visibleBadges.map((badge) => (
+            <TapeChip
+              key={badge.yes}
+              text={badge.value ? badge.yes : badge.no}
+              colors={BADGE_COLORS}
+              accessibilityLabel={`${badge.yes}: ${badge.value ? "yes" : "no"}`}
+            />
+          ))}
         </View>
       )}
 

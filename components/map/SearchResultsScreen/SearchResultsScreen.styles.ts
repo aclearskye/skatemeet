@@ -4,23 +4,6 @@ import { StyleSheet } from "react-native";
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   sortRow: { flexDirection: "row", flexWrap: "wrap", gap: 10, paddingHorizontal: 16, paddingBottom: 8 },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 2,
-    borderColor: C.border,
-    backgroundColor: C.bg,
-  },
-  chipText: {
-    fontFamily: F.mono,
-    fontSize: 10,
-    letterSpacing: 1,
-    color: C.muted,
-    textTransform: "uppercase",
-  },
-  chipTextActive: { color: C.onPrimary },
-  chipTextActiveNearest: { color: C.onSecondary },
-  chipTextActiveUserUploaded: { color: C.onTertiary },
   statusWrap: {
     flex: 1,
     alignItems: "center",

@@ -1,13 +1,21 @@
-import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
+import { ScrollView } from "react-native";
 import { C } from "@/lib/theme";
+import type { TapeColors } from "@/lib/shared/tapeLabels";
 import { FilterKey } from "@/utils/constants";
-import { ScrollView, Text, TouchableOpacity } from "react-native";
+import { TapeChip } from "@/components/common/TapeChip";
 import { styles } from "./MapFilterBar.styles";
 
 type Props = {
   filters: { key: FilterKey; label: string }[];
   activeFilters: Set<FilterKey>;
   onToggle: (key: FilterKey) => void;
+};
+
+const FILTER_COLORS: Record<FilterKey, TapeColors> = {
+  spots: { bg: C.primary, fg: C.onPrimary },
+  userSpots: { bg: C.primary, fg: C.onPrimary },
+  stores: { bg: C.secondary, fg: C.onSecondary },
+  diys: { bg: C.tertiary, fg: C.onTertiary },
 };
 
 export function MapFilterBar({ filters, activeFilters, onToggle }: Props) {
@@ -19,30 +27,16 @@ export function MapFilterBar({ filters, activeFilters, onToggle }: Props) {
     >
       {filters.map(({ key, label }) => {
         const active = activeFilters.has(key);
-        const accentBg = key === "stores" ? C.secondary : key === "diys" ? C.tertiary : C.primary;
-        const accentText =
-          key === "stores" ? C.onSecondary : key === "diys" ? C.onTertiary : C.onPrimary;
-        if (active) {
-          return (
-            <DuctTapeLabel
-              key={key}
-              color={accentBg}
-              style={[styles.chip, { borderColor: accentBg }]}
-              onPress={() => onToggle(key)}
-            >
-              <Text style={[styles.chipText, { color: accentText }]}>{label}</Text>
-            </DuctTapeLabel>
-          );
-        }
         return (
-          <TouchableOpacity
+          <TapeChip
             key={key}
-            style={styles.chip}
+            text={label}
+            colors={FILTER_COLORS[key]}
+            active={active}
             onPress={() => onToggle(key)}
-            activeOpacity={0.75}
-          >
-            <Text style={styles.chipText}>{label}</Text>
-          </TouchableOpacity>
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: active }}
+          />
         );
       })}
     </ScrollView>

@@ -1,6 +1,6 @@
+import { View } from "react-native";
 import { FACILITIES, FACILITY_LABELS, Facility } from "@/lib/shared/types";
-import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
-import { Text, TouchableOpacity, View } from "react-native";
+import { TapeChip } from "@/components/common/TapeChip";
 import { styles } from "./FacilitiesSelect.styles";
 
 type Props = {
@@ -21,34 +21,16 @@ export function FacilitiesSelect({ value, onChange, accent, onAccent }: Props) {
     <View style={styles.grid} accessibilityLabel="Facilities">
       {FACILITIES.map((facility) => {
         const selected = value.includes(facility);
-        const label = FACILITY_LABELS[facility].toUpperCase();
-        if (selected) {
-          return (
-            <DuctTapeLabel
-              key={facility}
-              color={accent}
-              style={[styles.chip, { borderColor: accent }]}
-              onPress={() => toggle(facility)}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: true }}
-              accessibilityLabel={FACILITY_LABELS[facility]}
-            >
-              <Text style={[styles.chipText, { color: onAccent }]}>{label}</Text>
-            </DuctTapeLabel>
-          );
-        }
         return (
-          <TouchableOpacity
+          <TapeChip
             key={facility}
-            style={styles.chip}
+            text={FACILITY_LABELS[facility]}
+            colors={{ bg: accent, fg: onAccent }}
+            active={selected}
             onPress={() => toggle(facility)}
-            activeOpacity={0.75}
             accessibilityRole="checkbox"
-            accessibilityState={{ checked: false }}
-            accessibilityLabel={FACILITY_LABELS[facility]}
-          >
-            <Text style={styles.chipText}>{label}</Text>
-          </TouchableOpacity>
+            accessibilityState={{ checked: selected }}
+          />
         );
       })}
     </View>

@@ -33,7 +33,13 @@ export function SpotChatJoinPanel({ canJoin, isJoining, accent, onAccent, bottom
       </View>
 
       {canJoin ? (
-        <DuctTapeLabel color={accent} style={styles.joinBtn} onPress={onJoin} disabled={isJoining}>
+        <DuctTapeLabel
+          color={accent}
+          style={styles.joinBtn}
+          maxTilt={0.5}
+          onPress={onJoin}
+          disabled={isJoining}
+        >
           {isJoining ? (
             <ActivityIndicator size="small" color={onAccent} />
           ) : (

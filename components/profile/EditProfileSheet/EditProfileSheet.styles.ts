@@ -46,14 +46,6 @@ export const styles = StyleSheet.create({
   inputError: { borderColor: C.error },
   errorText: { fontFamily: F.monoRegular, fontSize: 11, color: C.error },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderWidth: 2,
-    borderColor: C.border,
-    backgroundColor: C.surface,
-  },
-  chipText: { fontFamily: F.mono, fontSize: 11, letterSpacing: 1, color: C.muted },
   hint: { fontFamily: F.monoRegular, fontSize: 10, color: C.muted, letterSpacing: 0.5 },
   buttonRow: { flexDirection: "row", gap: 10 },
   cancelBtn: {

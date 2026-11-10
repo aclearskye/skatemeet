@@ -1,10 +1,13 @@
-import { Ionicons } from "@expo/vector-icons";
 import { ReactNode } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { TAPE_LABEL_COLORS, type TapeLabel } from "@/lib/shared/tapeLabels";
 import { C } from "@/lib/theme";
-import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
+import { TapeChip } from "@/components/common/TapeChip";
 import { styles } from "./ProfileBadges.styles";
+
+const SKILL_COLORS = { bg: C.secondary, fg: C.onSecondary };
+const DISCIPLINE_COLORS = { bg: C.primary, fg: C.onPrimary };
+const PRONOUN_COLORS = { bg: C.tertiary, fg: C.onTertiary };
 
 type Props = {
   skillLevel: string | null;
@@ -35,40 +38,42 @@ export default function ProfileBadges({
   const tapes: ReactNode = (
     <>
       {skillLevel && (
-        <DuctTapeLabel color={C.secondary} style={styles.badge} accessibilityLabel={`Skill level: ${skillLevel}`}>
-          <Text style={[styles.label, { color: C.onSecondary }]}>
-            {skillLevel.toUpperCase()}
-          </Text>
-        </DuctTapeLabel>
+        <TapeChip
+          text={skillLevel}
+          colors={SKILL_COLORS}
+          size="lg"
+          accessibilityLabel={`Skill level: ${skillLevel}`}
+        />
       )}
       {disciplines?.map((d) => (
-        <DuctTapeLabel key={d} color={C.primary} style={styles.badge} accessibilityLabel={`Discipline: ${d}`}>
-          <Text style={[styles.label, { color: C.onPrimary }]}>{d.toUpperCase()}</Text>
-        </DuctTapeLabel>
+        <TapeChip
+          key={d}
+          text={d}
+          colors={DISCIPLINE_COLORS}
+          size="lg"
+          accessibilityLabel={`Discipline: ${d}`}
+        />
       ))}
       {pronouns && (
-        <DuctTapeLabel color={C.tertiary} style={styles.badge} accessibilityLabel={`Pronouns: ${pronouns}`}>
-          <Text style={[styles.label, { color: C.onTertiary }]}>
-            {pronouns.toUpperCase()}
-          </Text>
-        </DuctTapeLabel>
+        <TapeChip
+          text={pronouns}
+          colors={PRONOUN_COLORS}
+          size="lg"
+          accessibilityLabel={`Pronouns: ${pronouns}`}
+        />
       )}
-      {labels.map((label, index) => {
-        const colors = TAPE_LABEL_COLORS[label.color];
-        return (
-          <DuctTapeLabel
-            key={label.text}
-            color={colors.bg}
-            style={[styles.badge, styles.badgeRow]}
-            onPress={onRemoveLabel ? () => onRemoveLabel(index) : undefined}
-            accessibilityLabel={`Label: ${label.text}`}
-            accessibilityHint={onRemoveLabel ? "Double-tap to remove" : undefined}
-          >
-            <Text style={[styles.label, { color: colors.fg }]}>{label.text.toUpperCase()}</Text>
-            {onRemoveLabel && <Ionicons name="close" size={12} color={colors.fg} />}
-          </DuctTapeLabel>
-        );
-      })}
+      {labels.map((label, index) => (
+        <TapeChip
+          key={label.text}
+          text={label.text}
+          colors={TAPE_LABEL_COLORS[label.color]}
+          size="lg"
+          removable={!!onRemoveLabel}
+          onPress={onRemoveLabel ? () => onRemoveLabel(index) : undefined}
+          accessibilityLabel={`Label: ${label.text}`}
+          accessibilityHint={onRemoveLabel ? "Double-tap to remove" : undefined}
+        />
+      ))}
     </>
   );
 

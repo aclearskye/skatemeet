@@ -1,5 +1,5 @@
-import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
 import { EntityPreviewCard } from "@/components/common/EntityPreviewCard";
+import { TapeChip } from "@/components/common/TapeChip";
 import type { PreviewItem } from "@/components/map/MapPreviewCard";
 import { coordinatesOf, haversineDistanceKm, kmToMiles, type Coordinates } from "@/lib/map/types";
 import type { SortMode } from "@/lib/map/useEntitySearch";
@@ -7,9 +7,13 @@ import { C } from "@/lib/theme";
 import { entityDetailRoute } from "@/utils/entityNavigation";
 import { previewItemId } from "@/utils/typeGuards";
 import { useRouter } from "expo-router";
-import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { styles } from "./SearchResultsScreen.styles";
+
+const UPVOTED_COLORS = { bg: C.primary, fg: C.onPrimary };
+const NEAREST_COLORS = { bg: C.secondary, fg: C.onSecondary };
+const USER_UPLOADED_COLORS = { bg: C.tertiary, fg: C.onTertiary };
 
 type Props = {
   query: string;
@@ -53,62 +57,31 @@ export function SearchResultsScreen({
   return (
     <View style={[styles.container, { paddingTop: insets.top + 116 }]}>
       <View style={styles.sortRow}>
-        {sortMode === "upvotes" ? (
-          <DuctTapeLabel
-            color={C.primary}
-            style={[styles.chip, { borderColor: C.primary }]}
-            onPress={() => toggleSort("upvotes")}
-          >
-            <Text style={[styles.chipText, styles.chipTextActive]}>MOST UPVOTED</Text>
-          </DuctTapeLabel>
-        ) : (
-          <TouchableOpacity
-            style={styles.chip}
-            onPress={() => toggleSort("upvotes")}
-            activeOpacity={0.75}
-          >
-            <Text style={styles.chipText}>MOST UPVOTED</Text>
-          </TouchableOpacity>
+        <TapeChip
+          text="Most upvoted"
+          colors={UPVOTED_COLORS}
+          active={sortMode === "upvotes"}
+          onPress={() => toggleSort("upvotes")}
+          accessibilityState={{ selected: sortMode === "upvotes" }}
+        />
+        {hasUserLocation && (
+          <TapeChip
+            text="Nearest"
+            colors={NEAREST_COLORS}
+            active={sortMode === "distance"}
+            onPress={() => toggleSort("distance")}
+            accessibilityState={{ selected: sortMode === "distance" }}
+          />
         )}
-        {hasUserLocation &&
-          (sortMode === "distance" ? (
-            <DuctTapeLabel
-              color={C.secondary}
-              style={[styles.chip, { borderColor: C.secondary }]}
-              onPress={() => toggleSort("distance")}
-            >
-              <Text style={[styles.chipText, styles.chipTextActiveNearest]}>NEAREST</Text>
-            </DuctTapeLabel>
-          ) : (
-            <TouchableOpacity
-              style={styles.chip}
-              onPress={() => toggleSort("distance")}
-              activeOpacity={0.75}
-            >
-              <Text style={styles.chipText}>NEAREST</Text>
-            </TouchableOpacity>
-          ))}
-        {userUploadedOnly ? (
-          // The design system's closest accent to "blue" is the cyan
-          // tertiary token — there's no separate blue in the palette.
-          <DuctTapeLabel
-            color={C.tertiary}
-            style={[styles.chip, { borderColor: C.tertiary }]}
-            onPress={onToggleUserUploadedOnly}
-          >
-            <Text style={[styles.chipText, styles.chipTextActiveUserUploaded]}>
-              USER UPLOADED
-            </Text>
-          </DuctTapeLabel>
-        ) : (
-          <TouchableOpacity
-            style={styles.chip}
-            onPress={onToggleUserUploadedOnly}
-            activeOpacity={0.75}
-          >
-            <Text style={styles.chipText}>USER UPLOADED</Text>
-          </TouchableOpacity>
-        )}
+        {/* The design system's closest accent to "blue" is the cyan
+            tertiary token — there's no separate blue in the palette. */}
+        <TapeChip
+          text="User uploaded"
+          colors={USER_UPLOADED_COLORS}
+          active={userUploadedOnly}
+          onPress={onToggleUserUploadedOnly}
+          accessibilityState={{ selected: userUploadedOnly }}
+        />
       </View>
 
       {isSearching ? (
