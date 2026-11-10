@@ -13,7 +13,9 @@ import { useResolveBanAppeal } from "@/lib/admin/hooks/useResolveBanAppeal";
 import { useResolveMessageReport } from "@/lib/admin/hooks/useResolveMessageReport";
 import { useResolvePhotoReport } from "@/lib/admin/hooks/useResolvePhotoReport";
 import { useResolveReviewReport } from "@/lib/admin/hooks/useResolveReviewReport";
+import { useResolveSpotChatReport } from "@/lib/admin/hooks/useResolveSpotChatReport";
 import { useReviewReportsQueue } from "@/lib/admin/hooks/useReviewReportsQueue";
+import { useSpotChatReportsQueue } from "@/lib/admin/hooks/useSpotChatReportsQueue";
 import { AdminError } from "@/lib/admin/mutations";
 import type { AdminEntityKind, BanAppealItem, ProfileReportItem, ReportResolution } from "@/lib/admin/types";
 import { C, F } from "@/lib/theme";
@@ -23,6 +25,7 @@ import { MessageReportCard } from "@/components/admin/MessageReportCard";
 import { PhotoReportCard } from "@/components/admin/PhotoReportCard";
 import { ProfileReportCard } from "@/components/admin/ProfileReportCard";
 import { ReviewReportCard } from "@/components/admin/ReviewReportCard";
+import { SpotChatReportCard } from "@/components/admin/SpotChatReportCard";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 export default function AdminReportsScreen() {
@@ -39,7 +42,9 @@ export default function AdminReportsScreen() {
   const { data: profileReports = [], isLoading: profilesLoading, isError: profilesError } = useProfileReportsQueue();
   const { data: banAppeals = [], isLoading: appealsLoading, isError: appealsError } = useBanAppealsQueue();
   const { data: messageReports = [], isLoading: messagesLoading, isError: messagesError } = useMessageReportsQueue();
+  const { data: spotChatReports = [], isLoading: spotChatLoading, isError: spotChatError } = useSpotChatReportsQueue();
   const resolveMessage = useResolveMessageReport();
+  const resolveSpotChat = useResolveSpotChatReport();
   const resolvePhoto = useResolvePhotoReport();
   const resolveReview = useResolveReviewReport();
   const dismissProfileReport = useDismissProfileReport();
@@ -95,6 +100,24 @@ export default function AdminReportsScreen() {
     );
   };
 
+  const handleDismissSpotChatReport = (reportId: string) => {
+    setErrorMessage(null);
+    setPendingId(reportId);
+    resolveSpotChat.mutate(
+      { action: "dismiss", reportId },
+      { onError: handleError, onSettled: () => setPendingId(null) }
+    );
+  };
+
+  const handleRemoveSpotChatMessage = (reportId: string, messageId: string) => {
+    setErrorMessage(null);
+    setPendingId(reportId);
+    resolveSpotChat.mutate(
+      { action: "remove", messageId },
+      { onError: handleError, onSettled: () => setPendingId(null) }
+    );
+  };
+
   async function handleBanSubmit(reason: string) {
     if (!banTarget) return;
     setErrorMessage(null);
@@ -140,7 +163,7 @@ export default function AdminReportsScreen() {
         <View style={styles.headerText}>
           <Text style={styles.heading}>REPORTS</Text>
           <Text style={styles.subheading} numberOfLines={1}>
-            {"// reported photos, reviews, profiles and messages"}
+            {"// reported photos, reviews, profiles, messages and spot chats"}
           </Text>
         </View>
       </View>
@@ -230,6 +253,28 @@ export default function AdminReportsScreen() {
                 item={item}
                 onDismiss={handleDismissMessageReport}
                 onRemove={(messageId) => handleRemoveMessage(item.reportId, messageId)}
+                onBan={(target) => setBanTarget({ profileId: target.senderId, username: target.senderUsername })}
+                isBusy={pendingId === item.reportId || pendingId === item.senderId}
+              />
+            ))}
+          </View>
+        )}
+
+        <Text style={[styles.sectionLabel, styles.sectionSpacing]}>SPOT CHATS</Text>
+        {spotChatLoading ? (
+          <ActivityIndicator color={C.primary} style={styles.sectionSpinner} />
+        ) : spotChatError ? (
+          <Text style={styles.emptyLabel}>FAILED TO LOAD SPOT CHAT REPORTS</Text>
+        ) : spotChatReports.length === 0 ? (
+          <Text style={styles.emptyLabel}>NO REPORTED SPOT CHAT MESSAGES</Text>
+        ) : (
+          <View style={styles.list}>
+            {spotChatReports.map((item) => (
+              <SpotChatReportCard
+                key={item.reportId}
+                item={item}
+                onDismiss={handleDismissSpotChatReport}
+                onRemove={(messageId) => handleRemoveSpotChatMessage(item.reportId, messageId)}
                 onBan={(target) => setBanTarget({ profileId: target.senderId, username: target.senderUsername })}
                 isBusy={pendingId === item.reportId || pendingId === item.senderId}
               />

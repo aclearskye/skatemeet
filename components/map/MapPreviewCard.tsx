@@ -1,4 +1,5 @@
 import { EntityPreviewCard } from "@/components/common/EntityPreviewCard";
+import { SpotChatButton } from "@/components/spotChat/SpotChatButton";
 import { OsmStore, OsmSpot, SkateSpot } from "@/lib/spots/types";
 import { UserStore } from "@/lib/stores/types";
 import { C, F } from "@/lib/theme";
@@ -97,6 +98,14 @@ export function MapPreviewCard({ item, onDismiss, initialHasVoted }: Props) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
+  // Spot chats exist for spots and DIY spots only, never stores.
+  const chatSpot =
+    item.kind === "user-spot"
+      ? { ref: { spotId: item.data.spot_id, osmSpotPlaceId: null }, name: item.data.name, isDiy: item.data.type === "diy" }
+      : item.kind === "osm-spot"
+        ? { ref: { spotId: null, osmSpotPlaceId: item.data.place_id }, name: item.data.name, isDiy: item.data.spot_type === "diy" }
+        : null;
+
   function handleNavigate() {
     router.push(entityDetailRoute(item) as any);
     onDismiss();
@@ -111,6 +120,17 @@ export function MapPreviewCard({ item, onDismiss, initialHasVoted }: Props) {
       ]}
     >
       <EntityPreviewCard item={item} onPress={handleNavigate} initialHasVoted={initialHasVoted} />
+      {chatSpot && (
+        <SpotChatButton
+          variant="strip"
+          spotRef={chatSpot.ref}
+          spotName={chatSpot.name}
+          isDiy={chatSpot.isDiy}
+          accent={chatSpot.isDiy ? C.tertiary : C.primary}
+          onAccent={chatSpot.isDiy ? C.onTertiary : C.onPrimary}
+          onOpen={onDismiss}
+        />
+      )}
     </View>
   );
 }

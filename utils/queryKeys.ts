@@ -97,6 +97,16 @@ export const queryKeys = {
     ["admin", "messageReports"] as const,
   adminMessageReportDetail: (reportId: string) =>
     ["admin", "messageReports", reportId] as const,
+  // Keyed by spot (spotChatKey), not room: a spot has no room until the
+  // first join.
+  spotChatRoom: (spotKey: string) =>
+    ["spotChat", spotKey, "room"] as const,
+  spotChatMessages: (roomId: string) =>
+    ["spotChat", roomId, "messages"] as const,
+  adminSpotChatReports: () =>
+    ["admin", "spotChatReports"] as const,
+  adminSpotChatReportDetail: (reportId: string) =>
+    ["admin", "spotChatReports", reportId] as const,
   adminHeldPosts: () =>
     ["admin", "heldPosts"] as const,
   adminCaptionFlags: () =>

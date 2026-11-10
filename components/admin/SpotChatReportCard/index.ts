@@ -1,0 +1,1 @@
+export { SpotChatReportCard } from "./SpotChatReportCard";

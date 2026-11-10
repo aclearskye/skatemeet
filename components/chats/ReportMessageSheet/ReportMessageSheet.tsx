@@ -4,26 +4,39 @@ import { KeyboardAvoidingView, KeyboardAwareScrollView } from "@/lib/shared/keyb
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { MESSAGE_REPORT_REASONS, type MessageReportReason } from "@/lib/messages/types";
+import type { ReportReason } from "@/lib/shared/types";
 import { C } from "@/lib/theme";
 import { Switch } from "@/components/common/Switch";
 import { styles } from "./ReportMessageSheet.styles";
 
-export type ReportMessageSubmit = {
-  reason: MessageReportReason;
+export type ReportMessageSubmit<TReason extends string = MessageReportReason> = {
+  reason: TReason;
   details: string | null;
   block: boolean;
 };
 
-type Props = {
+// The "also block" toggle's wording; null hides the toggle.
+export type ReportBlockOption = { title: string; description: string };
+
+type Props<TReason extends string> = {
   visible: boolean;
-  username: string | null;
+  blockOption: ReportBlockOption | null;
+  // Defaults to the DM reasons.
+  reasons?: readonly (ReportReason & { code: TReason })[];
   onClose: () => void;
-  onSubmit: (input: ReportMessageSubmit) => Promise<void>;
+  onSubmit: (input: ReportMessageSubmit<TReason>) => Promise<void>;
 };
 
-export function ReportMessageSheet({ visible, username, onClose, onSubmit }: Props) {
+export function ReportMessageSheet<TReason extends string = MessageReportReason>({
+  visible,
+  blockOption,
+  reasons,
+  onClose,
+  onSubmit,
+}: Props<TReason>) {
   const insets = useSafeAreaInsets();
-  const [reason, setReason] = useState<MessageReportReason | null>(null);
+  const reasonOptions = reasons ?? (MESSAGE_REPORT_REASONS as unknown as readonly (ReportReason & { code: TReason })[]);
+  const [reason, setReason] = useState<TReason | null>(null);
   const [details, setDetails] = useState("");
   const [block, setBlock] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,7 +57,7 @@ export function ReportMessageSheet({ visible, username, onClose, onSubmit }: Pro
     setIsSubmitting(true);
     setErrorMsg(null);
     try {
-      await onSubmit({ reason, details: details.trim() || null, block: block && username != null });
+      await onSubmit({ reason, details: details.trim() || null, block: block && blockOption != null });
       onClose();
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "Couldn't send the report. Try again.");
@@ -68,7 +81,7 @@ export function ReportMessageSheet({ visible, username, onClose, onSubmit }: Pro
         <KeyboardAwareScrollView style={styles.body} bottomOffset={100}>
           <View style={styles.section}>
             <Text style={styles.fieldLabel}>{"WHAT'S WRONG?"}</Text>
-            {MESSAGE_REPORT_REASONS.map((option) => (
+            {reasonOptions.map((option) => (
               <TouchableOpacity
                 key={option.code}
                 style={styles.reasonRow}
@@ -98,13 +111,11 @@ export function ReportMessageSheet({ visible, username, onClose, onSubmit }: Pro
               textAlignVertical="top"
             />
 
-            {username && (
+            {blockOption && (
               <View style={styles.blockRow}>
                 <View style={styles.blockText}>
-                  <Text style={styles.blockTitle}>Also block @{username}</Text>
-                  <Text style={styles.blockDescription}>
-                    Ends the friendship and stops messages and requests both ways.
-                  </Text>
+                  <Text style={styles.blockTitle}>{blockOption.title}</Text>
+                  <Text style={styles.blockDescription}>{blockOption.description}</Text>
                 </View>
                 <Switch value={block} onValueChange={setBlock} />
               </View>

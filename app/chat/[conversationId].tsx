@@ -150,7 +150,14 @@ export default function ChatThreadScreen() {
 
       <ReportMessageSheet
         visible={reportTarget != null}
-        username={chat?.otherState === "active" ? chat.otherUsername : null}
+        blockOption={
+          chat?.otherState === "active" && chat.otherUsername
+            ? {
+                title: `Also block @${chat.otherUsername}`,
+                description: "Ends the friendship and stops messages and requests both ways.",
+              }
+            : null
+        }
         onClose={() => setReportTarget(null)}
         onSubmit={handleReportSubmit}
       />

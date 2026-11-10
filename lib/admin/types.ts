@@ -101,6 +101,42 @@ export type MessageReportDetail = {
   context: MessageReportContext[];
 };
 
+// 'user': reported by a member. 'filter': refused before it was sent.
+// 'scan': sent, then hidden by the automatic scan.
+export type SpotChatReportSource = "user" | "filter" | "scan";
+
+export type SpotChatReportItem = {
+  reportId: string;
+  source: SpotChatReportSource;
+  // null for filter reports (never sent) and once the message is removed.
+  messageId: string | null;
+  messageHeld: boolean;
+  spotName: string;
+  senderId: string;
+  senderUsername: string;
+  senderDisplayName: string | null;
+  senderBanned: boolean;
+  reason: string;
+  details: string | null;
+  // Repeat filter hits from the same sender in the same room.
+  hitCount: number;
+  isUrgent: boolean;
+  createdAt: string;
+  lastHitAt: string;
+};
+
+export type SpotChatReportContext = {
+  senderId: string;
+  senderUsername: string | null;
+  body: string | null;
+  createdAt: string;
+};
+
+export type SpotChatReportDetail = {
+  body: string | null;
+  context: SpotChatReportContext[];
+};
+
 export type HeldPostMedia = {
   mediaId: string;
   position: number;

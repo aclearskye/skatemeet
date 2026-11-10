@@ -10,6 +10,7 @@ import { useHeldPostsQueue } from "@/lib/admin/hooks/useHeldPostsQueue";
 import { usePhotoReportsQueue } from "@/lib/admin/hooks/usePhotoReportsQueue";
 import { useProfileReportsQueue } from "@/lib/admin/hooks/useProfileReportsQueue";
 import { useReviewReportsQueue } from "@/lib/admin/hooks/useReviewReportsQueue";
+import { useSpotChatReportsQueue } from "@/lib/admin/hooks/useSpotChatReportsQueue";
 import { useVerificationQueue } from "@/lib/admin/hooks/useVerificationQueue";
 import { C, F } from "@/lib/theme";
 
@@ -22,6 +23,7 @@ export default function AdminDashboardScreen() {
   const { data: reviewReports } = useReviewReportsQueue();
   const { data: profileReports } = useProfileReportsQueue();
   const { data: banAppeals } = useBanAppealsQueue();
+  const { data: spotChatReports } = useSpotChatReportsQueue();
   const { data: deletionEligible } = useDeletionEligibleQueue();
   const { data: heldPosts } = useHeldPostsQueue();
   const { data: captionFlags } = useCaptionFlagsQueue();
@@ -37,7 +39,9 @@ export default function AdminDashboardScreen() {
     (photoReports?.length ?? 0) +
     (reviewReports?.length ?? 0) +
     (profileReports?.length ?? 0) +
-    (banAppeals?.length ?? 0);
+    (banAppeals?.length ?? 0) +
+    (spotChatReports?.length ?? 0);
+  const urgentReportCount = spotChatReports?.filter((r) => r.isUrgent).length ?? 0;
 
   return (
     <View style={styles.container}>
@@ -82,10 +86,12 @@ export default function AdminDashboardScreen() {
           onPress={() => router.push("/admin/reports")}
           activeOpacity={0.75}
         >
-          <Ionicons name="flag-outline" size={22} color={C.primary} />
+          <Ionicons name="flag-outline" size={22} color={urgentReportCount > 0 ? C.tapeRed : C.primary} />
           <View style={styles.tileText}>
             <Text style={styles.tileLabel}>REPORTS</Text>
-            <Text style={styles.tileCount}>{reportsCount} PENDING</Text>
+            <Text style={styles.tileCount}>
+              {reportsCount} PENDING{urgentReportCount > 0 ? ` · ${urgentReportCount} URGENT` : ""}
+            </Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={C.muted} />
         </TouchableOpacity>

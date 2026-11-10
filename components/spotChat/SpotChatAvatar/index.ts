@@ -1,0 +1,1 @@
+export { SpotChatAvatar } from "./SpotChatAvatar";

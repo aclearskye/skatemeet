@@ -15,6 +15,7 @@ import { RequestVerificationButton } from "@/components/spot-detail/RequestVerif
 import { SpotInfoBlock } from "@/components/spot-detail/SpotInfoBlock";
 import { SpotReviews } from "@/components/spot-detail/SpotReviews";
 import { SpotVoteSection } from "@/components/spot-detail/SpotVoteSection";
+import { SpotChatButton } from "@/components/spotChat/SpotChatButton";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { deleteSpot } from "@/lib/spots/mutations";
 import { spotMetadataAdapter } from "@/lib/spots/spotMetadataAdapter";
@@ -249,6 +250,15 @@ export default function SpotDetailScreen() {
             accent={accent}
             canEdit={session != null}
             onEdit={() => setShowEditMetadata(true)}
+          />
+
+          <SpotChatButton
+            variant="section"
+            spotRef={{ spotId, osmSpotPlaceId: osmPlaceId }}
+            spotName={spot.name}
+            isDiy={isDiy}
+            accent={accent}
+            onAccent={onAccent}
           />
 
           <CheckInSection

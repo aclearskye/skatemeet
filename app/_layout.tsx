@@ -68,6 +68,11 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
     const needsAgeCheck = !!profile?.onboarding_completed && !profile.age_confirmed_at;
     const inBannedScreen = segments[0] === "banned";
     const inAccountDeletedScreen = segments[0] === "account-deleted";
+    // Storybook (dev only, see metro.config.js) is reachable signed in or out.
+    if ((segments[0] as string) === "storybook") {
+      SplashScreen.hideAsync();
+      return;
+    }
     // A single shared post is viewable logged out (web share links); the
     // composer and grid browser still need a session.
     const [firstSegment, secondSegment] = segments as string[];
@@ -127,6 +132,7 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
         <Stack.Screen name="friends" />
         <Stack.Screen name="chats" />
         <Stack.Screen name="chat/[conversationId]" />
+        <Stack.Screen name="spot-chat" />
         <Stack.Screen name="blocked" />
         <Stack.Screen name="privacy" />
         <Stack.Screen name="age-check" />
@@ -139,6 +145,7 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
         <Stack.Screen name="post/browse" />
         <Stack.Screen name="follows/[userId]" />
         <Stack.Screen name="archive" />
+        <Stack.Screen name="storybook" />
       </Stack>
     </ErrorBoundary>
   );
