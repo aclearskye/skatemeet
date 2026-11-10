@@ -27,10 +27,14 @@ export const styles = StyleSheet.create({
   fieldFocused: {
     borderBottomColor: C.primary,
   },
+  // minWidth 0: on web a TextInput has an intrinsic minimum width, so
+  // without it the three fields overflow a phone-width row.
   short: {
     flex: 1,
+    minWidth: 0,
   },
   long: {
     flex: 1.6,
+    minWidth: 0,
   },
 });

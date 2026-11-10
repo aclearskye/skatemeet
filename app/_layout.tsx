@@ -37,6 +37,7 @@ import { useFonts } from "expo-font";
 import { useEffect } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { C } from "@/lib/theme";
+import StorybookRoot from "@/.rnstorybook";
 
 // Screen content is capped well beyond its original ~375-430px phone sizing
 // so it doesn't look sparse between the two sidebars on desktop, but still
@@ -68,11 +69,6 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
     const needsAgeCheck = !!profile?.onboarding_completed && !profile.age_confirmed_at;
     const inBannedScreen = segments[0] === "banned";
     const inAccountDeletedScreen = segments[0] === "account-deleted";
-    // Storybook (dev only, see metro.config.js) is reachable signed in or out.
-    if ((segments[0] as string) === "storybook") {
-      SplashScreen.hideAsync();
-      return;
-    }
     // A single shared post is viewable logged out (web share links); the
     // composer and grid browser still need a session.
     const [firstSegment, secondSegment] = segments as string[];
@@ -145,13 +141,12 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
         <Stack.Screen name="post/browse" />
         <Stack.Screen name="follows/[userId]" />
         <Stack.Screen name="archive" />
-        <Stack.Screen name="storybook" />
       </Stack>
     </ErrorBoundary>
   );
 };
 
-export default function Layout() {
+function AppLayout() {
   // Lifted above RootNavigation so DrawerMenu (a sibling, not a descendant of
   // RootNavigation) can be gated on it too — otherwise DrawerMenu mounts and
   // lays out its text against the fallback system font before these custom
@@ -227,3 +222,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
 });
+
+// `npm run storybook` swaps the whole app for the standalone component browser
+// (.rnstorybook/). Otherwise Metro stubs that import out of the bundle.
+export default process.env.EXPO_PUBLIC_STORYBOOK_ENABLED === "true" ? StorybookRoot : AppLayout;
