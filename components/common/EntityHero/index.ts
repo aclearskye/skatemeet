@@ -1,0 +1,1 @@
+export { EntityHero } from "./EntityHero";

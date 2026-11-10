@@ -3,11 +3,14 @@ import { CheckInSection } from "@/components/common/CheckInSection";
 import { DeleteUnverifiedButton } from "@/components/common/DeleteUnverifiedButton";
 import { DetailHeader } from "@/components/common/DetailHeader";
 import { EditMetadataSheet } from "@/components/common/EditMetadataSheet";
+import { EntityHero } from "@/components/common/EntityHero";
 import { EntityMetadataSection } from "@/components/common/EntityMetadataSection";
 import { EntityPhotoViewerModal } from "@/components/common/EntityPhotoViewerModal";
 import { ReviewsModal } from "@/components/common/ReviewsModal";
+import { EntityPostsSection } from "@/components/common/EntityPostsSection";
+import { EntityTapeLabels } from "@/components/common/EntityTapeLabels";
+import { PhotoUploadButton } from "@/components/common/PhotoUploadButton";
 import { StarRating } from "@/components/common/StarRating";
-import { StoreHero } from "@/components/store-detail/StoreHero";
 import { StoreInfoBlock } from "@/components/store-detail/StoreInfoBlock";
 import { StoreReviews } from "@/components/store-detail/StoreReviews";
 import { StoreVoteSection } from "@/components/store-detail/StoreVoteSection";
@@ -30,10 +33,13 @@ import { C, F } from "@/lib/theme";
 import { queryKeys } from "@/utils/queryKeys";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Params = { kind: string; data: string };
+
+// Hero tape labels read a size up on web's wider layout.
+const HERO_LABEL_SIZE = Platform.OS === "web" ? "lg" : "md";
 
 export default function StoreDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -197,16 +203,30 @@ export default function StoreDetailScreen() {
       />
 
       <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
-        <StoreHero photoUrl={photoUrl} onPress={() => setShowPhotoViewer(true)} />
+        <EntityHero
+          photoUrl={photoUrl}
+          placeholderIcon="storefront-outline"
+          onPhotoPress={() => setShowPhotoViewer(true)}
+          name={name}
+          badges={
+            <EntityTapeLabels size={HERO_LABEL_SIZE} typeLabel="SKATE STORE" typeColors={{ bg: C.secondary, fg: C.onSecondary }} />
+          }
+          action={
+            <PhotoUploadButton
+              onPick={addPhoto}
+              isLoading={isAddingPhoto}
+              disabled={!hasCheckedIn}
+              accent={C.secondary}
+              onAccent={C.onSecondary}
+            />
+          }
+          actionHint={hasCheckedIn ? null : "CHECK IN TO ADD A PHOTO"}
+        />
 
         <View style={styles.body}>
           <StoreInfoBlock
-            name={name}
             osmRating={osmRating}
             onDirections={handleDirections}
-            onAddPhoto={addPhoto}
-            isAddingPhoto={isAddingPhoto}
-            canAddPhoto={hasCheckedIn}
             address={address}
             hours={hours}
             phone={phone}
@@ -249,6 +269,10 @@ export default function StoreDetailScreen() {
             onAddReview={() => setShowAddReview(true)}
             onSeeMore={() => setShowReviewsModal(true)}
             canReview={hasCheckedIn}
+          />
+
+          <EntityPostsSection
+            tag={storeId ? { kind: "store", storeId } : osmPlaceId ? { kind: "osm_store", osmPlaceId } : null}
           />
 
           {isOwner && !isVerified && (
