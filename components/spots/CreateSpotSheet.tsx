@@ -7,12 +7,16 @@ import {
 import { MultiStepSheet } from "@/components/common/MultiStepSheet";
 import { PhotoPickerStep } from "@/components/common/PhotoPickerStep";
 import { StarInput } from "@/components/common/StarInput";
+import { SpotLabelsInput } from "@/components/spots/SpotLabelsInput";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { upsertSpotMetadata } from "@/lib/spots/metadataMutations";
 import { createSpot, linkSpotPhoto, uploadSpotPhoto } from "@/lib/spots/mutations";
+import { difficultyTier } from "@/lib/spots/difficulty";
+import { TapeLabel } from "@/lib/shared/tapeLabels";
 import { SkateSpot, SpotType } from "@/lib/spots/types";
 import { PickedPhoto } from "@/lib/storage";
 import { C, F } from "@/lib/theme";
+import { TYPE_LABELS } from "@/utils/constants";
 import { useState } from "react";
 import {
   StyleSheet,
@@ -37,8 +41,6 @@ const SPOT_TYPES: { key: SpotType; label: string }[] = [
   { key: "indoor", label: "INDOOR" },
 ];
 
-const DIFFICULTY_LABELS = ["", "MELLOW", "MELLOW", "MEDIUM", "GNARLY", "GNARLY"];
-
 export function CreateSpotSheet({
   visible,
   onClose,
@@ -57,10 +59,13 @@ export function CreateSpotSheet({
   const [spotType, setSpotType] = useState<SpotType>(lockedType ?? "street");
   const [description, setDescription] = useState("");
   const [difficulty, setDifficulty] = useState<number | null>(null);
+  const [labels, setLabels] = useState<TapeLabel[]>([]);
   const [metadata, setMetadata] = useState<MetadataFormState>(createEmptyMetadataFormState());
   const [photo, setPhoto] = useState<PickedPhoto | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const tier = difficultyTier(difficulty);
 
   function reset() {
     setStep(1);
@@ -68,6 +73,7 @@ export function CreateSpotSheet({
     setSpotType(lockedType ?? "street");
     setDescription("");
     setDifficulty(null);
+    setLabels([]);
     setMetadata(createEmptyMetadataFormState());
     setPhoto(null);
     setIsSubmitting(false);
@@ -97,6 +103,7 @@ export function CreateSpotSheet({
           longitude: initialCoordinates.longitude,
           photo_url,
           difficulty: difficulty ?? undefined,
+          labels: labels.length > 0 ? labels : undefined,
         },
         session.user.id
       );
@@ -200,12 +207,18 @@ export function CreateSpotSheet({
               hitSlop={4}
               accent={accent}
             />
-            {difficulty != null && (
-              <Text style={[styles.difficultyLabel, { color: accent }]}>
-                {DIFFICULTY_LABELS[difficulty]}
-              </Text>
+            {tier && (
+              <Text style={[styles.difficultyLabel, { color: accent }]}>{tier.label}</Text>
             )}
           </View>
+          <Text style={[styles.fieldLabel, { marginTop: 24 }]}>LABELS</Text>
+          <SpotLabelsInput
+            value={labels}
+            onChange={setLabels}
+            typeLabel={TYPE_LABELS[lockedType ?? spotType]}
+            typeColors={{ bg: accent, fg: onAccent }}
+            difficulty={difficulty}
+          />
         </View>
       )}
 

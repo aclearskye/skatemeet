@@ -1,4 +1,5 @@
 import { EntityMetadataBase, EntityPhoto } from "@/lib/shared/types";
+import type { TapeLabel } from "@/lib/shared/tapeLabels";
 
 export type SpotType = "street" | "diy" | "park" | "indoor";
 
@@ -12,6 +13,7 @@ export type SkateSpot = {
   longitude: number;
   photo_url: string | null;
   difficulty: number | null;
+  labels: TapeLabel[];
   is_verified: boolean;
   upvote_count: number;
   created_at: string;
@@ -52,6 +54,7 @@ export type CreateSpotPayload = {
   longitude: number;
   photo_url?: string;
   difficulty?: number;
+  labels?: TapeLabel[];
 };
 
 export type BoundingBox = {

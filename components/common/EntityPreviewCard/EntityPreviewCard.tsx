@@ -1,3 +1,4 @@
+import { EntityTapeLabels } from "@/components/common/EntityTapeLabels";
 import { VoteButton } from "@/components/common/VoteButton";
 import type { PreviewItem } from "@/components/map/MapPreviewCard";
 import { toggleSpotVote } from "@/lib/spots/mutations";
@@ -34,6 +35,7 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted, distanceMile
   let subtitle = "";
   let isDiy = false;
   let isStore = false;
+  let difficulty: number | null = null;
 
   switch (item.kind) {
     case "user-spot": {
@@ -44,6 +46,7 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted, distanceMile
       isVerified = s.is_verified;
       upvoteCount = s.upvote_count;
       isDiy = s.type === "diy";
+      difficulty = s.difficulty;
       break;
     }
     case "osm-spot": {
@@ -160,9 +163,19 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted, distanceMile
             {/* Badges + upvote pill -- always includes the vote pill when
                 available, never crowded out by the live badge above. */}
             <View style={styles.badgeRow}>
-              <View style={styles.typeBadge}>
-                <Text style={styles.typeBadgeText}>{typeLabel}</Text>
-              </View>
+              <EntityTapeLabels
+                typeLabel={typeLabel}
+                typeColors={
+                  isDiy
+                    ? { bg: C.tertiary, fg: C.onTertiary }
+                    : isStore
+                      ? { bg: C.secondary, fg: C.onSecondary }
+                      : { bg: C.primary, fg: C.onPrimary }
+                }
+                difficulty={difficulty}
+                size="sm"
+                style={styles.tapeLabels}
+              />
               {localCount != null && hasVoted !== null && (
                 <VoteButton
                   count={localCount}

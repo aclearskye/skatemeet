@@ -1,0 +1,1 @@
+export { EntityTapeLabels } from "./EntityTapeLabels";
