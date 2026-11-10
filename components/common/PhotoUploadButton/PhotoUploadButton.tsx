@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ActivityIndicator, Platform, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import type { PhotoSource } from "@/lib/storage";
 import { C } from "@/lib/theme";
 import { PhotoSourceSheet } from "@/components/common/PhotoSourceSheet";
@@ -41,8 +41,10 @@ export function PhotoUploadButton({ onPick, isLoading, disabled, accent, onAccen
       >
         {isLoading ? (
           <ActivityIndicator size="small" color={onAccent} />
+        ) : disabled ? (
+          <Ionicons name="lock-closed" size={18} color={C.muted} />
         ) : (
-          <Ionicons name={disabled ? "lock-closed" : "camera"} size={18} color={disabled ? C.muted : onAccent} />
+          <MaterialCommunityIcons name="camera-plus" size={22} color={onAccent} />
         )}
       </TouchableOpacity>
       {Platform.OS !== "web" && (

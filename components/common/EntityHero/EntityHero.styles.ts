@@ -1,13 +1,17 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { C, F } from "@/lib/theme";
 
 export const styles = StyleSheet.create({
-  // 4:3 rather than 16:9 so the name and a row or two of labels fit over the
-  // photo without hiding most of it.
+  // Native: 4:3 rather than 16:9 so the name and a row or two of labels fit
+  // over the photo without hiding most of it. Web: the column is far wider,
+  // so 4:3 would push everything below the fold — a wide crop, capped.
   hero: {
     width: "100%",
-    aspectRatio: 4 / 3,
     backgroundColor: C.surfaceHigh,
+    ...Platform.select({
+      web: { aspectRatio: 21 / 9, maxHeight: 340 },
+      default: { aspectRatio: 4 / 3 },
+    }),
   },
   fill: {
     ...StyleSheet.absoluteFillObject,
@@ -16,9 +20,8 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  // Straight on the photo, no backing band. The tapes carry their own
-  // colour; the name gets a hard offset shadow (the brand's flat-shadow
-  // look) so it stays readable on bright photos.
+  // Straight on the photo; the name has its own black strip and the tapes
+  // carry their own colour.
   overlay: {
     position: "absolute",
     left: 0,
@@ -28,15 +31,23 @@ export const styles = StyleSheet.create({
     paddingBottom: 14,
     gap: 8,
   },
+  // A big black duct-tape strip (DuctTapeLabel paints the colour and tilt)
+  // so the name reads on any photo.
+  nameTape: {
+    alignSelf: "flex-start",
+    maxWidth: "100%",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  // A size up on web's wider hero.
   name: {
     fontFamily: F.heading,
-    fontSize: 28,
-    lineHeight: 32,
     color: C.text,
     letterSpacing: 0.5,
-    textShadowColor: C.bgLowest,
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 0,
+    ...Platform.select({
+      web: { fontSize: 38, lineHeight: 44 },
+      default: { fontSize: 28, lineHeight: 32 },
+    }),
   },
   actionCorner: {
     position: "absolute",
@@ -44,15 +55,5 @@ export const styles = StyleSheet.create({
     right: 12,
     alignItems: "flex-end",
     gap: 8,
-  },
-  hintTape: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  hintText: {
-    fontFamily: F.mono,
-    fontSize: 9,
-    color: C.onTape,
-    letterSpacing: 1,
   },
 });

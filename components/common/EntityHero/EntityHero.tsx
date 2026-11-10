@@ -4,7 +4,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { C } from "@/lib/theme";
 import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
+import { TapeChip } from "@/components/common/TapeChip";
 import { styles } from "./EntityHero.styles";
+
+const HINT_COLORS = { bg: C.tape, fg: C.onTape };
 
 type Props = {
   photoUrl: string | null;
@@ -22,8 +25,8 @@ type Props = {
 };
 
 // Top of a spot / store detail page: the cover photo with the entity's
-// name and duct-tape labels laid over a dark band along its bottom, and the
-// photo upload button pinned top-right.
+// name and duct-tape labels laid over its bottom edge, and the photo upload
+// button pinned top-right.
 export function EntityHero({ photoUrl, placeholderIcon, onPhotoPress, name, badges, action, actionHint }: Props) {
   return (
     <View style={styles.hero}>
@@ -46,9 +49,18 @@ export function EntityHero({ photoUrl, placeholderIcon, onPhotoPress, name, badg
 
       {/* Over the photo; box-none so taps outside the text still open it. */}
       <View style={styles.overlay} pointerEvents="box-none">
-        <Text style={styles.name} numberOfLines={2} accessibilityRole="header">
-          {name}
-        </Text>
+        {/* The name as a big black tape strip, with the same random tilt as
+            every other tape. Not pressable. */}
+        <DuctTapeLabel
+          color={C.bgLowest}
+          style={styles.nameTape}
+          accessibilityRole="header"
+          accessibilityLabel={name}
+        >
+          <Text style={styles.name} numberOfLines={2}>
+            {name}
+          </Text>
+        </DuctTapeLabel>
         {badges}
       </View>
 
@@ -56,9 +68,7 @@ export function EntityHero({ photoUrl, placeholderIcon, onPhotoPress, name, badg
         <View style={styles.actionCorner} pointerEvents="box-none">
           {action}
           {actionHint ? (
-            <DuctTapeLabel color={C.tape} style={styles.hintTape}>
-              <Text style={styles.hintText}>{actionHint}</Text>
-            </DuctTapeLabel>
+            <TapeChip text={actionHint} colors={HINT_COLORS} size="sm" />
           ) : null}
         </View>
       ) : null}
