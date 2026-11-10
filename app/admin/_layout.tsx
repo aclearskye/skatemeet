@@ -24,6 +24,7 @@ export default function AdminLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="verification-requests" />
       <Stack.Screen name="reports" />
+      <Stack.Screen name="posts" />
       <Stack.Screen name="users" />
       <Stack.Screen name="data-deletion" />
     </Stack>

@@ -1,0 +1,1 @@
+export { EntityPostsSection } from "./EntityPostsSection";

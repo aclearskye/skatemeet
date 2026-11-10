@@ -1,20 +1,22 @@
 import { useCallback, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { useRespondToFriendRequest } from "@/lib/friendRequests/hooks/useRespondToFriendRequest";
+import { useRespondToPostTag } from "@/lib/posts/hooks/useRespondToPostTag";
 import { deleteNotification, deleteNotifications, markNotificationRead } from "@/lib/notifications/mutations";
 import { fetchNotifications } from "@/lib/notifications/queries";
 import {
-  isFriendRequestNotification,
-  isPendingFriendRequest,
+  isRequestNotification,
+  isPendingRequest,
   type Notification,
 } from "@/lib/notifications/types";
 import { C, F } from "@/lib/theme";
 import { queryKeys } from "@/utils/queryKeys";
+import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
 import { NotificationRow } from "@/components/notifications/NotificationRow";
 import { NotificationTabs, type NotificationTab } from "@/components/notifications/NotificationTabs";
 
@@ -42,10 +44,10 @@ export default function NotificationsScreen() {
       // should only run on an actual focus transition.
       const current = queryClient.getQueryData<Notification[]>(queryKeys.notifications(userId)) ?? [];
       // Pending friend requests are excluded here -- their readAt doubles as
-      // "resolved" (see isPendingFriendRequest), so they should only flip to
+      // "resolved" (see isPendingRequest), so they should only flip to
       // read once the user actually accepts/declines, not just from viewing
       // the inbox.
-      const unread = current.filter((n) => !n.readAt && n.source !== "friend_request");
+      const unread = current.filter((n) => !n.readAt && !isPendingRequest(n));
       if (unread.length === 0) return;
       Promise.all(unread.map((n) => markNotificationRead(n.notificationId))).then(() => {
         queryClient.invalidateQueries({ queryKey: queryKeys.notifications(userId) });
@@ -55,6 +57,12 @@ export default function NotificationsScreen() {
   );
 
   const { respond } = useRespondToFriendRequest();
+  const { respond: respondToTag } = useRespondToPostTag();
+
+  function handleRespond(source: string, requestId: string, accept: boolean, otherProfileId: string | null) {
+    if (source === "post_tag") respondToTag({ postId: requestId, accept });
+    else respond({ requestId, accept, otherProfileId });
+  }
 
   const deleteMutation = useMutation({
     mutationFn: deleteNotification,
@@ -79,16 +87,16 @@ export default function NotificationsScreen() {
     },
   });
 
-  const requestNotifications = notifications.filter(isFriendRequestNotification);
-  const generalNotifications = notifications.filter((n) => !isFriendRequestNotification(n));
-  const pendingRequestCount = requestNotifications.filter(isPendingFriendRequest).length;
+  const requestNotifications = notifications.filter(isRequestNotification);
+  const generalNotifications = notifications.filter((n) => !isRequestNotification(n));
+  const pendingRequestCount = requestNotifications.filter(isPendingRequest).length;
 
   const visibleNotifications = activeTab === "requests" ? requestNotifications : generalNotifications;
   // Scoped to whichever tab is active -- pending friend requests must be
   // resolved via Accept/Decline, not dismissed outright (same rule
   // NotificationRow uses to hide their delete button), so "Clear All"
   // leaves them in place even while viewing the Requests tab.
-  const clearableNotifications = visibleNotifications.filter((n) => !isPendingFriendRequest(n));
+  const clearableNotifications = visibleNotifications.filter((n) => !isPendingRequest(n));
 
   const clearAllMutation = useMutation({
     mutationFn: () => deleteNotifications(clearableNotifications.map((n) => n.notificationId)),
@@ -127,13 +135,17 @@ export default function NotificationsScreen() {
           </Text>
         </View>
         {clearableNotifications.length > 0 && (
-          <TouchableOpacity
+          // Orange "gaffer tape" strip: the theme's warning tape, for an
+          // action that deletes everything clearable.
+          <DuctTapeLabel
+            color={C.tapeOrange}
             onPress={() => clearAllMutation.mutate()}
             disabled={clearAllMutation.isPending}
-            hitSlop={8}
+            style={[styles.clearAllTape, clearAllMutation.isPending && styles.clearAllTapeBusy]}
+            accessibilityLabel="Clear all notifications"
           >
             <Text style={styles.clearAllText}>CLEAR ALL</Text>
-          </TouchableOpacity>
+          </DuctTapeLabel>
         )}
       </View>
 
@@ -151,7 +163,7 @@ export default function NotificationsScreen() {
         <View style={styles.centeredMsg}>
           <Ionicons name="notifications-outline" size={32} color={C.muted} />
           <Text style={styles.emptyLabel}>
-            {activeTab === "requests" ? "NO FRIEND REQUESTS" : "NO NOTIFICATIONS YET"}
+            {activeTab === "requests" ? "NO REQUESTS" : "NO NOTIFICATIONS YET"}
           </Text>
         </View>
       ) : (
@@ -161,9 +173,7 @@ export default function NotificationsScreen() {
               key={notification.notificationId}
               notification={notification}
               onDelete={(id) => deleteMutation.mutate(id)}
-              onRespond={(requestId, accept, otherProfileId) =>
-                respond({ requestId, accept, otherProfileId })
-              }
+              onRespond={handleRespond}
             />
           ))}
         </ScrollView>
@@ -191,11 +201,19 @@ const styles = StyleSheet.create({
     alignItems: "baseline",
     gap: 10,
   },
+  // Square-edged strip; colour and tilt come from DuctTapeLabel.
+  clearAllTape: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  clearAllTapeBusy: {
+    opacity: 0.5,
+  },
   clearAllText: {
     fontFamily: F.mono,
-    fontSize: 10,
-    color: C.muted,
-    letterSpacing: 1,
+    fontSize: 11,
+    color: C.onTapeOrange,
+    letterSpacing: 1.5,
   },
   heading: {
     fontFamily: F.heading,

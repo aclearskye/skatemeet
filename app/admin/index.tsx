@@ -3,7 +3,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useBanAppealsQueue } from "@/lib/admin/hooks/useBanAppealsQueue";
+import { useCaptionFlagsQueue } from "@/lib/admin/hooks/useCaptionFlagsQueue";
+import { useCsamHolds } from "@/lib/admin/hooks/useCsamHolds";
 import { useDeletionEligibleQueue } from "@/lib/admin/hooks/useDeletionEligibleQueue";
+import { useHeldPostsQueue } from "@/lib/admin/hooks/useHeldPostsQueue";
 import { usePhotoReportsQueue } from "@/lib/admin/hooks/usePhotoReportsQueue";
 import { useProfileReportsQueue } from "@/lib/admin/hooks/useProfileReportsQueue";
 import { useReviewReportsQueue } from "@/lib/admin/hooks/useReviewReportsQueue";
@@ -20,6 +23,15 @@ export default function AdminDashboardScreen() {
   const { data: profileReports } = useProfileReportsQueue();
   const { data: banAppeals } = useBanAppealsQueue();
   const { data: deletionEligible } = useDeletionEligibleQueue();
+  const { data: heldPosts } = useHeldPostsQueue();
+  const { data: captionFlags } = useCaptionFlagsQueue();
+  const { data: csamHolds } = useCsamHolds();
+
+  const urgentPostCount = heldPosts?.filter((p) => p.isUrgent).length ?? 0;
+  const postsCount =
+    (heldPosts?.length ?? 0) +
+    (captionFlags?.length ?? 0) +
+    (csamHolds?.filter((h) => h.ncaReportStatus === "to_file").length ?? 0);
 
   const reportsCount =
     (photoReports?.length ?? 0) +
@@ -37,6 +49,21 @@ export default function AdminDashboardScreen() {
       </View>
 
       <View style={styles.tiles}>
+        <TouchableOpacity
+          style={styles.tile}
+          onPress={() => router.push("/admin/posts" as never)}
+          activeOpacity={0.75}
+        >
+          <Ionicons name="images-outline" size={22} color={urgentPostCount > 0 ? C.tapeRed : C.primary} />
+          <View style={styles.tileText}>
+            <Text style={styles.tileLabel}>POSTS</Text>
+            <Text style={styles.tileCount}>
+              {postsCount} PENDING{urgentPostCount > 0 ? ` · ${urgentPostCount} URGENT` : ""}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={C.muted} />
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.tile}
           onPress={() => router.push("/admin/verification-requests")}

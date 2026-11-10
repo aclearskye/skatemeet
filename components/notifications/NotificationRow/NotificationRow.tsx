@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
 import { VARIANT_COLOR, VARIANT_ICON } from "@/lib/shared/notificationVariant";
-import { isPendingFriendRequest, type Notification } from "@/lib/notifications/types";
+import { isPendingRequest, type Notification } from "@/lib/notifications/types";
 import { C } from "@/lib/theme";
 import ProfileAvatar from "@/components/profile/ProfileAvatar";
 import { styles } from "./NotificationRow.styles";
@@ -11,7 +11,8 @@ import { styles } from "./NotificationRow.styles";
 type Props = {
   notification: Notification;
   onDelete: (notificationId: string) => void;
-  onRespond: (requestId: string, accept: boolean, otherProfileId: string | null) => void;
+  // requestId is the dedupKey: a friend request id, or a post id for post_tag.
+  onRespond: (source: string, requestId: string, accept: boolean, otherProfileId: string | null) => void;
 };
 
 function formatRelativeTime(isoDate: string): string {
@@ -29,7 +30,7 @@ export function NotificationRow({ notification, onDelete, onRespond }: Props) {
   const router = useRouter();
   const color = VARIANT_COLOR[notification.variant];
   const icon = VARIANT_ICON[notification.variant];
-  const isPending = isPendingFriendRequest(notification);
+  const isPending = isPendingRequest(notification);
 
   const { relatedProfileId, relatedProfile } = notification;
 
@@ -57,14 +58,14 @@ export function NotificationRow({ notification, onDelete, onRespond }: Props) {
             <DuctTapeLabel
               color={C.primary}
               style={styles.acceptBtn}
-              onPress={() => onRespond(notification.dedupKey, true, notification.relatedProfileId)}
+              onPress={() => onRespond(notification.source, notification.dedupKey, true, notification.relatedProfileId)}
             >
               <Text style={styles.acceptText}>ACCEPT</Text>
             </DuctTapeLabel>
             <DuctTapeLabel
               color={C.secondary}
               style={styles.declineBtn}
-              onPress={() => onRespond(notification.dedupKey, false, notification.relatedProfileId)}
+              onPress={() => onRespond(notification.source, notification.dedupKey, false, notification.relatedProfileId)}
             >
               <Text style={styles.declineText}>DECLINE</Text>
             </DuctTapeLabel>

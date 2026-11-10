@@ -12,6 +12,7 @@ import { SearchResultsScreen } from "@/components/map/SearchResultsScreen";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { useCenterOnUser } from "@/lib/map/useCenterOnUser";
 import { useEntitySearch, type SortMode } from "@/lib/map/useEntitySearch";
+import { useMapFocusParam } from "@/lib/map/useMapFocusParam";
 import { useMapRegionData } from "@/lib/map/useMapRegionData";
 import { useMarkerPreview } from "@/lib/map/useMarkerPreview";
 import { C, DARK_MAP_STYLE, F, R } from "@/lib/theme";
@@ -91,6 +92,7 @@ export default function MapScreen() {
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mapRef = useRef<MapViewNative>(null);
   const { centerOnUser, isLocating } = useCenterOnUser(mapRef, searchLocation, reportLiveLocation);
+  useMapFocusParam(mapRef, mapReady, handleMarkerSelect);
 
   useEffect(() => {
     if (searchDebounce.current) clearTimeout(searchDebounce.current);

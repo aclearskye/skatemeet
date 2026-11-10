@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
-import { uploadAvatar } from "@/lib/clips/clips";
+import { uploadAvatar } from "@/lib/profiles/mutations";
 import { avatarColor, C, F } from "@/lib/theme";
 import * as ImagePicker from "expo-image-picker";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";

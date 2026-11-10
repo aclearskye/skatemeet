@@ -43,6 +43,14 @@ export default function SettingsScreen() {
           </View>
           <Ionicons name="chevron-forward" size={18} color={C.muted} />
         </TouchableOpacity>
+
+        <TouchableOpacity style={styles.linkRow} onPress={() => router.push("/archive" as never)} activeOpacity={0.7}>
+          <View style={styles.rowText}>
+            <Text style={styles.rowTitle}>ARCHIVE</Text>
+            <Text style={styles.rowDescription}>{"Posts you've hidden from your profile. Only you can see them."}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={C.muted} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
