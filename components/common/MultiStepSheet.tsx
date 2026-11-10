@@ -4,12 +4,12 @@ import type { ReactNode } from "react";
 import {
   ActivityIndicator,
   Modal,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAvoidingView, KeyboardAwareScrollView } from "@/lib/shared/keyboard";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = {
@@ -55,7 +55,9 @@ export function MultiStepSheet({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
+      {/* Pads above the keyboard (both platforms) so the footer buttons stay
+          visible; the body keeps the focused field clear of them. */}
+      <KeyboardAvoidingView style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
         <View style={styles.header}>
           <Text style={styles.title}>{title}</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={8}>
@@ -70,9 +72,9 @@ export function MultiStepSheet({
           <Text style={styles.stepLabel}>STEP {step} OF {totalSteps}</Text>
         </View>
 
-        <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+        <KeyboardAwareScrollView style={styles.body} bottomOffset={100}>
           {children}
-        </ScrollView>
+        </KeyboardAwareScrollView>
 
         <View style={styles.footer}>
           {step > 1 && (
@@ -112,7 +114,7 @@ export function MultiStepSheet({
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

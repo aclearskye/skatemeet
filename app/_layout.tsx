@@ -2,15 +2,21 @@ import { useAuthContext } from "@/lib/context/use-auth-context";
 import AuthProvider from "@/providers/auth-provider";
 import { DrawerProvider } from "@/lib/context/drawer-context";
 import { ToastProvider } from "@/lib/context/toast-context";
+import { UploadQueueProvider } from "@/lib/context/upload-queue-context";
+import { VideoSoundProvider } from "@/lib/context/video-sound-context";
+import { KeyboardProvider } from "@/lib/shared/keyboard";
+import { UploadProgressBar } from "@/components/posts/UploadProgressBar";
 import { useWelcomeXpToast } from "@/lib/xp/useWelcomeXpToast";
 import { useCheckInSync } from "@/lib/shared/hooks/useCheckInSync";
 import { useChatRealtime } from "@/lib/messages/hooks/useChatRealtime";
+import { usePushNotificationRouting } from "@/lib/notifications/usePushNotificationRouting";
 import DrawerMenu from "@/components/ui/DrawerMenu";
 import { ToastHost } from "@/components/ui/ToastHost";
 import WebAccountSidebar from "@/components/ui/WebAccountSidebar";
 import WebSidebar from "@/components/ui/WebSidebar";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   Anton_400Regular,
 } from "@expo-google-fonts/anton";
@@ -49,6 +55,7 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
   useWelcomeXpToast(profile);
   useCheckInSync();
   useChatRealtime();
+  usePushNotificationRouting();
 
   useEffect(() => {
     if (isLoadingAuthContext || !fontsLoaded) return;
@@ -61,20 +68,33 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
     const needsAgeCheck = !!profile?.onboarding_completed && !profile.age_confirmed_at;
     const inBannedScreen = segments[0] === "banned";
     const inAccountDeletedScreen = segments[0] === "account-deleted";
+    // A single shared post is viewable logged out (web share links); the
+    // composer and grid browser still need a session.
+    const [firstSegment, secondSegment] = segments as string[];
+    const inPublicPostScreen =
+      firstSegment === "post" && secondSegment != null && secondSegment !== "new" && secondSegment !== "browse";
 
     if (session && isBanned && !inBannedScreen) {
       // The only ban enforcement -- a banned account can still authenticate,
       // it's just confined here instead of being rejected at sign-in (see
       // AuthProvider and 20260927000000_bans_without_auth_lockout.sql).
       router.replace("/banned");
-    } else if (!session && !inPublicScreen && !inBannedScreen && !inAccountDeletedScreen && !inPrivacyScreen) {
+    } else if (
+      !session &&
+      !inPublicScreen &&
+      !inBannedScreen &&
+      !inAccountDeletedScreen &&
+      !inPrivacyScreen &&
+      !inPublicPostScreen
+    ) {
       router.replace("/Login");
     } else if (session && profile === null && !inPublicScreen && !inOnboardingGroup) {
       router.replace("/(onboarding)");
     } else if (profile && !inOnboardingGroup && !profile.onboarding_completed) {
       router.replace("/(onboarding)");
     } else if (session && needsAgeCheck && !inAgeCheckScreen && !inPrivacyScreen && !inAccountDeletedScreen) {
-      // One-time 16+ check for accounts that never passed the sign-up gate.
+      // One-time 18+ check for accounts that never passed the current
+      // sign-up gate (all pre-18+ accounts were reset to need it).
       router.replace("/age-check" as any);
     } else if (
       session &&
@@ -114,6 +134,11 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
         <Stack.Screen name="admin" />
         <Stack.Screen name="banned" />
         <Stack.Screen name="account-deleted" />
+        <Stack.Screen name="post/new" options={{ presentation: "modal" }} />
+        <Stack.Screen name="post/[postId]" />
+        <Stack.Screen name="post/browse" />
+        <Stack.Screen name="follows/[userId]" />
+        <Stack.Screen name="archive" />
       </Stack>
     </ErrorBoundary>
   );
@@ -137,10 +162,16 @@ export default function Layout() {
   });
 
   return (
+    // Gesture-handler gestures (e.g. the post viewer's tap / double tap /
+    // hold) only work under this root.
+    <GestureHandlerRootView style={{ flex: 1 }}>
+    <KeyboardProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <DrawerProvider>
           <ToastProvider>
+            <UploadQueueProvider>
+            <VideoSoundProvider>
             {Platform.OS === "web" ? (
               // No hamburger/drawer on web — nav and account actions live
               // permanently in two sidebars pinned to the true left/right edges
@@ -160,11 +191,16 @@ export default function Layout() {
                 {fontsLoaded && <DrawerMenu />}
               </View>
             )}
+            {fontsLoaded && <UploadProgressBar />}
             <ToastHost />
+            </VideoSoundProvider>
+            </UploadQueueProvider>
           </ToastProvider>
         </DrawerProvider>
       </AuthProvider>
     </QueryClientProvider>
+    </KeyboardProvider>
+    </GestureHandlerRootView>
   );
 }
 

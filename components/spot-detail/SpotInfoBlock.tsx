@@ -1,62 +1,21 @@
-import { AddPhotoIconButton } from "@/components/common/AddPhotoIconButton";
 import { C, F } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { Fragment } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type Props = {
-  name: string;
-  typeLabel: string;
-  isUser: boolean;
-  isVerified: boolean;
   accent: string;
   onAccent: string;
   onDirections: () => void;
-  onAddPhoto: () => void;
-  isAddingPhoto: boolean;
-  canAddPhoto: boolean;
   description: string | null;
   address: string | null;
 };
 
-export function SpotInfoBlock({
-  name,
-  typeLabel,
-  isUser,
-  isVerified,
-  accent,
-  onAccent,
-  onDirections,
-  onAddPhoto,
-  isAddingPhoto,
-  canAddPhoto,
-  description,
-  address,
-}: Props) {
+// Below the hero (which carries the name, labels and photo upload):
+// directions, description and address.
+export function SpotInfoBlock({ accent, onAccent, onDirections, description, address }: Props) {
   return (
     <Fragment>
-      {!canAddPhoto && <Text style={styles.photoHint}>CHECK IN HERE TO ADD A PHOTO</Text>}
-      <View style={styles.nameRow}>
-        <Text style={styles.name}>{name}</Text>
-        <AddPhotoIconButton
-          onPress={onAddPhoto}
-          isLoading={isAddingPhoto}
-          disabled={!canAddPhoto}
-          accent={accent}
-        />
-      </View>
-
-      <View style={styles.badgeRow}>
-        <View style={styles.typeBadge}>
-          <Text style={styles.typeBadgeText}>{typeLabel}</Text>
-        </View>
-        {isUser && isVerified && (
-          <View style={[styles.verifiedBadge, { backgroundColor: accent }]}>
-            <Text style={[styles.verifiedBadgeText, { color: onAccent }]}>VERIFIED</Text>
-          </View>
-        )}
-      </View>
-
       <TouchableOpacity
         style={[styles.directionsBtn, { backgroundColor: accent }]}
         onPress={onDirections}
@@ -81,25 +40,6 @@ export function SpotInfoBlock({
 }
 
 const styles = StyleSheet.create({
-  nameRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  name: { fontFamily: F.heading, fontSize: 28, color: C.text, letterSpacing: 0.5, flexShrink: 1 },
-  photoHint: {
-    fontFamily: F.monoRegular,
-    fontSize: 10,
-    color: C.muted,
-    letterSpacing: 0.3,
-  },
-  badgeRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-  typeBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: C.surfaceHigh,
-    borderWidth: 1,
-    borderColor: C.borderVariant,
-  },
-  typeBadgeText: { fontFamily: F.mono, fontSize: 10, color: C.textVariant, letterSpacing: 1 },
-  verifiedBadge: { paddingHorizontal: 10, paddingVertical: 4 },
-  verifiedBadgeText: { fontFamily: F.mono, fontSize: 10, letterSpacing: 1 },
   directionsBtn: {
     flexDirection: "row",
     alignItems: "center",

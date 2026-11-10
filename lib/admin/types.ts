@@ -100,3 +100,54 @@ export type MessageReportDetail = {
   body: string | null;
   context: MessageReportContext[];
 };
+
+export type HeldPostMedia = {
+  mediaId: string;
+  position: number;
+  bucket: string;
+  storagePath: string | null;
+  mediaUrl: string | null;
+};
+
+export type HeldPostItem = {
+  postId: string;
+  profileId: string;
+  username: string;
+  mediaType: "photo" | "video";
+  caption: string | null;
+  // 'nudity' | 'gore' | 'reports' | 'reported_child_sexual_abuse'
+  holdReason: string | null;
+  isUrgent: boolean;
+  createdAt: string;
+  reportCount: number;
+  reportReasons: string[];
+  media: HeldPostMedia[];
+};
+
+export type CaptionFlagItem = {
+  eventId: string;
+  postId: string | null;
+  profileId: string | null;
+  username: string | null;
+  captionText: string | null;
+  reason: string | null;
+  createdAt: string;
+};
+
+export type CsamHoldItem = {
+  holdId: string;
+  postId: string;
+  profileId: string;
+  username: string | null;
+  ncaReportStatus: "to_file" | "filed";
+  ncaReference: string | null;
+  createdAt: string;
+  filedAt: string | null;
+};
+
+// Signed (1 hour) playback links for a held video -- it's still signed-only
+// on Stream until approved.
+export type HeldVideoPreview = {
+  hlsUrl: string;
+  thumbnailUrl: string;
+};

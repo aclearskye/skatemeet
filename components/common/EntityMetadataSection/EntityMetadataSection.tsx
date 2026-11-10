@@ -99,7 +99,12 @@ export function EntityMetadataSection({ metadata, isLoading, accent, canEdit, on
       {metadata && metadata.facilities.length > 0 && (
         <View style={styles.chipRow}>
           {metadata.facilities.map((facility) => (
-            <DuctTapeLabel key={facility} color={C.primary} style={styles.facilityChip}>
+            <DuctTapeLabel
+              key={facility}
+              color={C.primary}
+              style={styles.facilityChip}
+              accessibilityLabel={`Facility: ${FACILITY_LABELS[facility]}`}
+            >
               <Text style={styles.facilityChipText}>{FACILITY_LABELS[facility]}</Text>
             </DuctTapeLabel>
           ))}
@@ -107,7 +112,11 @@ export function EntityMetadataSection({ metadata, isLoading, accent, canEdit, on
       )}
 
       {metadata?.parking && (
-        <DuctTapeLabel color={C.tertiary} style={styles.parkingChip}>
+        <DuctTapeLabel
+          color={C.tertiary}
+          style={styles.parkingChip}
+          accessibilityLabel={`Parking: ${PARKING_LABELS[metadata.parking]}`}
+        >
           <Ionicons name="car-outline" size={15} color={C.onTertiary} />
           <Text style={styles.parkingChipText}>{PARKING_LABELS[metadata.parking]}</Text>
         </DuctTapeLabel>
@@ -117,12 +126,23 @@ export function EntityMetadataSection({ metadata, isLoading, accent, canEdit, on
         <View style={styles.chipRow}>
           {visibleBadges.map((badge) =>
             badge.value ? (
-              <DuctTapeLabel key={badge.label} color={C.secondary} style={styles.badgeOn}>
+              <DuctTapeLabel
+                key={badge.label}
+                color={C.secondary}
+                style={styles.badgeOn}
+                accessibilityLabel={`${badge.label}: yes`}
+              >
                 <Ionicons name="checkmark" size={12} color={C.onSecondary} />
                 <Text style={styles.badgeOnText}>{badge.label}</Text>
               </DuctTapeLabel>
             ) : (
-              <View key={badge.label} style={styles.badgeOff}>
+              <View
+                key={badge.label}
+                style={styles.badgeOff}
+                accessible
+                accessibilityRole="text"
+                accessibilityLabel={`${badge.label}: no`}
+              >
                 <Ionicons name="close" size={12} color={C.muted} />
                 <Text style={styles.chipText}>{badge.label}</Text>
               </View>

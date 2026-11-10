@@ -6,16 +6,14 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "@/lib/shared/keyboard";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = {
@@ -63,10 +61,7 @@ export default function SwitchToBusinessModal({ visible, onClose }: Props) {
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={styles.root}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      <View style={styles.root}>
         <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <Text style={styles.title}>SWITCH TO BUSINESS</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={12}>
@@ -74,7 +69,7 @@ export default function SwitchToBusinessModal({ visible, onClose }: Props) {
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        <KeyboardAwareScrollView contentContainerStyle={styles.body}>
           <Text style={styles.desc}>
             Business accounts can list skate store events and host meetups.
             Requests are reviewed by our team.
@@ -125,8 +120,8 @@ export default function SwitchToBusinessModal({ visible, onClose }: Props) {
               <Text style={styles.submitBtnText}>SUBMIT REQUEST</Text>
             )}
           </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAwareScrollView>
+      </View>
     </Modal>
   );
 }

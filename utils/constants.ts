@@ -11,6 +11,15 @@ export const SEARCH_MIN_CHARS = 3;
 // Beyond this delta (~55 km viewport), skip fetching to avoid loading the entire world
 export const MAX_DELTA = 0.5;
 
+// Span of the map's starting region around the user. Shared with the launch
+// prefetch (lib/map/useMapPrefetch.ts) so it warms exactly the tiles the map
+// asks for first.
+export const MAP_INITIAL_DELTA = 0.05;
+
+// A last-known GPS fix younger than this opens the map straight away instead
+// of waiting on a fresh one (see useMapRegionData).
+export const LAST_KNOWN_FIX_MAX_AGE_MS = 10 * 60_000;
+
 // ── Data fetching ─────────────────────────────────────────────────────────────
 
 export const BOUNDS_ROW_LIMIT = 150;

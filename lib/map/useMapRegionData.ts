@@ -5,7 +5,9 @@ import { Coordinates, dedupeById, latLngToTile, tilesForBbox, tileToBbox } from 
 import { BoundingBox, OsmSpot, OsmStore, regionToBoundingBox, SkateSpot } from "@/lib/spots/types";
 import { UserStore } from "@/lib/stores/types";
 import {
+  LAST_KNOWN_FIX_MAX_AGE_MS,
   LIVE_COUNT_STALE_MS,
+  MAP_INITIAL_DELTA,
   MAP_TILE_STALE_MS,
   MAX_DELTA,
   SCAN_MIN_MS,
@@ -141,8 +143,8 @@ export function useMapRegionData() {
       const region: Region = {
         latitude: cached.latitude,
         longitude: cached.longitude,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
+        latitudeDelta: MAP_INITIAL_DELTA,
+        longitudeDelta: MAP_INITIAL_DELTA,
       };
       setInitialRegion((current) => current ?? region);
       setCurrentRegion((current) => current ?? region);
@@ -168,7 +170,7 @@ export function useMapRegionData() {
   // always does its own fresh fetch, right here) is the fix, not preserving a
   // stale center.
   const applyLiveLocation = useCallback((latitude: number, longitude: number) => {
-    const region: Region = { latitude, longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 };
+    const region: Region = { latitude, longitude, latitudeDelta: MAP_INITIAL_DELTA, longitudeDelta: MAP_INITIAL_DELTA };
     setInitialRegion(region);
     setCurrentRegion(region);
     setStatus("ready");
@@ -183,6 +185,17 @@ export function useMapRegionData() {
 
       if (permStatus !== "granted") {
         setStatus("denied");
+        return;
+      }
+
+      // A recent fix (e.g. from the launch prefetch in useMapPrefetch, or
+      // any other app) opens the map at once instead of waiting on a fresh
+      // one; the live-tracking watch below then keeps searchLocation exact.
+      const lastKnown = await Location.getLastKnownPositionAsync({ maxAge: LAST_KNOWN_FIX_MAX_AGE_MS }).catch(
+        () => null
+      );
+      if (lastKnown) {
+        applyLiveLocation(lastKnown.coords.latitude, lastKnown.coords.longitude);
         return;
       }
 

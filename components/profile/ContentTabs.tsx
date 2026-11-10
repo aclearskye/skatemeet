@@ -3,20 +3,24 @@ import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 const TABS: { icon: keyof typeof Ionicons.glyphMap; activeIcon: keyof typeof Ionicons.glyphMap }[] = [
-  { icon: "grid-outline", activeIcon: "grid" },
-  { icon: "pricetag-outline", activeIcon: "pricetag" },
-  { icon: "bookmark-outline", activeIcon: "bookmark" },
+  { icon: "grid-outline", activeIcon: "grid" }, // My Posts
+  { icon: "pricetag-outline", activeIcon: "pricetag" }, // Tagged in
+  { icon: "bookmark-outline", activeIcon: "bookmark" }, // Saved
 ];
 
 type Props = {
   activeTab: number;
   onTabChange: (index: number) => void;
+  // Saved (the third tab) is private to the profile's owner.
+  showSaved: boolean;
 };
 
-export default function ContentTabs({ activeTab, onTabChange }: Props) {
+// My Posts / Tagged in / Saved.
+export default function ContentTabs({ activeTab, onTabChange, showSaved }: Props) {
+  const tabs = showSaved ? TABS : TABS.slice(0, 2);
   return (
     <View style={styles.row}>
-      {TABS.map((tab, i) => {
+      {tabs.map((tab, i) => {
         const isActive = activeTab === i;
         return (
           <TouchableOpacity

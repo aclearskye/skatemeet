@@ -14,15 +14,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "@/lib/shared/keyboard";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -124,11 +122,8 @@ const SignUp = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
+        <KeyboardAwareScrollView
+          style={{ flex: 1 }}
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
@@ -264,9 +259,8 @@ const SignUp = () => {
           <TouchableOpacity style={styles.policyLink} onPress={() => router.push("/privacy" as any)}>
             <Text style={styles.policyLinkText}>By creating an account you agree to our Privacy Policy</Text>
           </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </KeyboardAwareScrollView>
+          </SafeAreaView>
   );
 };
 

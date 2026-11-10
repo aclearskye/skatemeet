@@ -1,5 +1,12 @@
 import { useMemo } from "react";
-import { StyleProp, TouchableOpacity, View, ViewStyle } from "react-native";
+import {
+  AccessibilityRole,
+  AccessibilityState,
+  StyleProp,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from "react-native";
 import { randomTapeRotation } from "@/lib/theme";
 
 type Props = {
@@ -7,6 +14,14 @@ type Props = {
   onPress?: () => void;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  // Defaults to "button" when pressable. Pass "tab", "radio", "checkbox"
+  // etc. when the label is one option in a group, with the matching state.
+  accessibilityRole?: AccessibilityRole;
+  accessibilityState?: AccessibilityState;
+  // Defaults to the children's text. Set it when the visible text alone
+  // lacks context (e.g. "Parking: street").
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
   children: React.ReactNode;
 };
 
@@ -15,7 +30,20 @@ type Props = {
 // across re-renders but comes out different every time the page remounts —
 // meaning a row of same-color tape labels never all tilt identically, and a
 // page refresh re-rolls every active label's angle.
-export function DuctTapeLabel({ color, onPress, disabled, style, children }: Props) {
+//
+// Either way it's one accessible element, so a screen reader reads the
+// icon + text inside as a single label instead of stepping through them.
+export function DuctTapeLabel({
+  color,
+  onPress,
+  disabled,
+  style,
+  accessibilityRole,
+  accessibilityState,
+  accessibilityLabel,
+  accessibilityHint,
+  children,
+}: Props) {
   const rotation = useMemo(() => randomTapeRotation(), []);
   // Tape color and tilt go last so a caller's base style (e.g. a shared chip
   // style with its own unselected backgroundColor) can't paint over them.
@@ -23,6 +51,7 @@ export function DuctTapeLabel({ color, onPress, disabled, style, children }: Pro
     style,
     { backgroundColor: color, transform: [{ rotate: rotation }] },
   ];
+  const a11y = { accessibilityLabel, accessibilityHint };
 
   if (onPress) {
     return (
@@ -31,11 +60,25 @@ export function DuctTapeLabel({ color, onPress, disabled, style, children }: Pro
         onPress={onPress}
         disabled={disabled}
         activeOpacity={0.8}
+        accessible
+        accessibilityRole={accessibilityRole ?? "button"}
+        accessibilityState={{ ...accessibilityState, disabled: !!disabled }}
+        {...a11y}
       >
         {children}
       </TouchableOpacity>
     );
   }
 
-  return <View style={tapeStyle}>{children}</View>;
+  return (
+    <View
+      style={tapeStyle}
+      accessible
+      accessibilityRole={accessibilityRole ?? "text"}
+      accessibilityState={accessibilityState}
+      {...a11y}
+    >
+      {children}
+    </View>
+  );
 }

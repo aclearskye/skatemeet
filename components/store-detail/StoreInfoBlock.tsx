@@ -1,4 +1,3 @@
-import { AddPhotoIconButton } from "@/components/common/AddPhotoIconButton";
 import { StarRating } from "@/components/common/StarRating";
 import { C, F } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
@@ -6,12 +5,8 @@ import { Fragment } from "react";
 import { Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type Props = {
-  name: string;
   osmRating: number | null;
   onDirections: () => void;
-  onAddPhoto: () => void;
-  isAddingPhoto: boolean;
-  canAddPhoto: boolean;
   address: string | null;
   hours: string | null;
   phone: string | null;
@@ -20,12 +15,8 @@ type Props = {
 };
 
 export function StoreInfoBlock({
-  name,
   osmRating,
   onDirections,
-  onAddPhoto,
-  isAddingPhoto,
-  canAddPhoto,
   address,
   hours,
   phone,
@@ -34,23 +25,6 @@ export function StoreInfoBlock({
 }: Props) {
   return (
     <Fragment>
-      {!canAddPhoto && <Text style={styles.photoHint}>CHECK IN HERE TO ADD A PHOTO</Text>}
-      <View style={styles.nameRow}>
-        <Text style={styles.name}>{name}</Text>
-        <AddPhotoIconButton
-          onPress={onAddPhoto}
-          isLoading={isAddingPhoto}
-          disabled={!canAddPhoto}
-          accent={C.secondary}
-        />
-      </View>
-
-      <View style={styles.badgeRow}>
-        <View style={styles.typeBadge}>
-          <Text style={styles.typeBadgeText}>SKATE STORE</Text>
-        </View>
-      </View>
-
       {osmRating != null && <StarRating rating={osmRating} accent={C.secondary} />}
 
       <TouchableOpacity style={styles.directionsBtn} onPress={onDirections} activeOpacity={0.85}>
@@ -105,23 +79,6 @@ export function StoreInfoBlock({
 }
 
 const styles = StyleSheet.create({
-  nameRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  name: { fontFamily: F.heading, fontSize: 28, color: C.text, letterSpacing: 0.5, flexShrink: 1 },
-  photoHint: {
-    fontFamily: F.monoRegular,
-    fontSize: 10,
-    color: C.muted,
-    letterSpacing: 0.3,
-  },
-  badgeRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-  typeBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: C.surfaceHigh,
-    borderWidth: 1,
-    borderColor: C.borderVariant,
-  },
-  typeBadgeText: { fontFamily: F.mono, fontSize: 10, color: C.textVariant, letterSpacing: 1 },
   directionsBtn: {
     flexDirection: "row",
     alignItems: "center",

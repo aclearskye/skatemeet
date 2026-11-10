@@ -9,13 +9,14 @@ import { C, F } from "@/lib/theme";
 // before launch.
 const DRAFT_NOTICE = "DRAFT — PENDING LEGAL REVIEW";
 const CONTACT = "[privacy contact address — add before launch]";
-const LAST_UPDATED = "3 November 2026";
+const LAST_UPDATED = "4 November 2026";
 
 const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: "WHO CAN USE SKATEMEET",
     body: [
-      "You must be 16 or older. We ask for your date of birth when you sign up, check it on your device, and only store the fact that you confirmed it — never the date itself.",
+      "You must be 18 or older. We ask for your date of birth when you sign up, check it on your device, and only store the fact that you confirmed it — never the date itself.",
+      "If an existing account confirms a date of birth under 18, it is deactivated rather than deleted, so you can appeal if it was a mistake. An account with no appeal, or whose appeal is denied, may be permanently deleted after 30 days.",
     ],
   },
   {

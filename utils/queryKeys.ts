@@ -26,8 +26,6 @@ export const queryKeys = {
   // Nested under profileStats so invalidating that prefix still covers it.
   friendCount: (profileId: string) =>
     ["profile", profileId, "stats", "friends"] as const,
-  profileClips: (profileId: string) =>
-    ["profile", profileId, "clips"] as const,
   profileFavorites: (profileId: string) =>
     ["profile", profileId, "favorites"] as const,
   profileXp: (profileId: string) =>
@@ -66,6 +64,8 @@ export const queryKeys = {
     ["profile", profileId, "reportStatus"] as const,
   banAppealStatus: (profileId: string) =>
     ["profile", profileId, "banAppealStatus"] as const,
+  myBanReason: (profileId: string) =>
+    ["profile", profileId, "banReason"] as const,
   // Per viewer: results depend on who's searching (privacy, blocks, self).
   userSearch: (profileId: string, query: string) =>
     ["search", "users", profileId, query] as const,
@@ -97,4 +97,56 @@ export const queryKeys = {
     ["admin", "messageReports"] as const,
   adminMessageReportDetail: (reportId: string) =>
     ["admin", "messageReports", reportId] as const,
+  adminHeldPosts: () =>
+    ["admin", "heldPosts"] as const,
+  adminCaptionFlags: () =>
+    ["admin", "captionFlags"] as const,
+  adminCsamHolds: () =>
+    ["admin", "csamHolds"] as const,
+  // Signed quarantine URLs expire, so they're cached per media path.
+  adminHeldMediaUrl: (bucket: string, path: string) =>
+    ["admin", "heldMediaUrl", bucket, path] as const,
+  adminHeldVideoPreview: (postId: string) =>
+    ["admin", "heldVideoPreview", postId] as const,
+  post: (postId: string) =>
+    ["post", postId] as const,
+  profilePosts: (profileId: string) =>
+    ["profile", profileId, "posts"] as const,
+  profilePostCount: (profileId: string) =>
+    ["profile", profileId, "postCount"] as const,
+  myPendingPosts: (profileId: string) =>
+    ["profile", profileId, "pendingPosts"] as const,
+  taggedPosts: (profileId: string) =>
+    ["profile", profileId, "taggedPosts"] as const,
+  savedPosts: (profileId: string) =>
+    ["profile", profileId, "savedPosts"] as const,
+  archivedPosts: (profileId: string) =>
+    ["profile", profileId, "archivedPosts"] as const,
+  followCounts: (profileId: string) =>
+    ["profile", profileId, "followCounts"] as const,
+  followStatus: (viewerId: string, profileId: string) =>
+    ["follow", viewerId, profileId] as const,
+  followListBase: (profileId: string) =>
+    ["profile", profileId, "follows"] as const,
+  followList: (profileId: string, direction: string, query: string) =>
+    ["profile", profileId, "follows", direction, query] as const,
+  feedBase: ["feed"] as const,
+  // Outside the "feed" prefix on purpose: only a newly published own post
+  // re-pins it (useFeed); other feed invalidations keep the scroll position.
+  feedAsOf: (tab: string) => ["feedAsOf", tab] as const,
+  feedAsOfBase: ["feedAsOf"] as const,
+  feed: (tab: string, asOf: string) =>
+    ["feed", tab, asOf] as const,
+  postLikeStatuses: (viewerId: string, postIds: string[]) =>
+    ["posts", "likeStatus", viewerId, [...postIds].sort().join(",")] as const,
+  postSaveStatuses: (viewerId: string, postIds: string[]) =>
+    ["posts", "saveStatus", viewerId, [...postIds].sort().join(",")] as const,
+  entityPosts: (entityKey: string) =>
+    ["posts", "entity", entityKey] as const,
+  entityTagLabel: (focusKey: string) =>
+    ["posts", "entityTagLabel", focusKey] as const,
+  cachedLocation: () =>
+    ["location", "cached"] as const,
+  nearbyEntityTags: (location: { lat: number; lng: number }) =>
+    ["posts", "nearbyEntityTags", location.lat.toFixed(3), location.lng.toFixed(3)] as const,
 };

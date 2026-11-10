@@ -60,10 +60,11 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "SkateMeet uses your photos to add spot images.",
-          "cameraPermission": "SkateMeet uses your camera to photograph spots."
+          "photosPermission": "SkateMeet uses your photos so you can post them and add spot images.",
+          "cameraPermission": "SkateMeet uses your camera so you can shoot posts and photograph spots."
         }
-      ]
+      ],
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true,

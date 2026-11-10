@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
+import type { TapeLabel } from "@/lib/shared/tapeLabels";
 import type { ProfileReportReason } from "@/lib/shared/types";
 
 export async function reportProfile(profileId: string, reason: ProfileReportReason): Promise<void> {
@@ -15,6 +16,27 @@ export async function updateProfilePrivacy(profileId: string, isPrivate: boolean
     .update({ is_private: isPrivate })
     .eq("profile_id", profileId)
     .select("is_private")
+    .single();
+  if (error) throw error;
+}
+
+// What the profile's pencil edits: the skate name and the duct-tape label
+// row. Only the fields passed are written.
+export type ProfileDetailsPatch = Partial<{
+  display_name: string;
+  skill_level: string | null;
+  disciplines: string[] | null;
+  labels: TapeLabel[];
+}>;
+
+// Read back for the same reason as updateProfilePrivacy: a zero-row update
+// must not look like success.
+export async function updateProfileDetails(profileId: string, patch: ProfileDetailsPatch): Promise<void> {
+  const { error } = await supabase
+    .from("profiles")
+    .update(patch)
+    .eq("profile_id", profileId)
+    .select("profile_id")
     .single();
   if (error) throw error;
 }
@@ -75,9 +97,43 @@ export async function deactivateAccount(): Promise<void> {
   }
 }
 
-// Records that the signed-in user passed the 16+ age gate. Only the
+// Records that the signed-in user passed the 18+ age gate. Only the
 // timestamp is stored, never the date of birth.
 export async function confirmAge(): Promise<void> {
   const { error } = await supabase.rpc("confirm_age");
   if (error) throw error;
+}
+
+// Deactivates the signed-in account pending appeal after it fails the 18+
+// re-check -- an 'underage' ban, so app/_layout.tsx confines it to
+// app/banned.tsx and the existing appeal flow. Idempotent server-side.
+export async function recordUnderageSelfReport(): Promise<void> {
+  const { error } = await supabase.rpc("record_underage_self_report");
+  if (error) throw error;
+}
+
+export async function uploadAvatar(
+  profileId: string,
+  uri: string,
+  mimeType: string
+): Promise<string> {
+  const ext = mimeType.split("/")[1] ?? "jpg";
+  // A unique path per upload (rather than a fixed "avatar.<ext>" path with
+  // upsert) keeps every write a storage.objects INSERT — the avatars bucket's
+  // RLS policy only grants INSERT, so a fixed path's second-and-later upload
+  // became an UPDATE and was rejected.
+  const path = `${profileId}/${Date.now()}.${ext}`;
+
+  // response.blob() silently yields an empty blob for local file:// URIs on
+  // React Native — arrayBuffer() reads the same bytes reliably instead.
+  const response = await fetch(uri);
+  const arrayBuffer = await response.arrayBuffer();
+
+  const { error } = await supabase.storage
+    .from("avatars")
+    .upload(path, arrayBuffer, { upsert: false, contentType: mimeType });
+  if (error) throw error;
+
+  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+  return data.publicUrl;
 }

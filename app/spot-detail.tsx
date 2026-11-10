@@ -3,12 +3,15 @@ import { CheckInSection } from "@/components/common/CheckInSection";
 import { DeleteUnverifiedButton } from "@/components/common/DeleteUnverifiedButton";
 import { DetailHeader } from "@/components/common/DetailHeader";
 import { EditMetadataSheet } from "@/components/common/EditMetadataSheet";
+import { EntityHero } from "@/components/common/EntityHero";
 import { EntityMetadataSection } from "@/components/common/EntityMetadataSection";
 import { EntityPhotoViewerModal } from "@/components/common/EntityPhotoViewerModal";
 import { ReviewsModal } from "@/components/common/ReviewsModal";
+import { EntityPostsSection } from "@/components/common/EntityPostsSection";
+import { EntityTapeLabels } from "@/components/common/EntityTapeLabels";
+import { PhotoUploadButton } from "@/components/common/PhotoUploadButton";
 import { StarRating } from "@/components/common/StarRating";
 import { RequestVerificationButton } from "@/components/spot-detail/RequestVerificationButton";
-import { SpotHero } from "@/components/spot-detail/SpotHero";
 import { SpotInfoBlock } from "@/components/spot-detail/SpotInfoBlock";
 import { SpotReviews } from "@/components/spot-detail/SpotReviews";
 import { SpotVoteSection } from "@/components/spot-detail/SpotVoteSection";
@@ -16,6 +19,7 @@ import { useAuthContext } from "@/lib/context/use-auth-context";
 import { deleteSpot } from "@/lib/spots/mutations";
 import { spotMetadataAdapter } from "@/lib/spots/spotMetadataAdapter";
 import { spotPhotosAdapter } from "@/lib/spots/spotPhotosAdapter";
+import { parseTapeLabels } from "@/lib/shared/tapeLabels";
 import { OsmSpot, SkateSpot } from "@/lib/spots/types";
 import { spotReviewableAdapter } from "@/lib/spots/spotReviewableAdapter";
 import { useAddSpotPhoto } from "@/lib/spots/useAddSpotPhoto";
@@ -31,7 +35,7 @@ import { TYPE_LABELS } from "@/utils/constants";
 import { queryKeys } from "@/utils/queryKeys";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Params = { kind: string; data: string };
@@ -39,6 +43,9 @@ type Params = { kind: string; data: string };
 function isSkateSpot(spot: SkateSpot | OsmSpot): spot is SkateSpot {
   return "spot_id" in spot;
 }
+
+// Hero tape labels read a size up on web's wider layout.
+const HERO_LABEL_SIZE = Platform.OS === "web" ? "lg" : "md";
 
 export default function SpotDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -195,20 +202,43 @@ export default function SpotDetailScreen() {
       />
 
       <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
-        <SpotHero photoUrl={photoUrl} onPress={() => setShowPhotoViewer(true)} />
+        <EntityHero
+          photoUrl={photoUrl}
+          placeholderIcon="location-sharp"
+          onPhotoPress={() => setShowPhotoViewer(true)}
+          name={spot.name}
+          badges={
+            <EntityTapeLabels
+              size={HERO_LABEL_SIZE}
+              typeLabel={typeLabel}
+              typeColors={{ bg: accent, fg: onAccent }}
+              difficulty={isSkateSpot(spot) ? spot.difficulty : null}
+              labels={isSkateSpot(spot) ? parseTapeLabels(spot.labels) : []}
+            >
+              {isUser && isVerified && (
+                <View style={[styles.verifiedStamp, { borderColor: accent }]}>
+                  <Text style={[styles.verifiedText, { color: accent }]}>VERIFIED</Text>
+                </View>
+              )}
+            </EntityTapeLabels>
+          }
+          action={
+            <PhotoUploadButton
+              onPick={addPhoto}
+              isLoading={isAddingPhoto}
+              disabled={!hasCheckedIn}
+              accent={accent}
+              onAccent={onAccent}
+            />
+          }
+          actionHint={hasCheckedIn ? null : "CHECK IN TO ADD A PHOTO"}
+        />
 
         <View style={styles.body}>
           <SpotInfoBlock
-            name={spot.name}
-            typeLabel={typeLabel}
-            isUser={isUser}
-            isVerified={isVerified}
             accent={accent}
             onAccent={onAccent}
             onDirections={handleDirections}
-            onAddPhoto={addPhoto}
-            isAddingPhoto={isAddingPhoto}
-            canAddPhoto={hasCheckedIn}
             description={description}
             address={address}
           />
@@ -255,6 +285,10 @@ export default function SpotDetailScreen() {
             onAddReview={() => setShowAddReview(true)}
             onSeeMore={() => setShowReviewsModal(true)}
             canReview={hasCheckedIn}
+          />
+
+          <EntityPostsSection
+            tag={spotId ? { kind: "spot", spotId } : osmPlaceId ? { kind: "osm_spot", osmPlaceId } : null}
           />
 
           {isOwner && !isVerified && (
@@ -311,6 +345,16 @@ export default function SpotDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  // Outlined in the accent so it reads as a stamp, distinct from the
+  // tapes; dark fill keeps it readable straight on the photo.
+  verifiedStamp: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderWidth: 2,
+    backgroundColor: C.bgLowest,
+    transform: [{ rotate: "-3deg" }],
+  },
+  verifiedText: { fontFamily: F.mono, fontSize: 10, letterSpacing: 1.5 },
   container: { flex: 1, backgroundColor: C.bg },
   body: { padding: 20, gap: 14 },
   sectionLabel: { fontFamily: F.mono, fontSize: 10, color: C.muted, letterSpacing: 2 },

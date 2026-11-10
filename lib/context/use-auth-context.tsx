@@ -1,5 +1,6 @@
 import { Session } from "@supabase/supabase-js";
 import { createContext, useContext } from "react";
+import type { TapeLabel } from "@/lib/shared/tapeLabels";
 
 export type AccountType = "user" | "business_pending" | "business_verified";
 
@@ -18,6 +19,9 @@ export type Profile = {
   city: string | null;
   bio: string | null;
   pronouns: string | null;
+  // Custom one-word duct-tape labels (profiles.labels). Read through
+  // parseTapeLabels -- it's raw JSONB.
+  labels?: TapeLabel[];
   avatar_url: string | null;
   is_admin: boolean;
   is_private: boolean;

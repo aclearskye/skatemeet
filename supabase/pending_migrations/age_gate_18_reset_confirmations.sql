@@ -1,0 +1,15 @@
+-- 18+ age gate, part 2 of 2 (part 1: migrations/20261104160316_age_gate_18.sql).
+--
+-- APPLY ONLY ONCE THE 18+ CLIENT BUILD IS LIVE (web deployed, and the store
+-- builds released). confirm_age() can't see the date of birth -- the check
+-- happens on the device -- so an older installed build would re-confirm
+-- 16-17 year olds against its own 16+ minimum, silently undoing this reset.
+--
+-- No date of birth is ever stored, only age_confirmed_at (see
+-- 20261009000000_privacy_blocks_and_message_reports.sql), so an account that
+-- passed the old 16+ gate is indistinguishable from an adult. Clearing every
+-- confirmation re-routes each existing user through app/age-check.tsx once
+-- more (app/_layout.tsx sends anyone onboarded with a NULL age_confirmed_at
+-- there). New sign-ups are unaffected: SignUp checks 18+ on the device and
+-- onboarding stamps age_confirmed_at as before.
+UPDATE profiles SET age_confirmed_at = NULL WHERE age_confirmed_at IS NOT NULL;

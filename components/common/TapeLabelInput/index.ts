@@ -1,0 +1,1 @@
+export { TapeLabelInput } from "./TapeLabelInput";

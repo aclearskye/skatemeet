@@ -1,5 +1,7 @@
+import { MIN_AGE, UNDERAGE_BAN_REASON } from "@/lib/auth/ageGate";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { useBanAppealStatus } from "@/lib/profiles/hooks/useBanAppealStatus";
+import { useMyBanReason } from "@/lib/profiles/hooks/useMyBanReason";
 import { BanAppealError, submitBanAppeal } from "@/lib/profiles/mutations";
 import { supabase } from "@/lib/supabaseClient";
 import { C, F } from "@/lib/theme";
@@ -10,15 +12,13 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "@/lib/shared/keyboard";
 import { DeactivateAccountButton } from "@/components/common/DeactivateAccountButton";
 
 // A banned account can still sign in (see
@@ -44,6 +44,11 @@ export default function BannedScreen() {
   // to a still-pending one with no way to tell the difference.
   const { data: appealStatus } = useBanAppealStatus(profile?.profile_id ?? null);
   const isCheckingAppealStatus = profile != null && appealStatus === undefined;
+
+  // An 'underage' ban is the 18+ re-check deactivating the account, not a
+  // guidelines violation -- same appeal flow, different wording.
+  const { data: banReason } = useMyBanReason(profile?.profile_id ?? null);
+  const isUnderage = banReason === UNDERAGE_BAN_REASON;
   const showPending = submitted || appealStatus === "pending";
   const showDenied = !submitted && appealStatus === "denied";
 
@@ -75,17 +80,14 @@ export default function BannedScreen() {
   const isValid = username.trim().length > 0 && testimony.trim().length > 0;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScrollView
+          style={styles.flex} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Ionicons name="ban-outline" size={48} color={C.error} />
-        <Text style={styles.title}>YOU HAVE BEEN BANNED</Text>
+        <Text style={styles.title}>{isUnderage ? "ACCOUNT DEACTIVATED" : "YOU HAVE BEEN BANNED"}</Text>
         <Text style={styles.message}>
-          Your account has been suspended for violating community guidelines. This action is
-          permanent unless an admin reinstates it. You have at least 30 days from your ban to
-          submit an appeal before your account and data may be permanently deleted.
+          {isUnderage
+            ? `SkateMeet is for skaters aged ${MIN_AGE} and over, and the date of birth you entered is under ${MIN_AGE}, so your account has been deactivated. If you entered it by mistake, appeal below and an admin will review it. You have at least 30 days to appeal before your account and data may be permanently deleted.`
+            : "Your account has been suspended for violating community guidelines. This action is permanent unless an admin reinstates it. You have at least 30 days from your ban to submit an appeal before your account and data may be permanently deleted."}
         </Text>
 
         {isCheckingAppealStatus ? (
@@ -105,7 +107,7 @@ export default function BannedScreen() {
           </View>
         ) : (
           <View style={styles.appealSection}>
-            <Text style={styles.appealLabel}>APPEAL THIS BAN</Text>
+            <Text style={styles.appealLabel}>{isUnderage ? "APPEAL THIS DEACTIVATION" : "APPEAL THIS BAN"}</Text>
             <TextInput
               style={styles.input}
               placeholder="Your username"
@@ -117,7 +119,7 @@ export default function BannedScreen() {
             />
             <TextInput
               style={[styles.input, styles.inputMultiline]}
-              placeholder="Why should you be unbanned?"
+              placeholder={isUnderage ? "Tell us what happened" : "Why should you be unbanned?"}
               placeholderTextColor={C.muted}
               value={testimony}
               onChangeText={setTestimony}
@@ -156,9 +158,8 @@ export default function BannedScreen() {
         <TouchableOpacity onPress={handleSignOut} activeOpacity={0.85}>
           <Text style={styles.backLink}>BACK TO LOGIN</Text>
         </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
-  );
+      </KeyboardAwareScrollView>
+      );
 }
 
 const styles = StyleSheet.create({

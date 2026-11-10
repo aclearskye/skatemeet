@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
+import { KeyboardAvoidingView } from "@/lib/shared/keyboard";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useBlockProfile } from "@/lib/blocks/hooks/useBlockProfile";
@@ -89,7 +90,7 @@ export default function ChatThreadScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+    <KeyboardAvoidingView style={styles.container}>
       <ChatHeader
         chat={chat ?? null}
         topInset={insets.top}
@@ -171,13 +172,14 @@ const styles = StyleSheet.create({
     color: C.muted,
     textAlign: "center",
   },
-  // Inverted list: the empty state renders upside down unless flipped back.
+  // No manual flip here: the inverted FlatList already applies its
+  // inversion to ListEmptyComponent (VirtualizedList's
+  // _renderEmptyComponent), so flipping it again turned it upside down.
   emptyWrap: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 48,
-    transform: [{ scaleY: -1 }],
   },
   listContent: {
     flexGrow: 1,

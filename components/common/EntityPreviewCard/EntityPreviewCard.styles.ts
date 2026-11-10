@@ -70,18 +70,8 @@ export const styles = StyleSheet.create({
     gap: 6,
     justifyContent: "space-between",
   },
-  typeBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    backgroundColor: C.surfaceHigh,
-    borderWidth: 1,
-    borderColor: C.borderVariant,
-  },
-  typeBadgeText: {
-    fontFamily: F.mono,
-    fontSize: 9,
-    color: C.textVariant,
-    letterSpacing: 1,
+  tapeLabels: {
+    flexShrink: 1,
   },
   liveBadge: {
     flexDirection: "row",

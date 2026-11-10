@@ -1,5 +1,6 @@
 import { consumeAgePassedOnDevice } from "@/lib/auth/ageGate";
 import { sanitizeDisplayName, sanitizeUsername } from "@/lib/auth/sanitizeUsername";
+import { DISCIPLINES, SKILL_LEVELS } from "@/lib/profiles/profileOptions";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { supabase } from "@/lib/supabaseClient";
 import { C, F, R } from "@/lib/theme";
@@ -7,57 +8,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAvoidingView, KeyboardAwareScrollView } from "@/lib/shared/keyboard";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const TOTAL_STEPS = 5;
-
-const DISCIPLINES = [
-  { id: "street", label: "Street" },
-  { id: "park", label: "Park" },
-  { id: "bowl", label: "Bowl" },
-  { id: "vert", label: "Vert / Ramps" },
-  { id: "transition", label: "Transition" },
-  { id: "flatground", label: "Flatground" },
-  { id: "cruising", label: "Cruising" },
-  { id: "downhill", label: "Downhill" },
-];
-
-const SKILL_LEVELS = [
-  {
-    id: "beginner",
-    label: "Just Dropped In",
-    desc: "Started skating recently",
-  },
-  {
-    id: "intermediate",
-    label: "Still Popping",
-    desc: "Getting the basics down",
-  },
-  {
-    id: "dialed",
-    label: "Dialed In",
-    desc: "Solid tricks, skating spots",
-  },
-  {
-    id: "expert",
-    label: "On Lock",
-    desc: "Consistent bangers",
-  },
-  {
-    id: "pro",
-    label: "Out Here Filming",
-    desc: "Retired from trying (but not really)",
-  },
-];
 
 type OnboardingData = {
   firstName: string;
@@ -186,10 +146,9 @@ export default function Onboarding() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      {/* Pads above the keyboard on both platforms so the footer button
+          stays visible; the scroll view keeps the focused field in view. */}
+      <KeyboardAvoidingView style={{ flex: 1 }}>
         <View style={styles.headerRow}>
           {step > 0 ? (
             <TouchableOpacity
@@ -232,7 +191,9 @@ export default function Onboarding() {
           ))}
         </View>
 
-        <ScrollView
+        <KeyboardAwareScrollView
+          // Clears the NEXT button pinned between the form and the keyboard.
+          bottomOffset={100}
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
@@ -457,7 +418,7 @@ export default function Onboarding() {
               <Text style={styles.charCount}>{data.bio.length}/160</Text>
             </View>
           )}
-        </ScrollView>
+        </KeyboardAwareScrollView>
 
         {/* Bottom CTA */}
         <View style={styles.cta}>
