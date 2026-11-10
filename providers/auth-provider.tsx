@@ -64,6 +64,14 @@ export default function AuthProvider({ children }: PropsWithChildren) {
       // profile, a chat thread), so the next account on this device must
       // not inherit what the previous one could see.
       if (event === "SIGNED_OUT") queryClient.clear();
+      // getSession() above already delivers the initial session. Handling it
+      // here too races it: if this lands after a signed-out load finished,
+      // loading flips back on, setSession(null) is a no-op, the profile effect
+      // never re-runs, and app/_layout.tsx waits on loading forever -- leaving
+      // signed-out visitors on the feed with no way to sign in.
+      if (event === "INITIAL_SESSION") return;
+      // Same trap for any signed-out -> signed-out event.
+      if (!session && !sessionRef.current) return;
       // Signal loading so the UI doesn't flash a stale profile between auth events
       setIsLoadingAuthContext(true);
       setSession(session);
