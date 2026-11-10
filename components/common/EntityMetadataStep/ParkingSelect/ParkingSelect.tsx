@@ -12,7 +12,7 @@ type Props = {
 
 export function ParkingSelect({ value, onChange, accent, onAccent }: Props) {
   return (
-    <View style={styles.row}>
+    <View style={styles.row} accessibilityRole="radiogroup" accessibilityLabel="Parking">
       {PARKING_OPTIONS.map((option) => {
         const selected = value === option;
         const label = PARKING_LABELS[option].toUpperCase();
@@ -23,6 +23,10 @@ export function ParkingSelect({ value, onChange, accent, onAccent }: Props) {
               color={accent}
               style={[styles.chip, { borderColor: accent }]}
               onPress={() => onChange(null)}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: true }}
+              accessibilityLabel={PARKING_LABELS[option]}
+              accessibilityHint="Double-tap to clear"
             >
               <Text style={[styles.chipText, { color: onAccent }]}>{label}</Text>
             </DuctTapeLabel>
@@ -34,6 +38,9 @@ export function ParkingSelect({ value, onChange, accent, onAccent }: Props) {
             style={styles.chip}
             onPress={() => onChange(option)}
             activeOpacity={0.75}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: false }}
+            accessibilityLabel={PARKING_LABELS[option]}
           >
             <Text style={styles.chipText}>{label}</Text>
           </TouchableOpacity>

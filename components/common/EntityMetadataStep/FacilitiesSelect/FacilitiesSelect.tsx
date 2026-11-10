@@ -18,7 +18,7 @@ export function FacilitiesSelect({ value, onChange, accent, onAccent }: Props) {
   }
 
   return (
-    <View style={styles.grid}>
+    <View style={styles.grid} accessibilityLabel="Facilities">
       {FACILITIES.map((facility) => {
         const selected = value.includes(facility);
         const label = FACILITY_LABELS[facility].toUpperCase();
@@ -29,6 +29,9 @@ export function FacilitiesSelect({ value, onChange, accent, onAccent }: Props) {
               color={accent}
               style={[styles.chip, { borderColor: accent }]}
               onPress={() => toggle(facility)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: true }}
+              accessibilityLabel={FACILITY_LABELS[facility]}
             >
               <Text style={[styles.chipText, { color: onAccent }]}>{label}</Text>
             </DuctTapeLabel>
@@ -40,6 +43,9 @@ export function FacilitiesSelect({ value, onChange, accent, onAccent }: Props) {
             style={styles.chip}
             onPress={() => toggle(facility)}
             activeOpacity={0.75}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: false }}
+            accessibilityLabel={FACILITY_LABELS[facility]}
           >
             <Text style={styles.chipText}>{label}</Text>
           </TouchableOpacity>
