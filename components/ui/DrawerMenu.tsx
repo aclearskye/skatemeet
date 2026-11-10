@@ -33,6 +33,8 @@ type NavItem = {
   match: string;
   // Also active on nested routes under this prefix (e.g. /chat/<id>).
   matchPrefix?: string;
+  // Web sidebar only -- native has this in the bottom tab bar instead.
+  webOnly?: boolean;
 };
 
 export function isNavItemActive(item: NavItem, pathname: string): boolean {
@@ -42,6 +44,7 @@ export function isNavItemActive(item: NavItem, pathname: string): boolean {
 export const NAV_ITEMS: NavItem[] = [
   { label: "FEED",       icon: "home-outline",   path: "/",           match: "/"           },
   { label: "MAP",        icon: "map-outline",    path: "/map",        match: "/map"        },
+  { label: "UPLOAD",     icon: "cloud-upload-outline", path: "/post/new", match: "/post/new", webOnly: true },
   { label: "FAVOURITES", icon: "heart-outline",  path: "/favourites", match: "/favourites" },
   { label: "SEARCH",     icon: "search-outline", path: "/search",     match: "/search"     },
   { label: "CHATS",      icon: "chatbubbles-outline", path: "/chats", match: "/chats", matchPrefix: "/chat/" },
@@ -174,7 +177,7 @@ export default function DrawerMenu() {
 
         <View style={styles.divider} />
         <View style={styles.navSection}>
-          {NAV_ITEMS.map((item) => {
+          {NAV_ITEMS.filter((item) => !item.webOnly).map((item) => {
             const { label, icon, path } = item;
             const active = isNavItemActive(item, pathname);
             return (
