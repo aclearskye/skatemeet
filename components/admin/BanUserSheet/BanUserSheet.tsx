@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
-  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAvoidingView, KeyboardAwareScrollView } from "@/lib/shared/keyboard";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { styles } from "./BanUserSheet.styles";
 
@@ -51,7 +51,9 @@ export function BanUserSheet({ visible, username, onClose, onSubmit }: Props) {
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
+      {/* Pads above the keyboard (both platforms) so the footer buttons stay
+          visible; the body keeps the focused field clear of them. */}
+      <KeyboardAvoidingView style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
         <View style={styles.header}>
           <Text style={styles.title}>BAN @{username}</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={8}>
@@ -59,7 +61,7 @@ export function BanUserSheet({ visible, username, onClose, onSubmit }: Props) {
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+        <KeyboardAwareScrollView style={styles.body} bottomOffset={100}>
           <View style={styles.section}>
             <Text style={styles.warning}>
               This is permanent — there is no auto-expiry. The account is signed out and
@@ -86,7 +88,7 @@ export function BanUserSheet({ visible, username, onClose, onSubmit }: Props) {
               </View>
             )}
           </View>
-        </ScrollView>
+        </KeyboardAwareScrollView>
 
         <View style={styles.footer}>
           <TouchableOpacity
@@ -102,7 +104,7 @@ export function BanUserSheet({ visible, username, onClose, onSubmit }: Props) {
             )}
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

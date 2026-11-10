@@ -40,6 +40,9 @@ export default function SearchScreen() {
         </View>
       ) : (
         <FlatList
+          // Search box is at the top; dragging the results drops the keyboard
+          // so the end of the list can be reached.
+          keyboardDismissMode="on-drag"
           data={results}
           keyExtractor={(result) => result.profileId}
           renderItem={({ item }) => (

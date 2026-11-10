@@ -110,7 +110,11 @@ export default function AdminUsersScreen() {
           <Text style={styles.emptyLabel}>SEARCH FOR A USERNAME</Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.list}>
+        <ScrollView contentContainerStyle={styles.list}
+          // Search box is at the top; dragging the results drops the keyboard
+          // so the end of the list can be reached.
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled">
           {results.map((result) => (
             <UserSearchResultCard
               key={result.profileId}
