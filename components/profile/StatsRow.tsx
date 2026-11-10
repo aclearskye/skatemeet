@@ -1,11 +1,14 @@
 import { C, F } from "@/lib/theme";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+// Exactly three stats (md/media_posts.md §6): Spots / Posts / Followers.
+// Friends moved off the profile (still in the drawer); the Following count
+// lives in the follows list header.
 type Props = {
   spots: number;
-  clips: number;
-  friends: number;
-  onFriendsPress?: () => void;
+  posts: number;
+  followers: number;
+  onFollowersPress?: () => void;
 };
 
 type StatCellProps = {
@@ -34,14 +37,14 @@ function StatCell({ value, label, color, onPress }: StatCellProps) {
   return <View style={styles.cell}>{content}</View>;
 }
 
-export default function StatsRow({ spots, clips, friends, onFriendsPress }: Props) {
+export default function StatsRow({ spots, posts, followers, onFollowersPress }: Props) {
   return (
     <View style={styles.row}>
       <StatCell value={spots} label="SPOTS" color={C.primary} />
       <View style={styles.divider} />
-      <StatCell value={clips} label="CLIPS" color={C.tertiary} />
+      <StatCell value={posts} label="POSTS" color={C.tertiary} />
       <View style={styles.divider} />
-      <StatCell value={friends} label="FRIENDS" color={C.secondary} onPress={onFriendsPress} />
+      <StatCell value={followers} label="FOLLOWERS" color={C.secondary} onPress={onFollowersPress} />
     </View>
   );
 }

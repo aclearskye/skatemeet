@@ -26,8 +26,6 @@ export const queryKeys = {
   // Nested under profileStats so invalidating that prefix still covers it.
   friendCount: (profileId: string) =>
     ["profile", profileId, "stats", "friends"] as const,
-  profileClips: (profileId: string) =>
-    ["profile", profileId, "clips"] as const,
   profileFavorites: (profileId: string) =>
     ["profile", profileId, "favorites"] as const,
   profileXp: (profileId: string) =>

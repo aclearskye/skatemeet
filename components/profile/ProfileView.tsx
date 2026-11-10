@@ -13,15 +13,16 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { fetchProfileClips, getProfileClipCount } from "@/lib/clips/clips";
+import { useFollowCounts } from "@/lib/follows/hooks/useFollowCounts";
+import { getProfilePostCount } from "@/lib/posts/queries";
 import { useBlockProfile } from "@/lib/blocks/hooks/useBlockProfile";
 import { fetchProfileVisitedCount, fetchUserStreak } from "@/lib/checkins/queries";
 import { type Profile } from "@/lib/context/use-auth-context";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { useToast } from "@/lib/context/toast-context";
 import { useFriendStatus } from "@/lib/friendRequests/hooks/useFriendStatus";
-import { getFriendCount } from "@/lib/friendRequests/queries";
 import { useReportProfile } from "@/lib/profiles/hooks/useReportProfile";
+import { parseTapeLabels } from "@/lib/shared/tapeLabels";
 import { PROFILE_REPORT_REASONS, type ProfileReportReason } from "@/lib/shared/types";
 import { C, F } from "@/lib/theme";
 import { fetchProfileXpState } from "@/lib/xp/queries";
@@ -30,10 +31,12 @@ import BurgerButton from "@/components/ui/BurgerButton";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ReportReasonSheet } from "@/components/common/ReportReasonSheet";
 import { AddFriendButton } from "@/components/profile/AddFriendButton";
+import { EditProfileSheet } from "@/components/profile/EditProfileSheet";
 import { ExpBar } from "@/components/profile/ExpBar";
 import { MessageButton } from "@/components/profile/MessageButton";
 import { PrivateProfileLock } from "@/components/profile/PrivateProfileLock";
-import ClipCard, { GAP } from "./ClipCard";
+import { PostGrid } from "@/components/posts/PostGrid";
+import { FollowButton } from "./FollowButton";
 import ContentTabs from "./ContentTabs";
 import ProfileAvatar from "./ProfileAvatar";
 import ProfileBadges from "./ProfileBadges";
@@ -58,6 +61,7 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
   const [activeTab, setActiveTab] = useState(0);
   const [showReportReasons, setShowReportReasons] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(
     profile.avatar_url
   );
@@ -89,24 +93,16 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
         queryFn: () => fetchProfileVisitedCount(profile.profile_id),
       },
       {
-        queryKey: [...queryKeys.profileStats(profile.profile_id), "clips"],
-        queryFn: () => getProfileClipCount(profile.profile_id),
-      },
-      {
-        queryKey: queryKeys.friendCount(profile.profile_id),
-        queryFn: () => getFriendCount(profile.profile_id),
+        queryKey: queryKeys.profilePostCount(profile.profile_id),
+        queryFn: () => getProfilePostCount(profile.profile_id),
       },
     ],
   });
-  const loadingStats = statsQueries.some((q) => q.isLoading);
+  const { data: followCounts, isLoading: loadingFollowCounts } = useFollowCounts(profile.profile_id);
+  const loadingStats = statsQueries.some((q) => q.isLoading) || loadingFollowCounts;
   const spotCount = statsQueries[0].data ?? 0;
-  const clipCount = statsQueries[1].data ?? 0;
-  const friendCount = statsQueries[2].data ?? 0;
-
-  const { data: clips = [], isLoading: loadingClips } = useQuery({
-    queryKey: queryKeys.profileClips(profile.profile_id),
-    queryFn: () => fetchProfileClips(profile.profile_id),
-  });
+  const postCount = statsQueries[1].data ?? 0;
+  const followerCount = followCounts?.followers ?? 0;
 
   const { data: xpState } = useQuery({
     queryKey: queryKeys.profileXp(profile.profile_id),
@@ -213,7 +209,14 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
             </Text>
             {isOwnProfile ? (
               <>
-                <TouchableOpacity style={styles.editBtn} activeOpacity={0.7}>
+                <TouchableOpacity
+                  style={styles.editBtn}
+                  activeOpacity={0.7}
+                  onPress={() => setShowEditProfile(true)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Edit skate name and labels"
+                >
                   <Ionicons name="pencil" size={14} color={C.muted} />
                 </TouchableOpacity>
                 <PrivateProfileLock />
@@ -225,6 +228,11 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
               </View>
             )}
           </View>
+
+          {/* Private profiles can't be followed (md/media_posts.md §1). */}
+          {!isOwnProfile && !profile.is_private && profile.username ? (
+            <FollowButton profileId={profile.profile_id} username={profile.username} />
+          ) : null}
 
           <View style={styles.metaRow}>
             <Text style={[styles.meta, Platform.OS === "web" && styles.metaWeb]}>
@@ -252,6 +260,7 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
             skillLevel={profile.skill_level}
             disciplines={profile.disciplines}
             pronouns={profile.pronouns}
+            labels={parseTapeLabels(profile.labels)}
           />
         </View>
       </View>
@@ -281,48 +290,37 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
       ) : (
         <StatsRow
           spots={spotCount}
-          clips={clipCount}
-          friends={friendCount}
-          onFriendsPress={isOwnProfile ? () => router.push("/friends" as any) : undefined}
+          posts={postCount}
+          followers={followerCount}
+          onFollowersPress={() => router.push(`/follows/${profile.profile_id}` as never)}
         />
       )}
 
-      {/* Content tabs */}
-      <ContentTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      {/* Content tabs: My Posts / Tagged in / Saved (own profile only) */}
+      <ContentTabs activeTab={activeTab} onTabChange={setActiveTab} showSaved={isOwnProfile} />
 
       {/* Grid */}
-      {activeTab === 0 && (
-        <View style={styles.gridContainer}>
-          {loadingClips ? (
-            <View style={styles.centeredMsg}>
-              <ActivityIndicator color={C.primary} />
-            </View>
-          ) : clips.length === 0 ? (
-            <EmptyClips isOwnProfile={isOwnProfile} />
-          ) : (
-            <View style={styles.grid}>
-              {clips.map((clip) => (
-                <ClipCard key={clip.clip_id} clip={clip} />
-              ))}
-            </View>
-          )}
-        </View>
-      )}
-
-      {activeTab === 1 && (
-        <View style={styles.centeredMsg}>
-          <Ionicons name="pricetag-outline" size={32} color={C.muted} />
-          <Text style={styles.emptyLabel}>TAGGED SPOTS COMING SOON</Text>
-        </View>
-      )}
-
-      {activeTab === 2 && (
-        <View style={styles.centeredMsg}>
-          <Ionicons name="bookmark-outline" size={32} color={C.muted} />
-          <Text style={styles.emptyLabel}>BOOKMARKS COMING SOON</Text>
-        </View>
-      )}
+      <View style={styles.gridContainer}>
+        {activeTab === 0 && (
+          <PostGrid
+            source={`posts:${profile.profile_id}`}
+            emptyIcon="images-outline"
+            emptyLabel="NO POSTS YET"
+            onCreatePost={isOwnProfile ? () => router.push("/post/new" as never) : undefined}
+          />
+        )}
+        {activeTab === 1 && (
+          <PostGrid source={`tagged:${profile.profile_id}`} emptyIcon="pricetag-outline" emptyLabel="NOT TAGGED IN ANY POSTS YET" />
+        )}
+        {activeTab === 2 && isOwnProfile && (
+          <PostGrid source={`saved:${profile.profile_id}`} emptyIcon="bookmark-outline" emptyLabel="NOTHING SAVED YET" />
+        )}
+      </View>
     </ScrollView>
+
+    {isOwnProfile && (
+      <EditProfileSheet visible={showEditProfile} onClose={() => setShowEditProfile(false)} />
+    )}
 
     <Modal
       visible={showReportReasons}
@@ -349,28 +347,6 @@ export default function ProfileView({ profile, isOwnProfile }: Props) {
       />
     )}
     </>
-  );
-}
-
-function EmptyClips({ isOwnProfile }: { isOwnProfile: boolean }) {
-  return (
-    <View style={styles.centeredMsg}>
-      <Ionicons
-        name={isOwnProfile ? "camera-outline" : "film-outline"}
-        size={40}
-        color={C.muted}
-      />
-      {isOwnProfile ? (
-        <>
-          <Text style={styles.emptyLabel}>SHARE YOUR FIRST CLIP</Text>
-          <TouchableOpacity style={styles.uploadBtn} activeOpacity={0.8}>
-            <Text style={styles.uploadBtnText}>+ UPLOAD</Text>
-          </TouchableOpacity>
-        </>
-      ) : (
-        <Text style={styles.emptyLabel}>NO CLIPS YET</Text>
-      )}
-    </View>
   );
 }
 
@@ -495,11 +471,6 @@ const styles = StyleSheet.create({
   gridContainer: {
     minHeight: 200,
   },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: GAP,
-  },
 
   centeredMsg: {
     paddingVertical: 48,
@@ -510,19 +481,6 @@ const styles = StyleSheet.create({
     fontFamily: F.mono,
     fontSize: 11,
     color: C.muted,
-    letterSpacing: 2,
-  },
-  uploadBtn: {
-    borderWidth: 1.5,
-    borderColor: C.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    marginTop: 4,
-  },
-  uploadBtnText: {
-    fontFamily: F.mono,
-    fontSize: 11,
-    color: C.primary,
     letterSpacing: 2,
   },
 });
