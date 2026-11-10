@@ -2,9 +2,14 @@ import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// 16 is the one cutoff that needs no verified-parental-consent flow anywhere
-// under GDPR Art. 8 (member states set it between 13 and 16).
-export const MIN_AGE = 16;
+// Raised from 16 (the GDPR Art. 8 consent ceiling) to 18 ahead of user
+// media posts, so no minors are on the platform once uploads open. Existing
+// accounts are re-gated by supabase/pending_migrations/age_gate_18_reset_confirmations.sql.
+export const MIN_AGE = 18;
+
+// user_bans.reason written by record_underage_self_report() when an
+// existing account fails the re-check; app/banned.tsx keys its copy off it.
+export const UNDERAGE_BAN_REASON = "underage";
 
 // Underage attempts are remembered on this device only -- nothing goes to
 // the server -- long enough to stop an instant retry with a different year.

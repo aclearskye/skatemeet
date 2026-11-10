@@ -66,6 +66,8 @@ export const queryKeys = {
     ["profile", profileId, "reportStatus"] as const,
   banAppealStatus: (profileId: string) =>
     ["profile", profileId, "banAppealStatus"] as const,
+  myBanReason: (profileId: string) =>
+    ["profile", profileId, "banReason"] as const,
   // Per viewer: results depend on who's searching (privacy, blocks, self).
   userSearch: (profileId: string, query: string) =>
     ["search", "users", profileId, query] as const,

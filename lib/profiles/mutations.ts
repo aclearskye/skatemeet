@@ -75,9 +75,17 @@ export async function deactivateAccount(): Promise<void> {
   }
 }
 
-// Records that the signed-in user passed the 16+ age gate. Only the
+// Records that the signed-in user passed the 18+ age gate. Only the
 // timestamp is stored, never the date of birth.
 export async function confirmAge(): Promise<void> {
   const { error } = await supabase.rpc("confirm_age");
+  if (error) throw error;
+}
+
+// Deactivates the signed-in account pending appeal after it fails the 18+
+// re-check -- an 'underage' ban, so app/_layout.tsx confines it to
+// app/banned.tsx and the existing appeal flow. Idempotent server-side.
+export async function recordUnderageSelfReport(): Promise<void> {
+  const { error } = await supabase.rpc("record_underage_self_report");
   if (error) throw error;
 }

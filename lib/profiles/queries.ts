@@ -54,6 +54,13 @@ export async function getBanAppealStatus(profileId: string): Promise<BanAppealSt
   return data as BanAppealStatus;
 }
 
+// The signed-in user's active ban reason, or null when not banned.
+export async function getMyBanReason(): Promise<string | null> {
+  const { data, error } = await supabase.rpc("get_my_ban_reason");
+  if (error) throw error;
+  return (data as string | null) ?? null;
+}
+
 // null when RLS hides the row: a private profile the viewer isn't friends
 // with, a blocked pair, or a deleted account.
 export async function fetchUserProfile(profileId: string): Promise<Profile | null> {
