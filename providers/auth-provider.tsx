@@ -76,6 +76,12 @@ export default function AuthProvider({ children }: PropsWithChildren) {
 
   // Single source of truth for the loading → profile fetch → done cycle
   useEffect(() => {
+    // `undefined` = getSession() hasn't answered yet. Finishing "loading"
+    // here would leave a render where the session has just arrived but the
+    // profile is still null with loading false -- which app/_layout.tsx reads
+    // as a brand-new account and redirects to onboarding ("who are you"
+    // flashes on every web refresh). Stay loading until the session is known.
+    if (session === undefined) return;
     const load = async () => {
       setIsLoadingAuthContext(true);
       await fetchProfile(session);
