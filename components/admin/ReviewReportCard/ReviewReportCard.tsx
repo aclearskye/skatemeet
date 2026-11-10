@@ -1,7 +1,5 @@
 import { Text, TouchableOpacity, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import type { ReportResolution, ReviewReportItem } from "@/lib/admin/types";
-import { C } from "@/lib/theme";
 import { styles } from "./ReviewReportCard.styles";
 
 type Props = {
@@ -25,8 +23,7 @@ export function ReviewReportCard({ item, onResolve, isBusy }: Props) {
         <Text style={styles.entityBadge}>{item.entityKind.toUpperCase()} REVIEW</Text>
         {item.rating !== null && (
           <View style={styles.ratingRow}>
-            <Ionicons name="star" size={12} color={C.primary} />
-            <Text style={styles.rating}>{item.rating}</Text>
+            <Text style={styles.rating}>{`RATED ${item.rating}/5`}</Text>
           </View>
         )}
       </View>

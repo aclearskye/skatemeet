@@ -1,4 +1,5 @@
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { RatingBar } from "@/components/common/RatingBar";
 import { ReportReasonSheet } from "@/components/common/ReportReasonSheet";
 import { REVIEW_REPORT_REASONS, ReviewReportReason } from "@/lib/shared/types";
 import { C } from "@/lib/theme";
@@ -60,16 +61,7 @@ export function ReviewCard({
       </View>
 
       {review.rating != null && (
-        <View style={styles.starsRow}>
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Ionicons
-              key={i}
-              name={i <= Math.round(review.rating!) ? "star" : "star-outline"}
-              size={14}
-              color={i <= Math.round(review.rating!) ? accent : C.borderVariant}
-            />
-          ))}
-        </View>
+        <RatingBar value={review.rating} accent={accent} size="sm" />
       )}
 
       <Text style={styles.comment}>{review.comment}</Text>

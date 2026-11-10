@@ -23,7 +23,6 @@ export const styles = StyleSheet.create({
     letterSpacing: 0.3,
     flex: 1,
   },
-  starsRow: { flexDirection: "row", gap: 3 },
   comment: {
     fontFamily: F.body,
     fontSize: 14,

@@ -1,4 +1,4 @@
-import { StarInput } from "@/components/common/StarInput";
+import { RatingBar } from "@/components/common/RatingBar";
 import { C } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
@@ -20,11 +20,14 @@ type Props = {
   visible: boolean;
   onClose: () => void;
   accent: string;
+  // Stores rate in the review. Spots don't: their difficulty is rated on
+  // the detail page's bar instead.
+  showRating?: boolean;
   onAccent: string;
   onSubmit: (payload: ReviewPayload) => Promise<void>;
 };
 
-export function AddReviewSheet({ visible, onClose, accent, onAccent, onSubmit }: Props) {
+export function AddReviewSheet({ visible, onClose, accent, onAccent, onSubmit, showRating = true }: Props) {
   const insets = useSafeAreaInsets();
 
   const [heading, setHeading] = useState("");
@@ -93,8 +96,12 @@ export function AddReviewSheet({ visible, onClose, accent, onAccent, onSubmit }:
               autoFocus
             />
 
-            <Text style={[styles.fieldLabel, { marginTop: 24 }]}>RATING (OPTIONAL)</Text>
-            <StarInput value={rating} onChange={setRating} accent={accent} />
+            {showRating && (
+              <>
+                <Text style={[styles.fieldLabel, { marginTop: 24 }]}>RATING (OPTIONAL)</Text>
+                <RatingBar value={rating} onChange={setRating} accent={accent} />
+              </>
+            )}
 
             <Text style={[styles.fieldLabel, { marginTop: 24 }]}>COMMENT</Text>
             <TextInput
