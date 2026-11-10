@@ -15,7 +15,6 @@ const meta = {
     onChange: fn(),
     typeLabel: "STREET",
     typeColors: { bg: C.primary, fg: C.onPrimary },
-    difficulty: 3,
   },
   render: function Render(args) {
     const [value, setValue] = useState(args.value);

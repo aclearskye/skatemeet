@@ -1,19 +1,20 @@
 import type { ReactNode } from "react";
-import { StyleProp, Text, View, ViewStyle } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { StyleProp, View, ViewStyle } from "react-native";
 import { difficultyTier } from "@/lib/spots/difficulty";
+import { smoothnessTier } from "@/lib/spots/smoothness";
 import { TAPE_LABEL_COLORS, TapeLabel, TapeColors } from "@/lib/shared/tapeLabels";
-import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
+import { TapeChip, TapeChipSize } from "@/components/common/TapeChip";
 import { styles } from "./EntityTapeLabels.styles";
 
 type Props = {
   typeLabel: string;
   typeColors: TapeColors;
   difficulty?: number | null;
+  smoothness?: number | null;
   labels?: TapeLabel[];
   // sm: map preview card. md: default. lg: detail-page hero on web.
-  size?: "sm" | "md" | "lg";
-  // When set, custom labels become pressable and show a remove icon
+  size?: TapeChipSize;
+  // When set, custom labels become pressable and show a remove mark
   // (used by the spot creation flow's preview).
   onRemoveLabel?: (index: number) => void;
   style?: StyleProp<ViewStyle>;
@@ -22,11 +23,13 @@ type Props = {
 };
 
 // The row of duct-tape labels on an entity: always type first, then the
-// difficulty tier (spots only, when rated), then any user-defined labels.
+// difficulty and smoothness tiers (spots only, once rated), then any
+// user-defined labels.
 export function EntityTapeLabels({
   typeLabel,
   typeColors,
   difficulty,
+  smoothness,
   labels = [],
   size = "md",
   onRemoveLabel,
@@ -34,46 +37,47 @@ export function EntityTapeLabels({
   children,
 }: Props) {
   const tier = difficultyTier(difficulty);
-  const chipStyle = size === "sm" ? styles.chipSm : size === "lg" ? styles.chipLg : styles.chipMd;
-  const textStyle = size === "sm" ? styles.textSm : size === "lg" ? styles.textLg : styles.textMd;
+  const smooth = smoothnessTier(smoothness);
 
   return (
     <View style={[styles.row, style]}>
-      <DuctTapeLabel
-        color={typeColors.bg}
-        style={chipStyle}
+      <TapeChip
+        text={typeLabel}
+        colors={typeColors}
+        size={size}
         accessibilityLabel={`Type: ${typeLabel}`}
-      >
-        <Text style={[textStyle, { color: typeColors.fg }]}>{typeLabel}</Text>
-      </DuctTapeLabel>
+      />
 
       {tier && (
-        <DuctTapeLabel
-          color={tier.bg}
-          style={chipStyle}
+        <TapeChip
+          text={tier.label}
+          colors={tier}
+          size={size}
           accessibilityLabel={`Difficulty: ${tier.label}`}
-        >
-          <Text style={[textStyle, { color: tier.fg }]}>{tier.label}</Text>
-        </DuctTapeLabel>
+        />
       )}
 
-      {labels.map((label, index) => {
-        const colors = TAPE_LABEL_COLORS[label.color];
-        const text = label.text.toUpperCase();
-        return (
-          <DuctTapeLabel
-            key={label.text}
-            color={colors.bg}
-            style={chipStyle}
-            onPress={onRemoveLabel ? () => onRemoveLabel(index) : undefined}
-            accessibilityLabel={`Label: ${label.text}`}
-            accessibilityHint={onRemoveLabel ? "Double-tap to remove" : undefined}
-          >
-            <Text style={[textStyle, { color: colors.fg }]}>{text}</Text>
-            {onRemoveLabel && <Ionicons name="close" size={12} color={colors.fg} />}
-          </DuctTapeLabel>
-        );
-      })}
+      {smooth && (
+        <TapeChip
+          text={smooth.label}
+          colors={smooth}
+          size={size}
+          accessibilityLabel={`Smoothness: ${smooth.label}`}
+        />
+      )}
+
+      {labels.map((label, index) => (
+        <TapeChip
+          key={label.text}
+          text={label.text}
+          colors={TAPE_LABEL_COLORS[label.color]}
+          size={size}
+          removable={!!onRemoveLabel}
+          onPress={onRemoveLabel ? () => onRemoveLabel(index) : undefined}
+          accessibilityLabel={`Label: ${label.text}`}
+          accessibilityHint={onRemoveLabel ? "Double-tap to remove" : undefined}
+        />
+      ))}
       {children}
     </View>
   );

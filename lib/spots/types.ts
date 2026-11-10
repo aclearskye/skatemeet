@@ -12,7 +12,14 @@ export type SkateSpot = {
   latitude: number;
   longitude: number;
   photo_url: string | null;
-  difficulty: number | null;
+  // Community data points: averages of skaters' 1–5 ratings, kept in sync
+  // by the DB from spot_ratings. An average is null until someone rates it.
+  rating_avg: number | null;
+  rating_count: number;
+  difficulty_avg: number | null;
+  difficulty_count: number;
+  smoothness_avg: number | null;
+  smoothness_count: number;
   labels: TapeLabel[];
   is_verified: boolean;
   upvote_count: number;
@@ -53,7 +60,6 @@ export type CreateSpotPayload = {
   latitude: number;
   longitude: number;
   photo_url?: string;
-  difficulty?: number;
   labels?: TapeLabel[];
 };
 

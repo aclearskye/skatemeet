@@ -1,8 +1,8 @@
 import { AddReviewSheet } from "@/components/common/AddReviewSheet";
-import { CheckInSection } from "@/components/common/CheckInSection";
 import { DeleteUnverifiedButton } from "@/components/common/DeleteUnverifiedButton";
 import { DetailHeader } from "@/components/common/DetailHeader";
 import { EditMetadataSheet } from "@/components/common/EditMetadataSheet";
+import { EntityActionBar } from "@/components/common/EntityActionBar";
 import { EntityHero } from "@/components/common/EntityHero";
 import { EntityMetadataSection } from "@/components/common/EntityMetadataSection";
 import { EntityPhotoViewerModal } from "@/components/common/EntityPhotoViewerModal";
@@ -10,11 +10,10 @@ import { ReviewsModal } from "@/components/common/ReviewsModal";
 import { EntityPostsSection } from "@/components/common/EntityPostsSection";
 import { EntityTapeLabels } from "@/components/common/EntityTapeLabels";
 import { PhotoUploadButton } from "@/components/common/PhotoUploadButton";
-import { StarRating } from "@/components/common/StarRating";
+import { SpotRatingsSection } from "@/components/spot-detail/SpotRatingsSection";
 import { RequestVerificationButton } from "@/components/spot-detail/RequestVerificationButton";
 import { SpotInfoBlock } from "@/components/spot-detail/SpotInfoBlock";
 import { SpotReviews } from "@/components/spot-detail/SpotReviews";
-import { SpotVoteSection } from "@/components/spot-detail/SpotVoteSection";
 import { SpotChatButton } from "@/components/spotChat/SpotChatButton";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { deleteSpot } from "@/lib/spots/mutations";
@@ -24,6 +23,7 @@ import { parseTapeLabels } from "@/lib/shared/tapeLabels";
 import { OsmSpot, SkateSpot } from "@/lib/spots/types";
 import { spotReviewableAdapter } from "@/lib/spots/spotReviewableAdapter";
 import { useAddSpotPhoto } from "@/lib/spots/useAddSpotPhoto";
+import { useSpotRatings } from "@/lib/spots/useSpotRatings";
 import { useEntityMetadata } from "@/lib/shared/hooks/useEntityMetadata";
 import { openDirections } from "@/lib/shared/openDirections";
 import { ReviewInteractions } from "@/lib/shared/types";
@@ -97,7 +97,6 @@ export default function SpotDetailScreen() {
     handleFavorite,
     reviews,
     isLoadingReviews,
-    avgRating,
     reviewVotes,
     handleReviewUpvote,
     handleReviewSubmit,
@@ -157,6 +156,8 @@ export default function SpotDetailScreen() {
     isDeleting: isDeletingPhoto,
   } = useEntityPhotos(spotId, osmPlaceId, spotPhotosAdapter, queryKeys.spotPhotos(spotId, osmPlaceId));
 
+  const spotRatings = useSpotRatings(spotId, osmPlaceId);
+
   const { hasCheckedIn } = useHasManualCheckIn({
     spotId,
     osmSpotPlaceId: osmPlaceId,
@@ -213,7 +214,8 @@ export default function SpotDetailScreen() {
               size={HERO_LABEL_SIZE}
               typeLabel={typeLabel}
               typeColors={{ bg: accent, fg: onAccent }}
-              difficulty={isSkateSpot(spot) ? spot.difficulty : null}
+              difficulty={spotRatings.summaries.difficulty.average}
+              smoothness={spotRatings.summaries.smoothness.average}
               labels={isSkateSpot(spot) ? parseTapeLabels(spot.labels) : []}
             >
               {isUser && isVerified && (
@@ -236,13 +238,21 @@ export default function SpotDetailScreen() {
         />
 
         <View style={styles.body}>
-          <SpotInfoBlock
+          <EntityActionBar
+            entityRef={{ spotId, osmSpotPlaceId: osmPlaceId, storeId: null, osmStorePlaceId: null }}
             accent={accent}
             onAccent={onAccent}
             onDirections={handleDirections}
-            description={description}
-            address={address}
+            vote={{
+              count: localVoteCount,
+              hasVoted: userHasVoted,
+              isLoading: isVoting || isLoadingVote,
+              onPress: handleVote,
+            }}
+            votesToVerify={isUser && !isVerified ? Math.max(0, 3 - localVoteCount) : null}
           />
+
+          <SpotInfoBlock description={description} address={address} />
 
           <EntityMetadataSection
             metadata={metadata}
@@ -261,30 +271,14 @@ export default function SpotDetailScreen() {
             onAccent={onAccent}
           />
 
-          <CheckInSection
-            entityRef={{ spotId, osmSpotPlaceId: osmPlaceId, storeId: null, osmStorePlaceId: null }}
-            accent={accent}
-            onAccent={onAccent}
-          />
-
-          <SpotVoteSection
-            count={localVoteCount}
-            hasVoted={userHasVoted}
-            accent={accent}
-            onAccent={onAccent}
-            onPress={handleVote}
-            isLoading={isVoting || isLoadingVote}
-            showVerifyHint={isUser && !isVerified}
-          />
-
           {isOwner && spotId && <RequestVerificationButton spotId={spotId} accent={accent} />}
 
-          {avgRating.count > 0 && (
-            <View style={styles.ratingSection}>
-              <Text style={styles.sectionLabel}>DIFFICULTY</Text>
-              <StarRating rating={avgRating.average} count={avgRating.count} accent={accent} />
-            </View>
-          )}
+          <SpotRatingsSection
+            summaries={spotRatings.summaries}
+            mine={spotRatings.mine}
+            onRate={spotRatings.rate}
+            lockedReason={!session ? "SIGN IN TO RATE IT" : hasCheckedIn ? null : "CHECK IN TO RATE IT"}
+          />
 
           <SpotReviews
             reviews={reviews}
@@ -313,6 +307,7 @@ export default function SpotDetailScreen() {
         accent={accent}
         onAccent={onAccent}
         onSubmit={handleReviewSubmit}
+        showRating={false}
       />
 
       <ReviewsModal
@@ -368,5 +363,4 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   body: { padding: 20, gap: 14 },
   sectionLabel: { fontFamily: F.mono, fontSize: 10, color: C.muted, letterSpacing: 2 },
-  ratingSection: { gap: 10, paddingTop: 14, borderTopWidth: 1, borderTopColor: C.borderVariant },
 });

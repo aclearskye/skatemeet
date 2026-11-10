@@ -20,7 +20,12 @@ export const SAMPLE_SPOT: SkateSpot = {
   latitude: 51.5069,
   longitude: -0.1167,
   photo_url: SAMPLE_PHOTO,
-  difficulty: 3,
+  rating_avg: 4.2,
+  rating_count: 9,
+  difficulty_avg: 3.4,
+  difficulty_count: 5,
+  smoothness_avg: 2.1,
+  smoothness_count: 4,
   labels: [
     { text: "ledges", color: "primary" },
     { text: "covered", color: "tertiary" },

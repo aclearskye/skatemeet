@@ -12,6 +12,7 @@ const meta = {
     typeLabel: "STREET",
     typeColors: { bg: C.primary, fg: C.onPrimary },
     difficulty: 3,
+    smoothness: 4.5,
     labels: [
       { text: "ledges", color: "tertiary" },
       { text: "covered", color: "gold" },

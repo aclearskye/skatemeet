@@ -1,0 +1,1 @@
+export { SpotRatingsSection } from "./SpotRatingsSection";

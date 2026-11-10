@@ -10,6 +10,11 @@ export const queryKeys = {
     ["spot", spotId, osmPlaceId, "photos"] as const,
   storePhotos: (storeId: string | null, osmPlaceId: string | null) =>
     ["store", storeId, osmPlaceId, "photos"] as const,
+  spotRatings: (spotId: string | null, osmPlaceId: string | null) =>
+    ["spot", spotId, osmPlaceId, "ratings"] as const,
+  // Nested under spotRatings so invalidating that prefix covers both.
+  mySpotRatings: (spotId: string | null, osmPlaceId: string | null, profileId: string) =>
+    ["spot", spotId, osmPlaceId, "ratings", "mine", profileId] as const,
   spotMetadata: (spotId: string | null, osmPlaceId: string | null) =>
     ["spot", spotId, osmPlaceId, "metadata"] as const,
   storeMetadata: (storeId: string | null, osmPlaceId: string | null) =>

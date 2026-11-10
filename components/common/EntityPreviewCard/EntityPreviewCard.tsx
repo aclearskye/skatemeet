@@ -36,6 +36,7 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted, distanceMile
   let isDiy = false;
   let isStore = false;
   let difficulty: number | null = null;
+  let smoothness: number | null = null;
 
   switch (item.kind) {
     case "user-spot": {
@@ -46,7 +47,8 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted, distanceMile
       isVerified = s.is_verified;
       upvoteCount = s.upvote_count;
       isDiy = s.type === "diy";
-      difficulty = s.difficulty;
+      difficulty = s.difficulty_avg;
+      smoothness = s.smoothness_avg;
       break;
     }
     case "osm-spot": {
@@ -173,6 +175,7 @@ export function EntityPreviewCard({ item, onPress, initialHasVoted, distanceMile
                       : { bg: C.primary, fg: C.onPrimary }
                 }
                 difficulty={difficulty}
+                smoothness={smoothness}
                 size="sm"
                 style={styles.tapeLabels}
               />
