@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/react-native";
-import { fn } from "storybook/test";
 
 import { StoreInfoBlock } from "./StoreInfoBlock";
 
@@ -8,7 +7,6 @@ const meta = {
   component: StoreInfoBlock,
   args: {
     osmRating: 4.5,
-    onDirections: fn(),
     address: "Brewer St, London",
     hours: "Mon-Sat 10-7",
     phone: "+44 20 0000 0000",

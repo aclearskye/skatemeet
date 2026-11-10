@@ -1,4 +1,4 @@
-import { StarRating } from "@/components/common/StarRating";
+import { RatingBar } from "@/components/common/RatingBar";
 import { C, F } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { Fragment } from "react";
@@ -6,7 +6,6 @@ import { Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 
 type Props = {
   osmRating: number | null;
-  onDirections: () => void;
   address: string | null;
   hours: string | null;
   phone: string | null;
@@ -16,7 +15,6 @@ type Props = {
 
 export function StoreInfoBlock({
   osmRating,
-  onDirections,
   address,
   hours,
   phone,
@@ -25,12 +23,7 @@ export function StoreInfoBlock({
 }: Props) {
   return (
     <Fragment>
-      {osmRating != null && <StarRating rating={osmRating} accent={C.secondary} />}
-
-      <TouchableOpacity style={styles.directionsBtn} onPress={onDirections} activeOpacity={0.85}>
-        <Ionicons name="navigate-outline" size={16} color={C.onSecondary} />
-        <Text style={styles.directionsBtnText}>GET DIRECTIONS</Text>
-      </TouchableOpacity>
+      {osmRating != null && <RatingBar label="RATING" value={osmRating} accent={C.secondary} />}
 
       {description != null && description !== "" && (
         <Text style={styles.description}>{description}</Text>
@@ -79,20 +72,6 @@ export function StoreInfoBlock({
 }
 
 const styles = StyleSheet.create({
-  directionsBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: C.secondary,
-    paddingVertical: 13,
-  },
-  directionsBtnText: {
-    fontFamily: F.mono,
-    fontSize: 12,
-    color: C.onSecondary,
-    letterSpacing: 1,
-  },
   description: { fontFamily: F.body, fontSize: 15, color: C.text, lineHeight: 24 },
   infoSection: { gap: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: C.borderVariant },
   infoRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },

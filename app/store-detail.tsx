@@ -1,8 +1,8 @@
 import { AddReviewSheet } from "@/components/common/AddReviewSheet";
-import { CheckInSection } from "@/components/common/CheckInSection";
 import { DeleteUnverifiedButton } from "@/components/common/DeleteUnverifiedButton";
 import { DetailHeader } from "@/components/common/DetailHeader";
 import { EditMetadataSheet } from "@/components/common/EditMetadataSheet";
+import { EntityActionBar } from "@/components/common/EntityActionBar";
 import { EntityHero } from "@/components/common/EntityHero";
 import { EntityMetadataSection } from "@/components/common/EntityMetadataSection";
 import { EntityPhotoViewerModal } from "@/components/common/EntityPhotoViewerModal";
@@ -10,10 +10,9 @@ import { ReviewsModal } from "@/components/common/ReviewsModal";
 import { EntityPostsSection } from "@/components/common/EntityPostsSection";
 import { EntityTapeLabels } from "@/components/common/EntityTapeLabels";
 import { PhotoUploadButton } from "@/components/common/PhotoUploadButton";
-import { StarRating } from "@/components/common/StarRating";
+import { RatingBar } from "@/components/common/RatingBar";
 import { StoreInfoBlock } from "@/components/store-detail/StoreInfoBlock";
 import { StoreReviews } from "@/components/store-detail/StoreReviews";
-import { StoreVoteSection } from "@/components/store-detail/StoreVoteSection";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { useCheckInSync } from "@/lib/shared/hooks/useCheckInSync";
 import { useEntityMetadata } from "@/lib/shared/hooks/useEntityMetadata";
@@ -224,9 +223,21 @@ export default function StoreDetailScreen() {
         />
 
         <View style={styles.body}>
+          <EntityActionBar
+            entityRef={{ spotId: null, osmSpotPlaceId: null, storeId, osmStorePlaceId: osmPlaceId }}
+            accent={C.secondary}
+            onAccent={C.onSecondary}
+            onDirections={handleDirections}
+            vote={{
+              count: localVoteCount,
+              hasVoted: userHasVoted,
+              isLoading: isVoting || isLoadingVote,
+              onPress: handleVote,
+            }}
+          />
+
           <StoreInfoBlock
             osmRating={osmRating}
-            onDirections={handleDirections}
             address={address}
             hours={hours}
             phone={phone}
@@ -242,25 +253,13 @@ export default function StoreDetailScreen() {
             onEdit={() => setShowEditMetadata(true)}
           />
 
-          <CheckInSection
-            entityRef={{ spotId: null, osmSpotPlaceId: null, storeId, osmStorePlaceId: osmPlaceId }}
+          <RatingBar
+            style={styles.communityRatingSection}
+            label="COMMUNITY RATING"
+            value={avgRating.average}
+            count={avgRating.count}
             accent={C.secondary}
-            onAccent={C.onSecondary}
           />
-
-          <StoreVoteSection
-            count={localVoteCount}
-            hasVoted={userHasVoted}
-            onPress={handleVote}
-            isLoading={isVoting || isLoadingVote}
-          />
-
-          {avgRating.count > 0 && (
-            <View style={styles.communityRatingSection}>
-              <Text style={styles.sectionLabel}>COMMUNITY RATING</Text>
-              <StarRating rating={avgRating.average} count={avgRating.count} accent={C.secondary} />
-            </View>
-          )}
 
           <StoreReviews
             reviews={reviews}

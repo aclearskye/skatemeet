@@ -1,7 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/react-native";
-import { fn } from "storybook/test";
-
-import { C } from "@/lib/theme";
 
 import { SpotInfoBlock } from "./SpotInfoBlock";
 
@@ -9,9 +6,6 @@ const meta = {
   title: "SpotDetail/SpotInfoBlock",
   component: SpotInfoBlock,
   args: {
-    accent: C.primary,
-    onAccent: C.onPrimary,
-    onDirections: fn(),
     description: "Banks, ledges and a lot of history.",
     address: "Belvedere Rd, London SE1",
   },

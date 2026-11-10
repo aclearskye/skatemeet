@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 
 // Split out from useCheckIn so read-only contexts (preview cards, search
 // results, many-at-once) don't also pull in the toggle/mutation machinery
-// that only a detail page's CheckInSection needs.
+// that only a detail page's EntityActionBar needs.
 export function useLiveCount(ref: EntityRef): number | null {
   const { data } = useQuery({
     queryKey: queryKeys.liveCount(ref),
