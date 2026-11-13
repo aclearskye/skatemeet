@@ -28,8 +28,29 @@ SkateMeet is moving from an 18+ app to one that also allows **13–17 year olds*
 - Represents one physical skate store. It is not a person, so it has no age or guardian.
 - **Exclusive claim:** a skate store entity (`UserStore` / `OsmStore` / `SkateStore`, see "Entity" in [CLAUDE.md](../CLAUDE.md)) can be associated with **at most one** Store account. Enforce this in the DB with a unique constraint, not only in app code.
 - A Store account can manage its store's **details page**: shop integration, posts and clips.
-- No social limits.
 - Store onboarding is its own flow, separate from Child/Adult sign-up.
+
+**Decided (2026-11-13):**
+- **Creation:** only through the B2B sign-up reached from the Login page ("Are you a skateboarding business?"). Email and password only, no OAuth. The in-app "Switch to business" conversion is removed.
+- **One account, one store.** A chain uses one Store account per location.
+- **Claim:** the owner searches for their store (OSM or user-created) or creates a new one, which stays hidden until approved. Proof is a document upload reviewed by an admin, plus an optional email-domain match against the store's website. A domain match fast-tracks the claim in the admin queue but an admin still approves it.
+- **Before approval:** the account sees only a "claim pending" dashboard (draft listing, proof, storefront connection). No social features and nothing public.
+- **Disputes:** a second business can file a dispute with proof against a claimed or pending store. Only an admin can transfer ownership, and the current owner is notified.
+- **Page authority:** once claimed, only the owner edits name, hours, contact details and official photos. Community photos and reviews stay in their own sections. The owner can report them but not delete them.
+- **Business details collected:** legal name and registration/tax number, contact person name and role (both private, admin-only), public phone and email, logo and cover photo.
+- **Social after approval:** can post to the feed and be followed, and can DM. **Not** in spot chats (advertising). Appears in nearby results at the store's fixed location, never a live one.
+- **Commerce:** products come only from third-party platforms (Shopify, WooCommerce, Square, BigCommerce), one platform per store. There are no manual products, SkateMeet never takes payments, fulfils orders or takes a cut, and no IAP is needed. Users add products to a cart in-app, and checkout hands off to that store's own hosted checkout, **one store per checkout**.
+- **Cart:** a **Cart** entry in the side drawer opens a page with every product the user has added, grouped by store, with a separate "Checkout at <store>" button for each store.
+- **Billing:** a subscription (Stripe, web only) is required. The card is taken during onboarding, and the **14-day trial starts when the claim is approved**. Billing is monthly, and a failed payment is retried weekly. Pricing is _TBD_.
+- **Unpaid stores** (subscription lapsed or cancelled):
+  - Purchasing through the app is blocked.
+  - The owner **keeps the ownership claim**, so no other business can take the store.
+  - The owner can only update **opening hours**. Every other owner edit is locked.
+  - Resubscribing brings purchasing and full editing back.
+  - _Open: whether "unpaid" starts at the first missed payment or after 2 missed weekly retries, and whether the earlier "revert to community listing after 4 missed" rule still applies._
+- **Store accounts can't buy.** The Cart and checkout are only for signed-in Adult accounts. Child accounts can browse only, and there's no guest cart.
+- **Storefront connection:** stores connect with per-store tokens, set up in person for the first clients. A public Shopify app comes later.
+- **Child interaction:** a Child can browse products but cart and checkout are off. A Child can start a DM with a store. A store can never start a DM with a Child.
 
 ### Admin
 - A **role on an Adult account**, not a separate account. It's a flag, not a fourth `account_type` value.
@@ -116,6 +137,8 @@ Record the answers here once they're decided.
 - How is a guardian link established and confirmed? Who can break it, and can a Child see who monitors them?
 - What exactly can a guardian see? (Messages? Location/check-ins? Followers?)
 - What happens on the 18th birthday? Automatic switch to Adult, and do guardian links end?
-- How is a Store verified before it claims a store entity? Who can resolve a disputed claim?
-- Can one person own both an Adult account and a Store account?
+- ~~How is a Store verified before it claims a store entity? Who can resolve a disputed claim?~~ **Decided:** document upload plus admin review, with an email-domain match as a fast-track. Admins resolve disputes. See [Store](#store).
+- ~~Can one person own both an Adult account and a Store account?~~ **Decided:** yes, as two separate logins with different emails. There's no account switcher.
+- ~~Nearby skaters: should Store accounts stay discoverable once Store onboarding is finished?~~ **Decided:** yes, approved stores appear at their fixed store location, never a live one.
+- Store subscriptions: pricing. (Trial and lapse rules are decided, see [Store](#store).)
 - Spot chats: may Children ever join? If so, Child-only rooms, or mixed rooms with extra limits (no Adult-to-Child DMs started from a spot chat, stricter filtering)? Should Store accounts post in spot chats, or is that advertising?
