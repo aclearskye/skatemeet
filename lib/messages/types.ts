@@ -49,6 +49,7 @@ export type MessageErrorCode =
   | "CANNOT_MESSAGE_SELF"
   | "NOT_A_MEMBER"
   | "NOT_FRIENDS"
+  | "DM_NOT_ALLOWED"
   | "BLOCKED"
   | "BANNED"
   | "PARTICIPANT_GONE"

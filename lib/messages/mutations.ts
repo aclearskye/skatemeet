@@ -6,6 +6,7 @@ const MESSAGES: Record<MessageErrorCode, string> = {
   CANNOT_MESSAGE_SELF: "You can't message yourself.",
   NOT_A_MEMBER: "You're not part of this chat.",
   NOT_FRIENDS: "You can only message friends.",
+  DM_NOT_ALLOWED: "You can't message this account.",
   BLOCKED: "You can't message this skater.",
   BANNED: "Your account can't send messages.",
   PARTICIPANT_GONE: "This skater isn't available.",
