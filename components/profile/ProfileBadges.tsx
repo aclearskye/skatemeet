@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { ScrollView, View } from "react-native";
 import { TAPE_LABEL_COLORS, type TapeLabel } from "@/lib/shared/tapeLabels";
 import { C } from "@/lib/theme";
-import { TapeChip } from "@/components/common/TapeChip";
+import { TapeChip, type TapeChipSize } from "@/components/common/TapeChip";
 import { styles } from "./ProfileBadges.styles";
 
 const SKILL_COLORS = { bg: C.secondary, fg: C.onSecondary };
@@ -19,6 +19,9 @@ type Props = {
   onRemoveLabel?: (index: number) => void;
   // Wrap onto more lines instead of scrolling sideways (editor preview).
   wrap?: boolean;
+  // Tape size. "lg" on the profile itself; "sm" in compact rows such as
+  // search result cards.
+  size?: TapeChipSize;
 };
 
 // The duct-tape row on a profile: skill level, disciplines, pronouns, then
@@ -30,6 +33,7 @@ export default function ProfileBadges({
   labels = [],
   onRemoveLabel,
   wrap = false,
+  size = "lg",
 }: Props) {
   const hasBadges =
     skillLevel || (disciplines && disciplines.length > 0) || pronouns || labels.length > 0;
@@ -41,7 +45,7 @@ export default function ProfileBadges({
         <TapeChip
           text={skillLevel}
           colors={SKILL_COLORS}
-          size="lg"
+          size={size}
           accessibilityLabel={`Skill level: ${skillLevel}`}
         />
       )}
@@ -50,7 +54,7 @@ export default function ProfileBadges({
           key={d}
           text={d}
           colors={DISCIPLINE_COLORS}
-          size="lg"
+          size={size}
           accessibilityLabel={`Discipline: ${d}`}
         />
       ))}
@@ -58,7 +62,7 @@ export default function ProfileBadges({
         <TapeChip
           text={pronouns}
           colors={PRONOUN_COLORS}
-          size="lg"
+          size={size}
           accessibilityLabel={`Pronouns: ${pronouns}`}
         />
       )}
@@ -67,7 +71,7 @@ export default function ProfileBadges({
           key={label.text}
           text={label.text}
           colors={TAPE_LABEL_COLORS[label.color]}
-          size="lg"
+          size={size}
           removable={!!onRemoveLabel}
           onPress={onRemoveLabel ? () => onRemoveLabel(index) : undefined}
           accessibilityLabel={`Label: ${label.text}`}
@@ -77,10 +81,12 @@ export default function ProfileBadges({
     </>
   );
 
-  if (wrap) return <View style={[styles.row, styles.rowWrap]}>{tapes}</View>;
+  const rowStyle = size === "lg" ? styles.row : [styles.row, styles.rowCompact];
+
+  if (wrap) return <View style={[rowStyle, styles.rowWrap]}>{tapes}</View>;
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={rowStyle}>
       {tapes}
     </ScrollView>
   );
