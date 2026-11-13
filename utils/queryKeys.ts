@@ -78,8 +78,8 @@ export const queryKeys = {
   // refetch (or use up a rate-limited search point).
   nearbySkaters: (profileId: string, location: Coordinates) =>
     ["search", "nearby", profileId, location.lat.toFixed(2), location.lng.toFixed(2)] as const,
-  placeSearch: (query: string) =>
-    ["search", "places", query] as const,
+  placeSearch: (query: string, kind: "place" | "address" = "place") =>
+    ["search", "places", kind, query] as const,
   friendStatus: (profileId: string, otherId: string) =>
     ["profile", profileId, "friendStatus", otherId] as const,
   friendsList: (profileId: string) =>

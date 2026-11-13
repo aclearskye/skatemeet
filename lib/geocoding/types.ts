@@ -1,5 +1,9 @@
 import type { Coordinates } from "@/lib/map/types";
 
+// "place" is a city or area (nearby search). "address" is a street address
+// (Store onboarding's "my store isn't listed").
+export type PlaceSearchKind = "place" | "address";
+
 // A city or area returned by the geocode-place edge function.
 export type PlaceResult = {
   label: string;

@@ -1,8 +1,9 @@
 // City search for the Search tab's location picker. Forwards to Photon (an
 // OpenStreetMap geocoder with autocomplete) so the client never talks to a
 // third party directly, and works on web where expo-location's geocoder
-// doesn't. Only towns, cities, districts and regions are returned: nearby
-// search needs an area, not a street address.
+// doesn't. By default only towns, cities, districts and regions are
+// returned: nearby search needs an area, not a street address. Store
+// onboarding passes kind: "address" to find a shop's street address.
 //
 // verify_jwt alone isn't enough here: the app's public anon key is itself a
 // valid token, so it would let anyone call this as a free geocoding proxy
@@ -22,10 +23,22 @@ const PLACE_LAYERS = ["city", "district", "locality", "county", "state"];
 const MAX_RESULTS = 8;
 const MAX_QUERY_LENGTH = 100;
 
+type PhotonProperties = {
+  name?: string;
+  housenumber?: string;
+  street?: string;
+  city?: string;
+  postcode?: string;
+  state?: string;
+  country?: string;
+};
+
 type PhotonFeature = {
   geometry?: { coordinates?: [number, number] };
-  properties?: { name?: string; state?: string; country?: string };
+  properties?: PhotonProperties;
 };
+
+type SearchKind = "place" | "address";
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -34,7 +47,16 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-function labelFor(properties: NonNullable<PhotonFeature["properties"]>): string | null {
+function addressLabelFor(properties: PhotonProperties): string | null {
+  const streetLine = [properties.housenumber, properties.street].filter(Boolean).join(" ");
+  const parts = [properties.name, streetLine, properties.city, properties.postcode, properties.country].filter(
+    (part, index, all): part is string => !!part && all.indexOf(part) === index
+  );
+  return parts.length >= 2 ? parts.join(", ") : null;
+}
+
+function labelFor(properties: PhotonProperties, kind: SearchKind): string | null {
+  if (kind === "address") return addressLabelFor(properties);
   if (!properties.name) return null;
   const parts = [properties.name, properties.state, properties.country].filter(
     (part, index, all): part is string => !!part && all.indexOf(part) === index
@@ -61,8 +83,9 @@ serve(async (req) => {
     if (limitError) throw new Error(limitError.message);
     if (allowed !== true) return json({ error: "RATE_LIMITED" }, 429);
 
-    const { query } = await req.json();
+    const { query, kind: rawKind } = await req.json();
     if (typeof query !== "string") return json({ error: "query is required" }, 400);
+    const kind: SearchKind = rawKind === "address" ? "address" : "place";
     const trimmed = query.trim().slice(0, MAX_QUERY_LENGTH);
     if (trimmed.length < 2) return json({ results: [] });
 
@@ -70,7 +93,9 @@ serve(async (req) => {
     url.searchParams.set("q", trimmed);
     url.searchParams.set("limit", String(MAX_RESULTS * 2));
     url.searchParams.set("lang", "en");
-    for (const layer of PLACE_LAYERS) url.searchParams.append("layer", layer);
+    if (kind === "place") {
+      for (const layer of PLACE_LAYERS) url.searchParams.append("layer", layer);
+    }
 
     const res = await fetch(url, { headers: { "User-Agent": "SkateMeet geocode-place" } });
     if (!res.ok) throw new Error(`Photon responded ${res.status}`);
@@ -80,7 +105,7 @@ serve(async (req) => {
     const results = [];
     for (const feature of body.features ?? []) {
       const [lng, lat] = feature.geometry?.coordinates ?? [];
-      const label = feature.properties ? labelFor(feature.properties) : null;
+      const label = feature.properties ? labelFor(feature.properties, kind) : null;
       if (typeof lat !== "number" || typeof lng !== "number" || !label || seen.has(label)) continue;
       seen.add(label);
       results.push({ label, coords: { lat, lng } });
