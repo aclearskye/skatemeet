@@ -12,6 +12,7 @@ import { EntityTapeLabels } from "@/components/common/EntityTapeLabels";
 import { PhotoUploadButton } from "@/components/common/PhotoUploadButton";
 import { RatingBar } from "@/components/common/RatingBar";
 import { StoreInfoBlock } from "@/components/store-detail/StoreInfoBlock";
+import { StoreOwnerBar } from "@/components/store-detail/StoreOwnerBar";
 import { StoreReviews } from "@/components/store-detail/StoreReviews";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { useCheckInSync } from "@/lib/shared/hooks/useCheckInSync";
@@ -23,6 +24,8 @@ import { useEntityPhotos } from "@/lib/shared/useEntityPhotos";
 import { useReviewableEntity } from "@/lib/shared/useReviewableEntity";
 import { OsmStore } from "@/lib/spots/types";
 import { deleteStore } from "@/lib/stores/mutations";
+import { useStorePage } from "@/lib/storeAccounts/hooks/useStorePage";
+import { storeImageUrl } from "@/lib/storeAccounts/queries";
 import { storeMetadataAdapter } from "@/lib/stores/storeMetadataAdapter";
 import { storePhotosAdapter } from "@/lib/stores/storePhotosAdapter";
 import { SkateStore, UserStore } from "@/lib/stores/types";
@@ -43,7 +46,8 @@ const HERO_LABEL_SIZE = Platform.OS === "web" ? "lg" : "md";
 export default function StoreDetailScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { session } = useAuthContext();
+  const { session, profile } = useAuthContext();
+  const viewerIsStore = profile?.account_type === "store";
   const { kind, data } = useLocalSearchParams<Params>();
 
   useCheckInSync();
@@ -77,13 +81,20 @@ export default function StoreDetailScreen() {
     ? (isUserStore ? (store as UserStore).longitude : (store as SkateStore | OsmStore).coordinates.lng)
     : 0;
 
-  const name = store?.name ?? "";
+  // A claimed store's owner is authoritative: their name, contact details,
+  // description and cover replace the community listing's.
+  const { data: page } = useStorePage(storeId, osmPlaceId);
+
+  const name = page?.name ?? store?.name ?? "";
   const address = store?.address ?? "";
   const osmRating = store && "rating" in store ? (store as SkateStore).rating : null;
-  const phone = store && "phone" in store ? (store as OsmStore | UserStore).phone : null;
-  const website = store && "website" in store ? (store as OsmStore | UserStore).website : null;
+  const listedPhone = store && "phone" in store ? (store as OsmStore | UserStore).phone : null;
+  const listedWebsite = store && "website" in store ? (store as OsmStore | UserStore).website : null;
   const hours = store && "opening_hours" in store ? (store as OsmStore | UserStore).opening_hours : null;
-  const description = store && "description" in store ? (store as OsmStore | UserStore).description : null;
+  const listedDescription = store && "description" in store ? (store as OsmStore | UserStore).description : null;
+  const phone = page ? page.publicPhone : listedPhone;
+  const website = page ? page.website : listedWebsite;
+  const description = page ? page.description : listedDescription;
 
   const [showAddReview, setShowAddReview] = useState(false);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
@@ -120,7 +131,9 @@ export default function StoreDetailScreen() {
       : store && "cover_photo_url" in store
         ? ((store as OsmStore).cover_photo_url ?? (store as OsmStore).osm_image_url)
         : null;
-  const photoUrl = photos[0]?.media_url ?? initialPhotoUrl;
+  const photoUrl = page?.coverPath ? storeImageUrl(page.coverPath) : (photos[0]?.media_url ?? initialPhotoUrl);
+  // Facilities, parking and hours are the owner's once the store is claimed.
+  const canEditMetadata = session != null && (page ? page.isOwner : !viewerIsStore);
 
   const {
     userHasVoted,
@@ -223,6 +236,8 @@ export default function StoreDetailScreen() {
         />
 
         <View style={styles.body}>
+          {page ? <StoreOwnerBar page={page} viewerIsStore={viewerIsStore} /> : null}
+
           <EntityActionBar
             entityRef={{ spotId: null, osmSpotPlaceId: null, storeId, osmStorePlaceId: osmPlaceId }}
             accent={C.secondary}
@@ -249,7 +264,7 @@ export default function StoreDetailScreen() {
             metadata={metadata}
             isLoading={isLoadingMetadata}
             accent={C.secondary}
-            canEdit={session != null}
+            canEdit={canEditMetadata}
             onEdit={() => setShowEditMetadata(true)}
           />
 
@@ -267,14 +282,14 @@ export default function StoreDetailScreen() {
             interactions={reviewInteractions}
             onAddReview={() => setShowAddReview(true)}
             onSeeMore={() => setShowReviewsModal(true)}
-            canReview={hasCheckedIn}
+            canReview={hasCheckedIn && !viewerIsStore}
           />
 
           <EntityPostsSection
             tag={storeId ? { kind: "store", storeId } : osmPlaceId ? { kind: "osm_store", osmPlaceId } : null}
           />
 
-          {isOwner && !isVerified && (
+          {isOwner && !isVerified && !page && (
             <DeleteUnverifiedButton entityLabel="store" onDelete={handleDeleteStore} />
           )}
         </View>
