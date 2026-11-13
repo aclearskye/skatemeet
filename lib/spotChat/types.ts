@@ -34,6 +34,24 @@ export type SpotChatMessage = {
   isPending?: boolean;
 };
 
+// A spot chat the viewer has joined and not left, as a Chats tab card.
+export type SpotChatListItem = {
+  roomId: string;
+  spotRef: SpotChatSpotRef;
+  spotName: string;
+  isDiy: boolean;
+  memberCount: number;
+  joinedAt: string;
+  lastMessageBody: string | null;
+  lastMessageAt: string | null;
+  lastMessageIsMine: boolean;
+  // Display name only, never a username.
+  lastSenderName: string | null;
+  unreadCount: number;
+  // Muted by the viewer: no push and no in-app banner for new messages.
+  muted: boolean;
+};
+
 export type SpotChatMessagePage = {
   messages: SpotChatMessage[];
   nextCursor: string | null;

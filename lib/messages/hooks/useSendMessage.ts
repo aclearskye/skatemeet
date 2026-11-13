@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { ensurePushRegistered } from "@/lib/notifications/pushRegistration";
 import { queryKeys } from "@/utils/queryKeys";
 import { sendMessage } from "../mutations";
 import type { Message, MessagePage } from "../types";
@@ -51,6 +52,8 @@ export function useSendMessage(conversationId: string) {
     },
     onSuccess: (message, { tempId }) => {
       queryClient.setQueryData<Pages>(threadKey, (old) => replace(old, tempId, message));
+      // Chatting is when replies start to matter: ask for push now.
+      ensurePushRegistered();
     },
     onError: (_err, { tempId }) => {
       queryClient.setQueryData<Pages>(threadKey, (old) => replace(old, tempId, null));

@@ -108,6 +108,9 @@ export const queryKeys = {
     ["spotChat", spotKey, "room"] as const,
   spotChatMessages: (roomId: string) =>
     ["spotChat", roomId, "messages"] as const,
+  // The viewer's joined spot chats, for the Chats tab.
+  mySpotChats: (profileId: string) =>
+    ["spotChat", "mine", profileId] as const,
   adminSpotChatReports: () =>
     ["admin", "spotChatReports"] as const,
   adminSpotChatReportDetail: (reportId: string) =>

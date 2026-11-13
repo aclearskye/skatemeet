@@ -15,6 +15,7 @@ type ChatRow = {
   last_message_at: string | null;
   unread_count: number;
   can_message: boolean;
+  muted: boolean;
 };
 
 function toChatListItem(row: ChatRow): ChatListItem {
@@ -32,6 +33,7 @@ function toChatListItem(row: ChatRow): ChatListItem {
     lastMessageAt: row.last_message_at,
     unreadCount: row.unread_count,
     canMessage: row.can_message,
+    muted: row.muted ?? false,
   };
 }
 

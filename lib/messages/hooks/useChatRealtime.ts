@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useQueryClient, type InfiniteData, type QueryClient } from "@tanstack/react-query";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { supabase } from "@/lib/supabaseClient";
 import { queryKeys } from "@/utils/queryKeys";
 import { toMessage, type MessageRow } from "../queries";
 import type { ChatListItem, MessagePage } from "../types";
+import { useIncomingDmBanner } from "./useIncomingDmBanner";
 
 type Pages = InfiniteData<MessagePage, string | null>;
 
@@ -56,6 +57,10 @@ export function useChatRealtime() {
   const { session } = useAuthContext();
   const viewerId = session?.user.id ?? null;
   const queryClient = useQueryClient();
+  // Read through a ref so a new handler identity doesn't resubscribe.
+  const showBanner = useIncomingDmBanner();
+  const showBannerRef = useRef(showBanner);
+  showBannerRef.current = showBanner;
 
   useEffect(() => {
     if (!viewerId) return;
@@ -72,6 +77,7 @@ export function useChatRealtime() {
         addMessage(queryClient, row);
         queryClient.invalidateQueries({ queryKey: queryKeys.chatSummary(row.conversation_id) });
         refreshLists();
+        showBannerRef.current(row);
       })
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "messages" }, (payload) => {
         // Deletes carry only the primary key (an admin removal or cleanup).

@@ -35,6 +35,8 @@ export type ChatListItem = {
   lastMessageAt: string | null;
   unreadCount: number;
   canMessage: boolean;
+  // Muted by the viewer: no push and no in-app banner for new messages.
+  muted: boolean;
 };
 
 export type MessagePage = {

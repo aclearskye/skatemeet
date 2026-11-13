@@ -104,3 +104,15 @@ export async function reportSpotChatMessage({ messageId, reason, details, block 
   });
   if (error) throw toSpotChatError(error);
 }
+
+// Clears the Chats tab's unread dot for this room.
+export async function markSpotChatRead(roomId: string): Promise<void> {
+  const { error } = await supabase.rpc("mark_spot_chat_read", { p_room_id: roomId });
+  if (error) throw error;
+}
+
+// Mute or unmute one spot chat for the caller: no push, no in-app banner.
+export async function setSpotChatMuted(roomId: string, muted: boolean): Promise<void> {
+  const { error } = await supabase.rpc("set_spot_chat_muted", { p_room_id: roomId, p_muted: muted });
+  if (error) throw error;
+}

@@ -23,6 +23,7 @@ const meta = {
       lastMessageAt: SAMPLE_DATE,
       unreadCount: 2,
       canMessage: true,
+      muted: false,
     },
     viewerId: "viewer-id",
     onPress: fn(),
@@ -34,3 +35,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
+
+export const Muted: Story = {
+  args: { chat: { ...meta.args.chat, muted: true } },
+};

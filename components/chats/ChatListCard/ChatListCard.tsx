@@ -48,6 +48,9 @@ export function ChatListCard({ chat, viewerId, onPress }: Props) {
           >
             {chatDisplayName(chat).toUpperCase()}
           </Text>
+          {chat.muted && (
+            <Ionicons name="notifications-off" size={13} color={C.muted} accessibilityLabel="Muted" />
+          )}
           {chat.otherState === "blocked_by_me" && (
             <Ionicons name="ban" size={13} color={C.secondary} accessibilityLabel="Blocked" />
           )}

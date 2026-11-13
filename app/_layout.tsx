@@ -9,6 +9,7 @@ import { UploadProgressBar } from "@/components/posts/UploadProgressBar";
 import { useWelcomeXpToast } from "@/lib/xp/useWelcomeXpToast";
 import { useCheckInSync } from "@/lib/shared/hooks/useCheckInSync";
 import { useChatRealtime } from "@/lib/messages/hooks/useChatRealtime";
+import { useSpotChatsRealtime } from "@/lib/spotChat/hooks/useSpotChatsRealtime";
 import { usePushNotificationRouting } from "@/lib/notifications/usePushNotificationRouting";
 import DrawerMenu from "@/components/ui/DrawerMenu";
 import { ToastHost } from "@/components/ui/ToastHost";
@@ -56,6 +57,7 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
   useWelcomeXpToast(profile);
   useCheckInSync();
   useChatRealtime();
+  useSpotChatsRealtime();
   usePushNotificationRouting();
 
   useEffect(() => {

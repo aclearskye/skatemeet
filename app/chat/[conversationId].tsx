@@ -15,6 +15,8 @@ import { useOtherLastReadAt } from "@/lib/messages/hooks/useOtherLastReadAt";
 import { useReportMessage } from "@/lib/messages/hooks/useReportMessage";
 import { useSendMessage } from "@/lib/messages/hooks/useSendMessage";
 import { messageStatus, type Message } from "@/lib/messages/types";
+import { dmChatKey } from "@/lib/shared/activeChat";
+import { useActiveChat } from "@/lib/shared/hooks/useActiveChat";
 import { C, F } from "@/lib/theme";
 import { ChatHeader } from "@/components/chats/ChatHeader";
 import { ChatLockedBanner, type ChatLockReason } from "@/components/chats/ChatLockedBanner";
@@ -36,6 +38,7 @@ export default function ChatThreadScreen() {
     useConversationMessages(conversationId);
   const { data: otherLastReadAt = null } = useOtherLastReadAt(conversationId);
   const { send } = useSendMessage(conversationId ?? "");
+  useActiveChat(conversationId ? dmChatKey(conversationId) : null);
   const { markRead } = useMarkConversationRead(conversationId);
   const { clear } = useClearConversation(conversationId ?? "");
   const { deleteChat } = useDeleteConversation(conversationId ?? "");

@@ -1,5 +1,12 @@
 import { supabase } from "@/lib/supabaseClient";
-import { SPOT_CHAT_PAGE_SIZE, type SpotChatMessage, type SpotChatMessagePage, type SpotChatRoom, type SpotChatSpotRef } from "./types";
+import {
+  SPOT_CHAT_PAGE_SIZE,
+  type SpotChatListItem,
+  type SpotChatMessage,
+  type SpotChatMessagePage,
+  type SpotChatRoom,
+  type SpotChatSpotRef,
+} from "./types";
 
 type RoomRow = {
   room_id: string | null;
@@ -61,4 +68,40 @@ export async function fetchSpotChatMessages(roomId: string, before: string | nul
     messages,
     nextCursor: messages.length === SPOT_CHAT_PAGE_SIZE ? messages[messages.length - 1].createdAt : null,
   };
+}
+
+type MySpotChatRow = {
+  room_id: string;
+  spot_id: string | null;
+  osm_spot_place_id: string | null;
+  spot_name: string;
+  is_diy: boolean;
+  member_count: number;
+  joined_at: string;
+  last_message_body: string | null;
+  last_message_at: string | null;
+  last_message_is_mine: boolean | null;
+  last_sender_name: string | null;
+  unread_count: number;
+  muted: boolean;
+};
+
+// Every spot chat the viewer has joined and not left, most recent first.
+export async function fetchMySpotChats(): Promise<SpotChatListItem[]> {
+  const { data, error } = await supabase.rpc("get_my_spot_chats");
+  if (error) throw error;
+  return (data as MySpotChatRow[]).map((row) => ({
+    roomId: row.room_id,
+    spotRef: { spotId: row.spot_id, osmSpotPlaceId: row.osm_spot_place_id },
+    spotName: row.spot_name,
+    isDiy: row.is_diy,
+    memberCount: row.member_count,
+    joinedAt: row.joined_at,
+    lastMessageBody: row.last_message_body,
+    lastMessageAt: row.last_message_at,
+    lastMessageIsMine: row.last_message_is_mine ?? false,
+    lastSenderName: row.last_sender_name,
+    unreadCount: row.unread_count,
+    muted: row.muted ?? false,
+  }));
 }

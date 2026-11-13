@@ -86,3 +86,12 @@ export async function reportMessage({ messageId, reason, details, block }: Repor
   });
   if (error) throw toMessageError(error);
 }
+
+// Mute or unmute one conversation for the caller: no push, no in-app banner.
+export async function setConversationMuted(conversationId: string, muted: boolean): Promise<void> {
+  const { error } = await supabase.rpc("set_conversation_muted", {
+    p_conversation_id: conversationId,
+    p_muted: muted,
+  });
+  if (error) throw error;
+}

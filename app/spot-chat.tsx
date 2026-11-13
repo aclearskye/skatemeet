@@ -9,6 +9,9 @@ import { useClearSpotChat } from "@/lib/spotChat/hooks/useClearSpotChat";
 import { useHideSpotChatMessage } from "@/lib/spotChat/hooks/useHideSpotChatMessage";
 import { useJoinSpotChat } from "@/lib/spotChat/hooks/useJoinSpotChat";
 import { useLeaveSpotChat } from "@/lib/spotChat/hooks/useLeaveSpotChat";
+import { useMarkSpotChatRead } from "@/lib/spotChat/hooks/useMarkSpotChatRead";
+import { spotChatRoomKey } from "@/lib/shared/activeChat";
+import { useActiveChat } from "@/lib/shared/hooks/useActiveChat";
 import { useReportSpotChatMessage } from "@/lib/spotChat/hooks/useReportSpotChatMessage";
 import { useSendSpotChatMessage } from "@/lib/spotChat/hooks/useSendSpotChatMessage";
 import { useSpotChatMessages } from "@/lib/spotChat/hooks/useSpotChatMessages";
@@ -56,6 +59,10 @@ export default function SpotChatScreen() {
   const { messages, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useSpotChatMessages(roomId, isMember);
   useSpotChatRealtime(roomId, isMember);
+  // Skip optimistic copies: mark read once the real newest message lands.
+  const newestMessageId = messages.find((m) => !m.isPending)?.messageId ?? null;
+  useMarkSpotChatRead(roomId, isMember, newestMessageId);
+  useActiveChat(roomId ? spotChatRoomKey(roomId) : null);
 
   const { join, isJoining } = useJoinSpotChat(spotRef);
   const { leave } = useLeaveSpotChat(spotRef, roomId);

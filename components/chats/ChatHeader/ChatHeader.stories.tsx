@@ -24,6 +24,7 @@ const meta = {
       lastMessageAt: SAMPLE_DATE,
       unreadCount: 2,
       canMessage: true,
+      muted: false,
     },
     topInset: 0,
     onBack: fn(),

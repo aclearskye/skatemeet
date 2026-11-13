@@ -6,15 +6,16 @@ import { styles } from "./SearchBar.styles";
 type Props = {
   value: string;
   onChangeText: (text: string) => void;
+  placeholder?: string;
 };
 
-export function SearchBar({ value, onChangeText }: Props) {
+export function SearchBar({ value, onChangeText, placeholder = "Search skaters…" }: Props) {
   return (
     <View style={styles.searchRow}>
       <Ionicons name="search-outline" size={16} color={C.muted} style={styles.searchIcon} />
       <TextInput
         style={styles.searchInput}
-        placeholder="Search skaters…"
+        placeholder={placeholder}
         placeholderTextColor={C.muted}
         value={value}
         onChangeText={onChangeText}
