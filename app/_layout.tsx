@@ -8,6 +8,7 @@ import { KeyboardProvider } from "@/lib/shared/keyboard";
 import { UploadProgressBar } from "@/components/posts/UploadProgressBar";
 import { useWelcomeXpToast } from "@/lib/xp/useWelcomeXpToast";
 import { useCheckInSync } from "@/lib/shared/hooks/useCheckInSync";
+import { useLiveLocationReporter } from "@/lib/shared/hooks/useLiveLocationReporter";
 import { useChatRealtime } from "@/lib/messages/hooks/useChatRealtime";
 import { useSpotChatsRealtime } from "@/lib/spotChat/hooks/useSpotChatsRealtime";
 import { usePushNotificationRouting } from "@/lib/notifications/usePushNotificationRouting";
@@ -56,6 +57,7 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
 
   useWelcomeXpToast(profile);
   useCheckInSync();
+  useLiveLocationReporter();
   useChatRealtime();
   useSpotChatsRealtime();
   usePushNotificationRouting();
