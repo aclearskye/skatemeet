@@ -172,6 +172,19 @@ const Login = () => {
               <Text style={styles.footerLink}>Create an account</Text>
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity
+            style={styles.businessCta}
+            onPress={() => router.push("/store-sign-up" as never)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="storefront-outline" size={20} color={C.primary} />
+            <View style={styles.businessCtaText}>
+              <Text style={styles.businessCtaTitle}>Are you a skateboarding business?</Text>
+              <Text style={styles.businessCtaSub}>List and manage your store on SkateMeet</Text>
+            </View>
+            <Text style={styles.businessCtaAction}>GET STARTED</Text>
+          </TouchableOpacity>
         </KeyboardAwareScrollView>
           </SafeAreaView>
   );
@@ -337,5 +350,36 @@ const styles = StyleSheet.create({
     color: C.primary,
     fontFamily: F.bodyBold,
     fontSize: 14,
+  },
+  businessCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 24,
+    padding: 16,
+    borderRadius: R,
+    borderWidth: 1,
+    borderColor: C.borderVariant,
+    backgroundColor: C.surfaceLow,
+  },
+  businessCtaText: {
+    flex: 1,
+    gap: 2,
+  },
+  businessCtaTitle: {
+    color: C.text,
+    fontFamily: F.bodyBold,
+    fontSize: 14,
+  },
+  businessCtaSub: {
+    color: C.muted,
+    fontFamily: F.body,
+    fontSize: 12,
+  },
+  businessCtaAction: {
+    color: C.primary,
+    fontFamily: F.mono,
+    fontSize: 11,
+    letterSpacing: 1,
   },
 });

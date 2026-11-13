@@ -66,7 +66,12 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
     if (isLoadingAuthContext || !fontsLoaded) return;
 
     const inOnboardingGroup = segments[0] === "(onboarding)";
-    const inPublicScreen = segments[0] === "Login" || segments[0] === "SignUp";
+    const inPublicScreen =
+      segments[0] === "Login" || segments[0] === "SignUp" || segments[0] === "store-sign-up";
+    const inStoreGroup = segments[0] === "(store)";
+    // A business account never sees skater onboarding, the age check or the
+    // app itself until Phase 2 -- only its own dashboard (docs/ACCOUNT_TYPES.md).
+    const isStoreAccount = profile?.account_type === "store";
     // Readable signed in or out -- SignUp links to it.
     const inPrivacyScreen = segments[0] === "privacy";
     const inAgeCheckScreen = segments[0] === "age-check";
@@ -93,6 +98,10 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
       !inPublicPostScreen
     ) {
       router.replace("/Login");
+    } else if (session && isStoreAccount) {
+      if (!inStoreGroup && !inPrivacyScreen && !inAccountDeletedScreen) {
+        router.replace("/(store)" as never);
+      }
     } else if (session && profile === null && !inPublicScreen && !inOnboardingGroup) {
       router.replace("/(onboarding)");
     } else if (profile && !inOnboardingGroup && !profile.onboarding_completed) {
@@ -123,7 +132,9 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="Login" />
         <Stack.Screen name="SignUp" />
+        <Stack.Screen name="store-sign-up" />
         <Stack.Screen name="(onboarding)" />
+        <Stack.Screen name="(store)" />
         <Stack.Screen name="spot-detail" />
         <Stack.Screen name="store-detail" />
         <Stack.Screen name="user/[userId]" />

@@ -19,7 +19,8 @@ export function useWelcomeXpToast(profile: Profile | null | undefined) {
   const checkedProfileId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!profile || profile.onboarding_completed) return;
+    // Store accounts never go through skater onboarding and earn no XP.
+    if (!profile || profile.onboarding_completed || profile.account_type === "store") return;
     if (checkedProfileId.current === profile.profile_id) return;
     checkedProfileId.current = profile.profile_id;
 
