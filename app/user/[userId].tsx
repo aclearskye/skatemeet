@@ -3,7 +3,10 @@ import { PrivateProfileView } from "@/components/profile/PrivateProfileView";
 import { useProfileCard } from "@/lib/profiles/hooks/useProfileCard";
 import { useUserProfile } from "@/lib/profiles/hooks/useUserProfile";
 import { C, F } from "@/lib/theme";
+import { useStoreForProfile } from "@/lib/storeAccounts/hooks/useStoreForProfile";
+import { useOpenStorePage } from "@/lib/storeAccounts/hooks/useOpenStorePage";
 import { useLocalSearchParams } from "expo-router";
+import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 export default function UserProfileScreen() {
@@ -15,6 +18,27 @@ export default function UserProfileScreen() {
   // indistinguishable).
   const isHidden = !isLoading && !isError && profile === null;
   const { data: card, isLoading: cardLoading } = useProfileCard(userId ?? null, isHidden);
+
+  // A Store account has no skater profile: a link to one (a post header, a
+  // follower list) opens its store page instead.
+  const isStore = profile?.account_type === "store";
+  const { data: storeRef, isLoading: storeLoading } = useStoreForProfile(userId ?? null, isStore);
+  const { openStorePage } = useOpenStorePage();
+  useEffect(() => {
+    if (storeRef) openStorePage(storeRef, { replace: true }).catch(() => {});
+  }, [storeRef, openStorePage]);
+
+  if (isStore) {
+    return (
+      <View style={styles.center}>
+        {storeLoading || storeRef ? (
+          <ActivityIndicator color={C.primary} />
+        ) : (
+          <Text style={styles.errorText}>This store isn&apos;t available.</Text>
+        )}
+      </View>
+    );
+  }
 
   if (isLoading || (isHidden && cardLoading)) {
     return (

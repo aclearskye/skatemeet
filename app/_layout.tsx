@@ -1,3 +1,4 @@
+import { isApprovedStoreProfile } from "@/lib/storeAccounts/types";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import AuthProvider from "@/providers/auth-provider";
 import { DrawerProvider } from "@/lib/context/drawer-context";
@@ -69,9 +70,11 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
     const inPublicScreen =
       segments[0] === "Login" || segments[0] === "SignUp" || segments[0] === "store-sign-up";
     const inStoreGroup = segments[0] === "(store)";
-    // A business account never sees skater onboarding, the age check or the
-    // app itself until Phase 2 -- only its own dashboard (docs/ACCOUNT_TYPES.md).
+    // A business account never sees skater onboarding or the age check. Until
+    // its claim is approved it only sees its dashboard; once approved it gets
+    // the normal app with store tools (docs/ACCOUNT_TYPES.md).
     const isStoreAccount = profile?.account_type === "store";
+    const isApprovedStore = isApprovedStoreProfile(profile);
     // Readable signed in or out -- SignUp links to it.
     const inPrivacyScreen = segments[0] === "privacy";
     const inAgeCheckScreen = segments[0] === "age-check";
@@ -98,9 +101,13 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
       !inPublicPostScreen
     ) {
       router.replace("/Login");
-    } else if (session && isStoreAccount) {
-      if (!inStoreGroup && !inPrivacyScreen && !inAccountDeletedScreen) {
+    } else if (session && isStoreAccount && !isApprovedStore) {
+      if (!inStoreGroup && !inPrivacyScreen && !inAccountDeletedScreen && segments[0] !== "billing-return") {
         router.replace("/(store)" as never);
+      }
+    } else if (session && isApprovedStore) {
+      if (inStoreGroup || inOnboardingGroup || inPublicScreen || inAgeCheckScreen || segments[0] === undefined) {
+        router.replace("/(tabs)");
       }
     } else if (session && profile === null && !inPublicScreen && !inOnboardingGroup) {
       router.replace("/(onboarding)");
@@ -135,6 +142,7 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
         <Stack.Screen name="store-sign-up" />
         <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(store)" />
+        <Stack.Screen name="billing-return" />
         <Stack.Screen name="spot-detail" />
         <Stack.Screen name="store-detail" />
         <Stack.Screen name="user/[userId]" />
