@@ -61,6 +61,7 @@ To be decided for each feature. These are the current social surfaces to rule on
 | Check-ins and location | `lib/checkins/` | _TBD_ |
 | Reviews | `lib/spots/`, `lib/stores/` | _TBD_ |
 | Push notifications | `lib/notifications/` | _TBD_ |
+| Nearby skaters (Search tab, current or chosen location) | `lib/nearby/` | **Off, decided.** A Child can't search nearby, can't appear in results and never has a location reported. Server-enforced: `search_nearby_skaters` and `report_live_location` require `age_confirmed_at`, which only the 18+ gate sets. When the Child band lands, both must refuse Child accounts explicitly, not rely on `age_confirmed_at` alone. See [Nearby skaters checklist](#nearby-skaters-checklist) |
 | Spot chats (public group chat per spot/DIY) | `lib/spotChat/` | **Off** until decided. Server-enforced: `_spot_chat_eligible` requires `age_confirmed_at`, which only the 18+ gate sets. When the Child band lands, that helper must refuse Child accounts unless a decision says otherwise |
 
 Fill in this table as decisions are made. It is the reference for Child behaviour.
@@ -78,6 +79,20 @@ One text-only group chat per skate spot and DIY spot (never stores), in `supabas
 | Guardian | Nothing extra. No guardian visibility into spot chats yet | n/a | n/a |
 
 Banned accounts can't join or post, and their existing messages are hidden.
+
+### Nearby skaters checklist
+
+When the search bar is empty, the Search tab lists skaters whose last reported location is near the viewer's current location or a location they choose. Results come in distance bands (no exact order), within 50 km, and load page by page as the viewer scrolls. Distance, coordinates and the time of the last update are never returned. Only a rounded location (about 2 km grid) is stored, in `profile_locations`, which no client can read. Changing the search location is rate-limited and stale locations are dropped.
+
+| Type | See it | Use it | Be the subject of it |
+|---|---|---|---|
+| Child | No | No | **No.** Never listed, and no location is reported or stored |
+| Adult | Yes | Search by current or chosen location. Turn discoverability on or off from the Search tab | Yes, only if public and discoverable. **Private accounts are never listed in nearby results**, even to friends (they still appear in username search under the usual privacy rules) |
+| Store | Yes (needs `age_confirmed_at`, same as Adult) | Same as Adult | **Yes for now**, while Store accounts are only partly built. Revisit when Store onboarding lands |
+| Admin | Same as Adult. No admin view of anyone's location | Same as Adult | Same as Adult |
+| Guardian | Nothing extra. No guardian visibility into a Child's location, since a Child has none stored | n/a | n/a |
+
+Banned accounts, blocked pairs (either direction) and the viewer themself are always excluded.
 
 ## Where the code is today
 
