@@ -12,12 +12,15 @@ export type ToastItem = {
   message: string;
   label?: string;
   variant: ToastVariant;
+  // Tapping the toast runs this before dismissing it (e.g. open a chat).
+  onPress?: () => void;
 };
 
 type ShowToastInput = {
   message: string;
   label?: string;
   variant: ToastVariant;
+  onPress?: () => void;
 };
 
 type ToastContextType = {

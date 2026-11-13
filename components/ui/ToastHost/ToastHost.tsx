@@ -54,7 +54,13 @@ export function ToastHost() {
           animatedStyle,
         ]}
       >
-        <TouchableOpacity activeOpacity={0.85} onPress={dismiss}>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => {
+            current.onPress?.();
+            dismiss();
+          }}
+        >
           <View style={styles.row}>
             <Ionicons name={VARIANT_ICON[current.variant]} size={20} color={VARIANT_COLOR[current.variant]} />
             <View style={styles.textColumn}>
