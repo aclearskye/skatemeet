@@ -23,6 +23,7 @@ export default function StoreSignUpScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
@@ -73,7 +74,11 @@ export default function StoreSignUpScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAwareScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <TouchableOpacity style={styles.back} onPress={() => router.back()} hitSlop={12}>
           <Ionicons name="arrow-back" size={22} color={C.text} />
         </TouchableOpacity>
@@ -99,7 +104,8 @@ export default function StoreSignUpScreen() {
             label="PASSWORD"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            secureTextEntry={!showPassword}
+            onToggleSecureEntry={() => setShowPassword((visible) => !visible)}
             autoComplete="new-password"
             textContentType="newPassword"
           />
@@ -107,7 +113,7 @@ export default function StoreSignUpScreen() {
             label="CONFIRM PASSWORD"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
-            secureTextEntry
+            secureTextEntry={!showPassword}
             autoComplete="new-password"
             textContentType="newPassword"
           />

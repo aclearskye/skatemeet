@@ -9,16 +9,22 @@ export const styles = StyleSheet.create({
     letterSpacing: 1.5,
     color: C.muted,
   },
-  input: {
-    minHeight: 48,
+  field: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     borderBottomWidth: 2,
     borderBottomColor: C.border,
     paddingHorizontal: 4,
+  },
+  fieldFocused: { borderBottomColor: C.primary },
+  input: {
+    flex: 1,
+    minHeight: 48,
     color: C.text,
     fontFamily: F.body,
     fontSize: 16,
   },
-  inputFocused: { borderBottomColor: C.primary },
   inputMultiline: { minHeight: 96, paddingTop: 12, textAlignVertical: "top" },
   hint: {
     fontFamily: F.body,

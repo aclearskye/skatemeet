@@ -57,6 +57,7 @@ const Login = () => {
           style={{ flex: 1 }}
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           <View style={styles.brand}>
             <View style={styles.logoMark}>
