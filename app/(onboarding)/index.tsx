@@ -1,4 +1,5 @@
 import { consumeAgePassedOnDevice } from "@/lib/auth/ageGate";
+import { confirmAge } from "@/lib/profiles/mutations";
 import { sanitizeDisplayName, sanitizeUsername } from "@/lib/auth/sanitizeUsername";
 import { DISCIPLINES, SKILL_LEVELS } from "@/lib/profiles/profileOptions";
 import { useAuthContext } from "@/lib/context/use-auth-context";
@@ -123,13 +124,18 @@ export default function Onboarding() {
         city: data.city.trim() || null,
         bio: data.bio.trim() || null,
         onboarding_completed: true,
-        ...(agePassed ? { age_confirmed_at: new Date().toISOString() } : {}),
       })
       .eq("profile_id", session.user.id);
     if (updateError) {
       setLoading(false);
       setError("Couldn't save your profile. Try again.");
       return;
+    }
+    // age_confirmed_at isn't client-writable, so it's stamped through the
+    // confirm_age RPC. If that fails the profile is still saved and the
+    // app/age-check.tsx screen asks again, so it isn't fatal here.
+    if (agePassed) {
+      await confirmAge().catch(() => {});
     }
     await refreshProfile();
     setLoading(false);
