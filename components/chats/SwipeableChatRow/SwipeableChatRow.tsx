@@ -31,6 +31,9 @@ export function SwipeableChatRow({ muted, onToggleMute, onDelete, children }: Pr
       friction={2}
       rightThreshold={40}
       overshootRight={false}
+      // Opaque, so the card covers the actions behind it until it slides
+      // clear of them (otherwise its text draws over the buttons).
+      childrenContainerStyle={styles.card}
       renderRightActions={() => (
         <View style={styles.actions}>
           <TouchableOpacity

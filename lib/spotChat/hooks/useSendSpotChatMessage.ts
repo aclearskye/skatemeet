@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { ensurePushRegistered } from "@/lib/notifications/pushRegistration";
 import { queryKeys } from "@/utils/queryKeys";
 import { prependMessage, replaceMessage, type SpotChatPages } from "../messageCache";
 import { sendSpotChatMessage } from "../mutations";
@@ -29,6 +30,8 @@ export function useSendSpotChatMessage(roomId: string | null) {
     },
     onSuccess: (message, { tempId }) => {
       queryClient.setQueryData<SpotChatPages>(threadKey, (old) => replaceMessage(old, tempId, message));
+      // Covers members who joined before joining asked for push.
+      ensurePushRegistered();
     },
     onError: (_err, { tempId }) => {
       queryClient.setQueryData<SpotChatPages>(threadKey, (old) => replaceMessage(old, tempId, null));
