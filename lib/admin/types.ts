@@ -192,6 +192,7 @@ export type HeldVideoPreview = {
 // claim on a store that already has an owner; approving it transfers it.
 export type StoreClaimQueueItem = {
   claimId: string;
+  profileId: string;
   kind: "claim" | "dispute";
   accountEmail: string;
   legalName: string | null;

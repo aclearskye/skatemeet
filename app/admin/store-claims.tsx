@@ -21,10 +21,12 @@ export default function AdminStoreClaimsScreen() {
   const review = useReviewStoreClaim();
 
   const handleDecide = (claimId: string, approve: boolean, notes: string) => {
+    const claim = claims.find((c) => c.claimId === claimId);
+    if (!claim) return;
     setErrorMessage(null);
     setPendingClaimId(claimId);
     review.mutate(
-      { claimId, approve, notes },
+      { claimId, profileId: claim.profileId, approve, notes },
       {
         onError: (error) =>
           setErrorMessage(error instanceof AdminError ? error.message : "Something went wrong — try again."),

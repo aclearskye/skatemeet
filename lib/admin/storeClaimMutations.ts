@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
+import { ensureStoreSubscription } from "@/lib/storeAccounts/billingMutations";
 import { AdminError } from "./mutations";
 
 function toAdminError(error: { message: string }): AdminError {
@@ -8,15 +9,19 @@ function toAdminError(error: { message: string }): AdminError {
   return new AdminError("UNKNOWN");
 }
 
-export type StoreClaimDecision = { claimId: string; approve: boolean; notes: string };
+export type StoreClaimDecision = { claimId: string; profileId: string; approve: boolean; notes: string };
 
 // Approving makes the business the store's owner. For a dispute this revokes
 // the current owner. Rejecting needs notes, which the business sees.
-export async function reviewStoreClaim({ claimId, approve, notes }: StoreClaimDecision): Promise<void> {
+export async function reviewStoreClaim({ claimId, profileId, approve, notes }: StoreClaimDecision): Promise<void> {
   const { error } = await supabase.rpc("admin_review_store_claim", {
     p_claim_id: claimId,
     p_approve: approve,
     p_notes: notes,
   });
   if (error) throw toAdminError(error);
+  // Starts the store's subscription (the 14-day trial runs from approval).
+  // Best effort: the store's own app retries, and the trial counts from
+  // approval either way.
+  if (approve) await ensureStoreSubscription(profileId).catch(() => {});
 }

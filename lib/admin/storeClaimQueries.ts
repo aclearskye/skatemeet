@@ -4,6 +4,7 @@ import type { StoreClaimQueueItem } from "./types";
 
 type StoreClaimRow = {
   claim_id: string;
+  profile_id: string;
   kind: "claim" | "dispute";
   account_email: string;
   legal_name: string | null;
@@ -31,6 +32,7 @@ export async function fetchStoreClaimsQueue(): Promise<StoreClaimQueueItem[]> {
 
   return (data as StoreClaimRow[]).map((row) => ({
     claimId: row.claim_id,
+    profileId: row.profile_id,
     kind: row.kind,
     accountEmail: row.account_email,
     legalName: row.legal_name,
