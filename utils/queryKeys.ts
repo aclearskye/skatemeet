@@ -53,6 +53,12 @@ export const queryKeys = {
     ["checkIn", entityKey, "hasManual"] as const,
   adminVerificationQueue: () =>
     ["admin", "verificationQueue"] as const,
+  adminStoreClaims: () =>
+    ["admin", "storeClaims"] as const,
+  storeOnboarding: (profileId: string) =>
+    ["storeAccount", profileId, "onboarding"] as const,
+  claimableStoreSearch: (query: string) =>
+    ["storeAccount", "claimableSearch", query] as const,
   adminPhotoReports: () =>
     ["admin", "photoReports"] as const,
   adminReviewReports: () =>
