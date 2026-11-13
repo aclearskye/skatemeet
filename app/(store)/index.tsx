@@ -11,19 +11,21 @@ import { BusinessDetailsStep } from "@/components/storeAccount/BusinessDetailsSt
 import { ClaimProofStep } from "@/components/storeAccount/ClaimProofStep";
 import { ClaimStatusPanel } from "@/components/storeAccount/ClaimStatusPanel";
 import { ClaimStoreStep } from "@/components/storeAccount/ClaimStoreStep";
+import { StorePhotosStep } from "@/components/storeAccount/StorePhotosStep";
 import { StorePrimaryButton } from "@/components/storeAccount/StorePrimaryButton";
 import { StoreStepIndicator } from "@/components/storeAccount/StoreStepIndicator";
 
 // The Store account's whole app until its claim is approved (and, in Phase 1,
-// afterwards too): business details -> find or add the store -> proof ->
-// review status. The step comes from server state. `override` lets the owner
+// afterwards too): business details -> find or add the store -> photos ->
+// proof -> review status. The step comes from server state. `override` lets the owner
 // step back to edit details or change store while the claim is still a draft.
 export default function StoreDashboardScreen() {
   const insets = useSafeAreaInsets();
   const { data: state, isLoading, isError, refetch } = useStoreOnboarding();
   const [override, setOverride] = useState<StoreOnboardingStep | null>(null);
+  const [skippedPhotos, setSkippedPhotos] = useState(false);
 
-  const serverStep = state ? currentOnboardingStep(state) : null;
+  const serverStep = state ? currentOnboardingStep(state, skippedPhotos) : null;
   const step = override ?? serverStep;
   const clearOverride = () => setOverride(null);
 
@@ -65,12 +67,23 @@ export default function StoreDashboardScreen() {
             />
           ) : step === "store" ? (
             <ClaimStoreStep onCancel={override ? clearOverride : undefined} onDone={clearOverride} />
+          ) : step === "photos" && state.business ? (
+            <StorePhotosStep
+              business={state.business}
+              publicDetails={state.publicDetails}
+              onDone={() => {
+                setSkippedPhotos(true);
+                clearOverride();
+              }}
+              onCancel={override ? clearOverride : undefined}
+            />
           ) : step === "proof" && state.claim ? (
             <ClaimProofStep
               key={state.claim.claimId}
               claim={state.claim}
               onChangeStore={() => setOverride("store")}
               onEditDetails={() => setOverride("details")}
+              onEditPhotos={() => setOverride("photos")}
             />
           ) : state.claim ? (
             <ClaimStatusPanel claim={state.claim} />

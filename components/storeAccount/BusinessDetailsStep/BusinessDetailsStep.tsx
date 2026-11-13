@@ -8,7 +8,6 @@ import {
   type StoreBusinessDetails,
   type StorePublicDetails,
 } from "@/lib/storeAccounts/types";
-import { StoreImagePicker } from "@/components/storeAccount/StoreImagePicker";
 import { StorePrimaryButton } from "@/components/storeAccount/StorePrimaryButton";
 import { StoreTextField } from "@/components/storeAccount/StoreTextField";
 import { styles } from "./BusinessDetailsStep.styles";
@@ -80,7 +79,10 @@ export function BusinessDetailsStep({ business, publicDetails, onCancel, onSaved
       />
 
       <Text style={[styles.sectionTitle, styles.sectionGap]}>PUBLIC DETAILS</Text>
-      <Text style={styles.sectionHint}>Shown on your store page once your claim is approved. All optional.</Text>
+      <Text style={styles.sectionHint}>
+        Shown on your store page once your claim is approved. All optional. You&apos;ll add photos after choosing your
+        store.
+      </Text>
       <StoreTextField
         label="STORE PHONE"
         value={form.publicPhone ?? ""}
@@ -96,8 +98,6 @@ export function BusinessDetailsStep({ business, publicDetails, onCancel, onSaved
         autoCapitalize="none"
         maxLength={254}
       />
-      <StoreImagePicker label="LOGO" shape="square" path={form.logoPath} onChange={(p) => set("logoPath", p)} />
-      <StoreImagePicker label="COVER PHOTO" shape="wide" path={form.coverPath} onChange={(p) => set("coverPath", p)} />
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <StorePrimaryButton label="SAVE AND CONTINUE" onPress={handleSave} isBusy={save.isPending} />

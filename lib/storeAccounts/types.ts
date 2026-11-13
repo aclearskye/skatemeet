@@ -87,15 +87,22 @@ export type PickedEvidenceFile = {
 
 // Which part of onboarding the Store dashboard shows, derived from the
 // server state so a reload always lands in the right place.
-export type StoreOnboardingStep = "details" | "store" | "proof" | "status";
+export type StoreOnboardingStep = "details" | "store" | "photos" | "proof" | "status";
 
-export function currentOnboardingStep(state: StoreOnboardingState): StoreOnboardingStep {
+// Logo and cover are optional, so the photos step only comes up by itself
+// while neither is set and the owner hasn't skipped it (`skippedPhotos`,
+// held by the dashboard for the session).
+export function currentOnboardingStep(state: StoreOnboardingState, skippedPhotos = false): StoreOnboardingStep {
   if (!state.business) return "details";
   const claim = state.claim;
   if (!claim || claim.status === "rejected" || claim.status === "revoked") {
     return claim ? "status" : "store";
   }
-  if (claim.status === "draft") return claim.store ? "proof" : "store";
+  if (claim.status === "draft") {
+    if (!claim.store) return "store";
+    const hasPhotos = Boolean(state.publicDetails?.logoPath || state.publicDetails?.coverPath);
+    return hasPhotos || skippedPhotos ? "proof" : "photos";
+  }
   return "status";
 }
 

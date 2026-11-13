@@ -17,11 +17,12 @@ type Props = {
   claim: StoreClaim;
   onChangeStore: () => void;
   onEditDetails: () => void;
+  onEditPhotos: () => void;
 };
 
 type SubmitVariables = { paths: string[]; note: string };
 
-export function ClaimProofStep({ claim, onChangeStore, onEditDetails }: Props) {
+export function ClaimProofStep({ claim, onChangeStore, onEditDetails, onEditPhotos }: Props) {
   const { profile, session } = useAuthContext();
   const [paths, setPaths] = useState<string[]>(claim.evidencePaths);
   const [note, setNote] = useState(claim.applicantNote ?? "");
@@ -118,6 +119,7 @@ export function ClaimProofStep({ claim, onChangeStore, onEditDetails }: Props) {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <StorePrimaryButton label="SUBMIT FOR REVIEW" onPress={handleSubmit} isBusy={submit.isPending} disabled={isUploading} />
+      <StorePrimaryButton label="EDIT STORE PHOTOS" variant="secondary" onPress={onEditPhotos} />
       <StorePrimaryButton label="EDIT BUSINESS DETAILS" variant="secondary" onPress={onEditDetails} />
     </View>
   );
