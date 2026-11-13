@@ -8,9 +8,11 @@ import { useSearchLocation } from "@/lib/nearby/hooks/useSearchLocation";
 import { nearbyListStatus, shortPlaceName } from "@/lib/nearby/types";
 import { useProfileSearch } from "@/lib/profiles/hooks/useProfileSearch";
 import type { ProfileSearchResult } from "@/lib/profiles/queries";
+import { useAuthContext } from "@/lib/context/use-auth-context";
 import { C, F } from "@/lib/theme";
 import { DiscoverabilityToggle } from "@/components/search/DiscoverabilityToggle";
 import { NearbySkatersList } from "@/components/search/NearbySkatersList";
+import { NearbyStoresRow } from "@/components/search/NearbyStoresRow";
 import { SearchBar } from "@/components/search/SearchBar";
 import { SearchLocationButton } from "@/components/search/SearchLocationButton";
 import { SearchLocationModal } from "@/components/search/SearchLocationModal";
@@ -28,6 +30,10 @@ export default function SearchScreen() {
   const searchLocation = useSearchLocation();
   const nearby = useNearbySkaters(searchLocation.coords);
   const discoverable = useDiscoverable();
+  // A store is never listed as a nearby skater (it shows under Stores
+  // nearby), so it gets no discoverability toggle.
+  const { profile } = useAuthContext();
+  const isStoreAccount = profile?.account_type === "store";
 
   const customLabel = searchLocation.location?.kind === "custom" ? searchLocation.location.label : null;
   const nearbyStatus = nearbyListStatus({
@@ -56,11 +62,13 @@ export default function SearchScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headingRow}>
           <Text style={styles.heading}>SEARCH</Text>
-          <DiscoverabilityToggle
-            isDiscoverable={discoverable.isDiscoverable}
-            isPrivate={discoverable.isPrivate}
-            onToggle={discoverable.setDiscoverable}
-          />
+          {isStoreAccount ? null : (
+            <DiscoverabilityToggle
+              isDiscoverable={discoverable.isDiscoverable}
+              isPrivate={discoverable.isPrivate}
+              onToggle={discoverable.setDiscoverable}
+            />
+          )}
         </View>
         <SearchBar value={query} onChangeText={setQuery} />
         {!enabled && (
@@ -69,6 +77,7 @@ export default function SearchScreen() {
             onPress={() => setIsLocationModalOpen(true)}
           />
         )}
+        {!enabled && <NearbyStoresRow coords={searchLocation.coords} />}
       </View>
 
       {!enabled ? (
