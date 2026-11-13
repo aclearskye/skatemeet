@@ -59,6 +59,17 @@ export const queryKeys = {
     ["storeAccount", profileId, "onboarding"] as const,
   claimableStoreSearch: (query: string) =>
     ["storeAccount", "claimableSearch", query] as const,
+  // Under "store" so invalidating a store's detail also refreshes its page layer.
+  storePage: (storeId: string | null, osmPlaceId: string | null) =>
+    ["store", storeId, osmPlaceId, "page"] as const,
+  storeBilling: (profileId: string) =>
+    ["storeAccount", profileId, "billing"] as const,
+  myStorePage: (profileId: string) =>
+    ["storeAccount", profileId, "page"] as const,
+  storeForProfile: (profileId: string) =>
+    ["storeAccount", "forProfile", profileId] as const,
+  nearbyStores: (lat: number, lng: number) =>
+    ["storeAccount", "nearby", lat, lng] as const,
   adminPhotoReports: () =>
     ["admin", "photoReports"] as const,
   adminReviewReports: () =>

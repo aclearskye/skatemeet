@@ -7,7 +7,9 @@ import {
   type NewClaimStorePayload,
   type PickedEvidenceFile,
   type SaveStoreDetailsPayload,
+  type UpdateStorePagePayload,
 } from "./types";
+import { storeImageUrl } from "./queries";
 
 export type CreateStoreAccountResult = { needsEmailConfirmation: boolean };
 
@@ -86,5 +88,21 @@ export async function withdrawStoreClaim(): Promise<void> {
 
 export async function restartStoreClaim(): Promise<void> {
   const { error } = await supabase.rpc("restart_store_claim");
+  if (error) throw toStoreAccountError(error);
+}
+
+// The owner's page editor. The logo also becomes the account's avatar, so
+// post headers and follower lists show it.
+export async function updateStorePage(payload: UpdateStorePagePayload): Promise<void> {
+  const { error } = await supabase.rpc("update_store_page", {
+    p_name: payload.name,
+    p_description: payload.description,
+    p_website: payload.website,
+    p_public_phone: payload.publicPhone,
+    p_public_email: payload.publicEmail,
+    p_logo_path: payload.logoPath,
+    p_cover_path: payload.coverPath,
+    p_logo_url: payload.logoPath ? storeImageUrl(payload.logoPath) : null,
+  });
   if (error) throw toStoreAccountError(error);
 }
