@@ -47,7 +47,7 @@ SkateMeet is moving from an 18+ app to one that also allows **13–17 year olds*
   - The owner **keeps the ownership claim**, so no other business can take the store.
   - The owner can only update **opening hours**. Every other owner edit is locked.
   - Resubscribing brings purchasing and full editing back.
-  - _Open: whether "unpaid" starts at the first missed payment or after 2 missed weekly retries, and whether the earlier "revert to community listing after 4 missed" rule still applies._
+  - A store becomes **officially unpaid after 2 missed weekly retries**. There's no later step: the page never reverts to the community listing, and owner details and photos stay visible but frozen.
 - **Store accounts can't buy.** The Cart and checkout are only for signed-in Adult accounts. Child accounts can browse only, and there's no guest cart.
 - **Storefront connection:** stores connect with per-store tokens, set up in person for the first clients. A public Shopify app comes later.
 - **Child interaction:** a Child can browse products but cart and checkout are off. A Child can start a DM with a store. A store can never start a DM with a Child.
@@ -122,10 +122,11 @@ The current model doesn't match the target yet. Check this before building on it
 | Concept | Today | Gap |
 |---|---|---|
 | Age | `lib/auth/ageGate.ts`: `MIN_AGE = 18`, under-18s refused or banned (`UNDERAGE_BAN_REASON`). Only `profiles.age_confirmed_at` is stored, never the date of birth | Needs a 13–17 band, a stored age band or adult flag (not the DOB) and a re-check on turning 18 |
-| Account type | `profiles.account_type`: `'user' \| 'business_pending' \| 'business_verified'` (`supabase/migrations/20260509172735_phase1_business_accounts.sql`, `AccountType` in `lib/context/use-auth-context.tsx`) | `user` must split into Child and Adult. `business_*` becomes Store |
-| Store conversion | `components/ui/SwitchToBusinessModal.tsx` converts an existing user account in place | The target is a **separate** Store onboarding flow |
-| Store ownership | None. No link between a Store account and a store entity | Needs a store-claim table with a unique index on the store entity |
-| Admin | `profiles.is_admin` boolean plus the SQL `is_admin(uuid)` helper used throughout RLS/RPCs | Matches the target model ("role on Adult"). Also enforce "Adult only" |
+| Account type | `profiles.account_type`: `'user' \| 'store'` (`supabase/migrations/20261116120000_store_accounts_phase1.sql`, `AccountType` in `lib/context/use-auth-context.tsx`). `profiles` is column-locked (`20261115120000_lock_profile_columns.sql`), so the client can't write it | `user` must split into Child and Adult |
+| Store sign-up | `app/store-sign-up.tsx` (linked from Login). `handle_new_user` sets `'store'` from `user_metadata.signup_kind`. Store accounts are routed to `app/(store)` only, skip skater onboarding and the age gate, and `confirm_age()` refuses them | Card capture at onboarding (Phase 3) |
+| Store ownership | `store_claims` (draft → pending → approved / rejected / revoked; `kind` claim or dispute). Partial unique indexes give one approved owner per store and one live claim per account. Proof is in the private `store-claim-evidence` bucket. Admins review in `/admin/store-claims` (`admin_review_store_claim`, audit-logged). A store created during onboarding is a hidden `user_stores` row (`pending_claim`) until approved | Owner-managed store page (Phase 2) |
+| Pending-store limits | "Dashboard only" is enforced by routing. On the server a pending Store has no `age_confirmed_at`, so spot chats and nearby already refuse it, and it can't insert `user_stores` directly. Most other social RPCs (DMs, follows, posts, reviews) don't check account type yet | Add an `_is_approved_store` / account-type check to the social RPCs in Phase 2, alongside the Store-to-Child DM rule |
+| Admin | `profiles.is_admin` boolean plus the SQL `is_admin(uuid)` helper used throughout RLS/RPCs. `profiles_store_never_admin` blocks Admin on a Store | Matches the target model ("role on Adult"). Also enforce "Adult only" once Child exists |
 | Guardian link | None | Needs a link table (adult, child, status, consent) and visibility rules |
 | Ads | None | Targeting must be gated on account type |
 
