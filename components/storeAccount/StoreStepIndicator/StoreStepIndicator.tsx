@@ -10,6 +10,7 @@ const STEPS: { key: StoreOnboardingStep; label: string }[] = [
   { key: "details", label: "DETAILS" },
   { key: "store", label: "STORE" },
   { key: "photos", label: "PHOTOS" },
+  { key: "billing", label: "BILLING" },
   { key: "proof", label: "PROOF" },
   { key: "status", label: "REVIEW" },
 ];

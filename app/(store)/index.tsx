@@ -4,10 +4,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { onSignOutButtonPress } from "@/lib/auth/onSignOutButtonPress";
 import { KeyboardAwareScrollView } from "@/lib/shared/keyboard";
+import { useStoreBilling } from "@/lib/storeAccounts/hooks/useStoreBilling";
 import { useStoreOnboarding } from "@/lib/storeAccounts/hooks/useStoreOnboarding";
 import { currentOnboardingStep, type StoreOnboardingStep } from "@/lib/storeAccounts/types";
 import { C, F } from "@/lib/theme";
 import { BusinessDetailsStep } from "@/components/storeAccount/BusinessDetailsStep";
+import { StoreBillingStep } from "@/components/storeAccount/StoreBillingStep";
 import { ClaimProofStep } from "@/components/storeAccount/ClaimProofStep";
 import { ClaimStatusPanel } from "@/components/storeAccount/ClaimStatusPanel";
 import { ClaimStoreStep } from "@/components/storeAccount/ClaimStoreStep";
@@ -17,15 +19,21 @@ import { StoreStepIndicator } from "@/components/storeAccount/StoreStepIndicator
 
 // The Store account's whole app until its claim is approved (and, in Phase 1,
 // afterwards too): business details -> find or add the store -> photos ->
-// proof -> review status. The step comes from server state. `override` lets the owner
+// payment card -> proof -> review status. The step comes from server state. `override` lets the owner
 // step back to edit details or change store while the claim is still a draft.
 export default function StoreDashboardScreen() {
   const insets = useSafeAreaInsets();
-  const { data: state, isLoading, isError, refetch } = useStoreOnboarding();
+  const { data: state, isLoading: isLoadingState, isError: isStateError, refetch } = useStoreOnboarding();
+  const billing = useStoreBilling();
+  const isLoading = isLoadingState || billing.isLoading;
+  const isError = isStateError || billing.isError;
   const [override, setOverride] = useState<StoreOnboardingStep | null>(null);
   const [skippedPhotos, setSkippedPhotos] = useState(false);
 
-  const serverStep = state ? currentOnboardingStep(state, skippedPhotos) : null;
+  const serverStep =
+    state && billing.data
+      ? currentOnboardingStep(state, { skippedPhotos, cardReady: billing.data.paymentMethodReady })
+      : null;
   const step = override ?? serverStep;
   const clearOverride = () => setOverride(null);
 
@@ -50,7 +58,10 @@ export default function StoreDashboardScreen() {
         <View style={styles.centered}>
           <Ionicons name="alert-circle-outline" size={32} color={C.error} />
           <Text style={styles.errorLabel}>COULDN&apos;T LOAD YOUR ACCOUNT</Text>
-          <StorePrimaryButton label="TRY AGAIN" variant="secondary" onPress={() => refetch()} />
+          <StorePrimaryButton label="TRY AGAIN" variant="secondary" onPress={() => {
+              refetch();
+              billing.refetch();
+            }} />
         </View>
       ) : (
         <KeyboardAwareScrollView
@@ -77,6 +88,8 @@ export default function StoreDashboardScreen() {
               }}
               onCancel={override ? clearOverride : undefined}
             />
+          ) : step === "billing" ? (
+            <StoreBillingStep onCheckAgain={() => billing.refetch()} isChecking={billing.isFetching} />
           ) : step === "proof" && state.claim ? (
             <ClaimProofStep
               key={state.claim.claimId}
