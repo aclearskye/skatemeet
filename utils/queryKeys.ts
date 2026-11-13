@@ -74,6 +74,12 @@ export const queryKeys = {
   // Per viewer: results depend on who's searching (privacy, blocks, self).
   userSearch: (profileId: string, query: string) =>
     ["search", "users", profileId, query] as const,
+  // Rounded to ~1 km, matching what the RPC is sent, so GPS jitter doesn't
+  // refetch (or use up a rate-limited search point).
+  nearbySkaters: (profileId: string, location: Coordinates) =>
+    ["search", "nearby", profileId, location.lat.toFixed(2), location.lng.toFixed(2)] as const,
+  placeSearch: (query: string) =>
+    ["search", "places", query] as const,
   friendStatus: (profileId: string, otherId: string) =>
     ["profile", profileId, "friendStatus", otherId] as const,
   friendsList: (profileId: string) =>

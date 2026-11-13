@@ -64,3 +64,17 @@ export const TYPE_LABELS: Record<string, string> = {
   park: "PARK",
   indoor: "INDOOR",
 };
+
+// ── Nearby skaters ────────────────────────────────────────────────────────────
+
+// Matches c_page_size in search_nearby_skaters (20261114120000_nearby_skaters.sql).
+export const NEARBY_PAGE_SIZE = 20;
+
+// The live-location reporter skips a report unless this long has passed or
+// the device has moved at least this far since the last one. The server
+// rounds to a ~2 km cell anyway, so reporting more often gains nothing.
+export const LIVE_LOCATION_REPORT_INTERVAL_MS = 15 * 60_000;
+export const LIVE_LOCATION_REPORT_MIN_MOVE_KM = 1;
+
+// City search in the search-location modal.
+export const PLACE_SEARCH_MIN_CHARS = 2;

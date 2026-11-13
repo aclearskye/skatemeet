@@ -7,6 +7,12 @@ export const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 4,
   },
+  // Smaller tapes need less room around them.
+  rowCompact: {
+    gap: 6,
+    paddingVertical: 2,
+    paddingHorizontal: 2,
+  },
   rowWrap: {
     flexWrap: "wrap",
   },

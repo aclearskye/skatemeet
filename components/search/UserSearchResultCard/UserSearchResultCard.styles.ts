@@ -16,6 +16,9 @@ export const styles = StyleSheet.create({
   previewRow: {
     flex: 1,
     flexDirection: "row",
+    // Not stretch: the info column must report its own content height (the
+    // avatar is sized from it), not grow to match the avatar.
+    alignItems: "flex-start",
     gap: 12,
     minWidth: 0,
   },
@@ -23,6 +26,9 @@ export const styles = StyleSheet.create({
     flex: 1,
     gap: 5,
     justifyContent: "center",
+    // Sets the card's height (the avatar matches it), so it can't collapse
+    // below a comfortable size for a short name with no badges.
+    minHeight: 64,
   },
   nameRow: {
     flexDirection: "row",

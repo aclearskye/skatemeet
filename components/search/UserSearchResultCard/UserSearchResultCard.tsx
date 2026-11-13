@@ -1,6 +1,7 @@
+import { useState } from "react";
+import { LayoutChangeEvent, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
-import { Text, TouchableOpacity, View } from "react-native";
 import { fetchUserStreak } from "@/lib/checkins/queries";
 import type { ProfileSearchResult } from "@/lib/profiles/queries";
 import { C } from "@/lib/theme";
@@ -15,11 +16,24 @@ type Props = {
   onPress: () => void;
 };
 
+// First-render guess for the avatar, close to a typical card's text height,
+// so it barely moves once the real height is measured.
+const INITIAL_AVATAR_SIZE = 76;
+
 export function UserSearchResultCard({ result, onPress }: Props) {
   const { data: streak } = useQuery({
     queryKey: queryKeys.userStreak(result.profileId),
     queryFn: () => fetchUserStreak(result.profileId),
   });
+  // The avatar is a square as tall as the text column beside it, so it
+  // fills the card's height. ProfileAvatar takes a fixed size, so the
+  // column is measured.
+  const [avatarSize, setAvatarSize] = useState(INITIAL_AVATAR_SIZE);
+
+  function handleInfoLayout(event: LayoutChangeEvent) {
+    const height = Math.round(event.nativeEvent.layout.height);
+    if (height > 0 && height !== avatarSize) setAvatarSize(height);
+  }
 
   return (
     <View style={styles.card}>
@@ -31,10 +45,10 @@ export function UserSearchResultCard({ result, onPress }: Props) {
             displayName={result.displayName}
             avatarUrl={result.avatarUrl}
             isOwnProfile={false}
-            size={48}
+            size={avatarSize}
           />
 
-          <View style={styles.info}>
+          <View style={styles.info} onLayout={handleInfoLayout}>
             <View style={styles.nameRow}>
               <Text style={styles.displayName} numberOfLines={1}>
                 {(result.displayName || result.username).toUpperCase()}
@@ -63,7 +77,7 @@ export function UserSearchResultCard({ result, onPress }: Props) {
               ) : null}
             </View>
 
-            <ProfileBadges skillLevel={null} disciplines={result.disciplines} pronouns={null} />
+            <ProfileBadges skillLevel={null} disciplines={result.disciplines} pronouns={null} size="sm" />
           </View>
         </TouchableOpacity>
 
