@@ -2,7 +2,9 @@ import { Session } from "@supabase/supabase-js";
 import { createContext, useContext } from "react";
 import type { TapeLabel } from "@/lib/shared/tapeLabels";
 
-export type AccountType = "user" | "business_pending" | "business_verified";
+// "store" is a business account, created only by the Store sign-up
+// (app/store-sign-up.tsx). See docs/ACCOUNT_TYPES.md.
+export type AccountType = "user" | "store";
 
 export type Profile = {
   profile_id: string;
@@ -12,8 +14,6 @@ export type Profile = {
   display_name: string | null;
   onboarding_completed: boolean;
   account_type: AccountType;
-  business_name: string | null;
-  business_verified_at: string | null;
   disciplines: string[] | null;
   skill_level: string | null;
   city: string | null;

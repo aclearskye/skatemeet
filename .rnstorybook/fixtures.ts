@@ -168,8 +168,6 @@ export const SAMPLE_PROFILE: Profile = {
   display_name: "Kai",
   onboarding_completed: true,
   account_type: "user",
-  business_name: null,
-  business_verified_at: null,
   disciplines: ["street", "park"],
   skill_level: "intermediate",
   city: "London",
