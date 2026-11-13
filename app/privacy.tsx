@@ -9,7 +9,7 @@ import { C, F } from "@/lib/theme";
 // before launch.
 const DRAFT_NOTICE = "DRAFT — PENDING LEGAL REVIEW";
 const CONTACT = "[privacy contact address — add before launch]";
-const LAST_UPDATED = "4 November 2026";
+const LAST_UPDATED = "14 November 2026";
 
 const SECTIONS: { title: string; body: string[] }[] = [
   {
@@ -32,6 +32,14 @@ const SECTIONS: { title: string; body: string[] }[] = [
     body: [
       "Profiles start public: any signed-in skater can see your profile and find you in search. Turn on Private account in Settings and only your friends can — non-friends see just your name and avatar, so they can send a friend request. Your name still appears on public reviews you've written.",
       "Photos you upload (including your avatar) are stored at public links, so anyone with the link can open them even if your profile is private.",
+    ],
+  },
+  {
+    title: "NEARBY SKATERS",
+    body: [
+      "Search shows skaters whose last location is near you, or near a city you pick. To do that, while you use the app we store an approximate location for you (rounded to an area about 2 km across, never your exact position) and keep it for up to 30 days. Nobody can see it, and no one is ever shown how far away you are.",
+      "You start discoverable. Tap DISCOVERABLE on the Search tab to hide yourself; your stored location is deleted straight away and you can still search. Private accounts are never shown in nearby search and their location is never stored.",
+      "When you search around a place, we keep a rough record of the areas you searched (to about 1 km) for a day, to limit how often the search location can change. When you search for a city, we keep only the time of each search, for an hour, to limit how often it can be used; what you typed isn't stored. City searches are looked up through Photon, an OpenStreetMap service, which receives the text you type but not who you are.",
     ],
   },
   {

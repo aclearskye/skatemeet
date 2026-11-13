@@ -13,7 +13,7 @@
       "bundleIdentifier": "com.sk8meet",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSLocationWhenInUseUsageDescription": "SkateMeet uses your location to show nearby skate stores."
+        "NSLocationWhenInUseUsageDescription": "SkateMeet uses your location to show nearby skate spots, stores and skaters."
       }
     },
     "android": {
@@ -54,7 +54,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "SkateMeet uses your location to show nearby skate stores."
+          "locationWhenInUsePermission": "SkateMeet uses your location to show nearby skate spots, stores and skaters."
         }
       ],
       [
