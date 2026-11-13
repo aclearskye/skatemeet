@@ -12,6 +12,7 @@ export type AdminErrorCode =
   | "APPEAL_NOT_PENDING"
   | "BAN_TOO_RECENT"
   | "APPEAL_PENDING"
+  | "NOTES_REQUIRED"
   | "UNKNOWN";
 
 const MESSAGES: Record<AdminErrorCode, string> = {
@@ -25,6 +26,7 @@ const MESSAGES: Record<AdminErrorCode, string> = {
   APPEAL_NOT_PENDING: "This appeal has already been reviewed.",
   BAN_TOO_RECENT: "This user hasn't been banned for 30 days yet.",
   APPEAL_PENDING: "This user has a pending appeal — resolve it first.",
+  NOTES_REQUIRED: "Add a note explaining why — the business will see it.",
   UNKNOWN: "Something went wrong — try again.",
 };
 

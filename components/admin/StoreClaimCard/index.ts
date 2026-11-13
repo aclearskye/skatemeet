@@ -1,0 +1,1 @@
+export { StoreClaimCard } from "./StoreClaimCard";

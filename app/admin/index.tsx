@@ -11,6 +11,7 @@ import { usePhotoReportsQueue } from "@/lib/admin/hooks/usePhotoReportsQueue";
 import { useProfileReportsQueue } from "@/lib/admin/hooks/useProfileReportsQueue";
 import { useReviewReportsQueue } from "@/lib/admin/hooks/useReviewReportsQueue";
 import { useSpotChatReportsQueue } from "@/lib/admin/hooks/useSpotChatReportsQueue";
+import { useStoreClaimsQueue } from "@/lib/admin/hooks/useStoreClaimsQueue";
 import { useVerificationQueue } from "@/lib/admin/hooks/useVerificationQueue";
 import { C, F } from "@/lib/theme";
 
@@ -19,6 +20,7 @@ export default function AdminDashboardScreen() {
   const router = useRouter();
 
   const { data: verificationRequests } = useVerificationQueue();
+  const { data: storeClaims } = useStoreClaimsQueue();
   const { data: photoReports } = usePhotoReportsQueue();
   const { data: reviewReports } = useReviewReportsQueue();
   const { data: profileReports } = useProfileReportsQueue();
@@ -77,6 +79,19 @@ export default function AdminDashboardScreen() {
           <View style={styles.tileText}>
             <Text style={styles.tileLabel}>VERIFICATION REQUESTS</Text>
             <Text style={styles.tileCount}>{verificationRequests?.length ?? 0} PENDING</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={C.muted} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.tile}
+          onPress={() => router.push("/admin/store-claims" as never)}
+          activeOpacity={0.75}
+        >
+          <Ionicons name="storefront-outline" size={22} color={C.primary} />
+          <View style={styles.tileText}>
+            <Text style={styles.tileLabel}>STORE CLAIMS</Text>
+            <Text style={styles.tileCount}>{storeClaims?.length ?? 0} PENDING</Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={C.muted} />
         </TouchableOpacity>

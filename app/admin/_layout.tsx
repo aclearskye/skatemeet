@@ -23,6 +23,7 @@ export default function AdminLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="verification-requests" />
+      <Stack.Screen name="store-claims" />
       <Stack.Screen name="reports" />
       <Stack.Screen name="posts" />
       <Stack.Screen name="users" />

@@ -187,3 +187,27 @@ export type HeldVideoPreview = {
   hlsUrl: string;
   thumbnailUrl: string;
 };
+
+// A pending Store ownership claim (admin_list_store_claims). A "dispute" is a
+// claim on a store that already has an owner; approving it transfers it.
+export type StoreClaimQueueItem = {
+  claimId: string;
+  kind: "claim" | "dispute";
+  accountEmail: string;
+  legalName: string | null;
+  registrationNumber: string | null;
+  contactName: string | null;
+  contactRole: string | null;
+  publicPhone: string | null;
+  publicEmail: string | null;
+  storeName: string;
+  storeAddress: string;
+  storeWebsite: string | null;
+  isOsmStore: boolean;
+  storeCreatedByApplicant: boolean;
+  emailDomainMatch: boolean;
+  evidencePaths: string[];
+  applicantNote: string | null;
+  currentOwnerEmail: string | null;
+  submittedAt: string;
+};
