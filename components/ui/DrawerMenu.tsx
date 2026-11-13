@@ -6,11 +6,10 @@ import { fetchUnreadNotificationCount } from "@/lib/notifications/queries";
 import { avatarColor, C, F } from "@/lib/theme";
 import { queryKeys } from "@/utils/queryKeys";
 import { IconBadgeButton } from "@/components/common/IconBadgeButton";
-import SwitchToBusinessModal from "@/components/ui/SwitchToBusinessModal";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   Animated,
   Image,
@@ -53,13 +52,10 @@ export const NAV_ITEMS: NavItem[] = [
 
 export default function DrawerMenu() {
   const { isOpen, closeDrawer } = useDrawer();
-  const { profile, isBanned } = useAuthContext();
+  const { profile } = useAuthContext();
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  const [bizModalVisible, setBizModalVisible] = useState(false);
-
-  const accountType = profile?.account_type ?? "user";
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: queryKeys.notificationsUnreadCount(profile?.profile_id ?? ""),
@@ -67,11 +63,6 @@ export default function DrawerMenu() {
     enabled: !!profile,
   });
   const unreadChatCount = useUnreadChatCount();
-
-  const openBizModal = () => {
-    closeDrawer();
-    setBizModalVisible(true);
-  };
 
   const translateX = useRef(new Animated.Value(DRAWER_WIDTH)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
@@ -220,21 +211,6 @@ export default function DrawerMenu() {
           </TouchableOpacity>
         )}
 
-        {/* Business account section -- hidden for a banned account, which is
-        confined to app/banned.tsx and shouldn't reach any other flow. */}
-        {accountType === "user" && !isBanned && (
-          <TouchableOpacity style={styles.navItem} onPress={openBizModal} activeOpacity={0.7}>
-            <Ionicons name="briefcase-outline" size={18} color={C.muted} />
-            <Text style={styles.navLabel}>SWITCH TO BUSINESS</Text>
-          </TouchableOpacity>
-        )}
-        {accountType === "business_pending" && (
-          <View style={styles.pendingRow}>
-            <Ionicons name="time-outline" size={16} color={C.secondary} />
-            <Text style={styles.pendingText}>BUSINESS REVIEW PENDING</Text>
-          </View>
-        )}
-
         {/* Sign out */}
         <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut} activeOpacity={0.7}>
           <Ionicons name="log-out-outline" size={18} color={C.error} />
@@ -242,7 +218,6 @@ export default function DrawerMenu() {
         </TouchableOpacity>
       </Animated.View>
 
-      <SwitchToBusinessModal visible={bizModalVisible} onClose={() => setBizModalVisible(false)} />
     </View>
   );
 }
@@ -359,19 +334,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: C.tertiary,
     marginLeft: "auto",
-  },
-  pendingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 13,
-    paddingHorizontal: 12,
-  },
-  pendingText: {
-    fontFamily: F.mono,
-    fontSize: 11,
-    letterSpacing: 1,
-    color: C.secondary,
   },
   signOutBtn: {
     flexDirection: "row",

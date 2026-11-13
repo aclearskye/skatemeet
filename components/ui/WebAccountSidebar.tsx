@@ -5,20 +5,17 @@ import { fetchUnreadNotificationCount } from "@/lib/notifications/queries";
 import { avatarColor, C, F } from "@/lib/theme";
 import { queryKeys } from "@/utils/queryKeys";
 import { IconBadgeButton } from "@/components/common/IconBadgeButton";
-import SwitchToBusinessModal from "@/components/ui/SwitchToBusinessModal";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "expo-router";
-import { useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function WebAccountSidebar() {
-  const { profile, session, isBanned } = useAuthContext();
+  const { profile, session } = useAuthContext();
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  const [bizModalVisible, setBizModalVisible] = useState(false);
   const settingsActive = pathname === "/settings";
 
   const { data: unreadCount = 0 } = useQuery({
@@ -30,8 +27,6 @@ export default function WebAccountSidebar() {
 
   // No account sidebar on auth/onboarding screens — this is for the logged-in app only.
   if (!session || !profile?.onboarding_completed) return null;
-
-  const accountType = profile?.account_type ?? "user";
 
   const initials = (() => {
     const src = profile.display_name?.trim() || profile.username || "";
@@ -99,27 +94,11 @@ export default function WebAccountSidebar() {
         </TouchableOpacity>
       )}
 
-      {/* Hidden for a banned account, which is confined to app/banned.tsx and
-      shouldn't reach any other flow. */}
-      {accountType === "user" && !isBanned && (
-        <TouchableOpacity style={styles.navItem} onPress={() => setBizModalVisible(true)} activeOpacity={0.7}>
-          <Ionicons name="briefcase-outline" size={18} color={C.muted} />
-          <Text style={styles.navLabel}>SWITCH TO BUSINESS</Text>
-        </TouchableOpacity>
-      )}
-      {accountType === "business_pending" && (
-        <View style={styles.pendingRow}>
-          <Ionicons name="time-outline" size={16} color={C.secondary} />
-          <Text style={styles.pendingText}>BUSINESS REVIEW PENDING</Text>
-        </View>
-      )}
-
       <TouchableOpacity style={styles.signOutBtn} onPress={onSignOutButtonPress} activeOpacity={0.7}>
         <Ionicons name="log-out-outline" size={18} color={C.error} />
         <Text style={styles.signOutText}>SIGN OUT</Text>
       </TouchableOpacity>
 
-      <SwitchToBusinessModal visible={bizModalVisible} onClose={() => setBizModalVisible(false)} />
     </View>
   );
 }
@@ -198,19 +177,6 @@ const styles = StyleSheet.create({
   },
   navLabelActive: {
     color: C.primary,
-  },
-  pendingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 13,
-    paddingHorizontal: 12,
-  },
-  pendingText: {
-    fontFamily: F.mono,
-    fontSize: 11,
-    letterSpacing: 1,
-    color: C.secondary,
   },
   signOutBtn: {
     flexDirection: "row",
