@@ -25,6 +25,8 @@ export type Profile = {
   avatar_url: string | null;
   is_admin: boolean;
   is_private: boolean;
+  // Listed in nearby search (Search tab). Never applies to private accounts.
+  show_in_nearby: boolean;
   age_confirmed_at: string | null;
 };
 

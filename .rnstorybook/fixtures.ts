@@ -179,5 +179,6 @@ export const SAMPLE_PROFILE: Profile = {
   avatar_url: SAMPLE_AVATAR,
   is_admin: false,
   is_private: false,
+  show_in_nearby: true,
   age_confirmed_at: SAMPLE_DATE,
 };
