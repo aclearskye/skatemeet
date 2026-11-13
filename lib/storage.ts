@@ -43,7 +43,9 @@ function extensionForMimeType(mimeType: string): string {
   return subtype === "jpeg" ? "jpg" : subtype;
 }
 
-export async function uploadFile(
+// Uploads under the user's own folder and returns the object path. Use this
+// for private buckets, where there's no public URL to hand back.
+export async function uploadFileToPath(
   userId: string,
   localUri: string,
   bucket: string,
@@ -61,7 +63,16 @@ export async function uploadFile(
     .upload(fileName, arrayBuffer, { contentType: mimeType, upsert: false });
 
   if (error) throw error;
+  return fileName;
+}
 
-  const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
+export async function uploadFile(
+  userId: string,
+  localUri: string,
+  bucket: string,
+  mimeType: string = "image/jpeg"
+): Promise<string> {
+  const path = await uploadFileToPath(userId, localUri, bucket, mimeType);
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
 }
