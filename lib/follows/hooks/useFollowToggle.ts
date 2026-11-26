@@ -42,6 +42,8 @@ export function useFollowToggle(profileId: string) {
       queryClient.invalidateQueries({ queryKey: countsKey });
       if (viewerId) queryClient.invalidateQueries({ queryKey: queryKeys.followCounts(viewerId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.feedBase });
+      // The profile may be a store (Stores tab, Following).
+      if (viewerId) queryClient.invalidateQueries({ queryKey: queryKeys.followedStores(viewerId) });
     },
   });
 

@@ -78,6 +78,11 @@ export const queryKeys = {
     ["storeAccount", profileId, "page"] as const,
   storeForProfile: (profileId: string) =>
     ["storeAccount", "forProfile", profileId] as const,
+  // Prefix-invalidated when the viewer follows or unfollows anyone.
+  followedStores: (profileId: string) =>
+    ["storeAccount", "followed", profileId] as const,
+  visitedStores: (profileId: string) =>
+    ["storeAccount", "visited", profileId] as const,
   nearbyStores: (lat: number, lng: number) =>
     ["storeAccount", "nearby", lat, lng] as const,
   adminPhotoReports: () =>

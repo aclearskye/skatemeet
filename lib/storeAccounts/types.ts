@@ -124,12 +124,27 @@ export type UpdateStorePagePayload = {
 
 export type StoreRef = { storeId: string | null; osmPlaceId: string | null };
 
-export type NearbyStore = StoreRef & {
-  profileId: string;
+// A row in a list of stores (the Stores tab, Search). profileId is the
+// owning Store account; only Visited can list unclaimed stores (null).
+export type StoreListItem = StoreRef & {
+  profileId: string | null;
   name: string;
+  address: string | null;
   logoPath: string | null;
-  meters: number;
 };
+
+export type NearbyStore = StoreListItem & { profileId: string; meters: number };
+
+export type VisitedStore = StoreListItem & { lastVisitedAt: string; visitCount: number };
+
+// A stable list key for any store row.
+export function storeListKey(store: StoreRef): string {
+  return store.storeId ?? `osm:${store.osmPlaceId}`;
+}
+
+export function distanceLabel(meters: number): string {
+  return meters < 1000 ? `${Math.round(meters / 10) * 10} M` : `${(meters / 1000).toFixed(meters < 10000 ? 1 : 0)} KM`;
+}
 
 // Stripe's subscription status (store_billing.status), or null before the
 // subscription exists.
