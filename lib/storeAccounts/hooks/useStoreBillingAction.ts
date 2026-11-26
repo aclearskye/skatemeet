@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { createBillingSession } from "@/lib/storeAccounts/billingMutations";
-import { billingReturnUrl, openStripePage } from "@/lib/storeAccounts/openStripePage";
+import { hostedPageReturnUrl, openHostedPage } from "@/lib/shared/openHostedPage";
 import type { BillingAction } from "@/lib/storeAccounts/types";
 import { queryKeys } from "@/utils/queryKeys";
 
@@ -18,9 +18,9 @@ export function useStoreBillingAction() {
 
   return useMutation({
     mutationFn: async (action: BillingAction) => {
-      const returnUrl = billingReturnUrl();
+      const returnUrl = hostedPageReturnUrl();
       const url = await createBillingSession(action, returnUrl);
-      await openStripePage(url, returnUrl);
+      await openHostedPage(url, returnUrl);
     },
     onSettled: () => {
       for (const delay of REFETCH_DELAYS_MS) {

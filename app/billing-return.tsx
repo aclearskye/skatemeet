@@ -3,7 +3,7 @@ import { ActivityIndicator, View } from "react-native";
 import { useRouter } from "expo-router";
 import { C } from "@/lib/theme";
 
-// Stripe's return deep link (lib/storeAccounts/openStripePage.ts). On iOS
+// Stripe's return deep link (lib/shared/openHostedPage.ts). On iOS
 // the in-app browser session swallows it; on Android it can also reach the
 // router, so this just steps back to wherever billing was opened from.
 export default function BillingReturnScreen() {
