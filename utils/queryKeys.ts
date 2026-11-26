@@ -62,6 +62,16 @@ export const queryKeys = {
   // Under "store" so invalidating a store's detail also refreshes its page layer.
   storePage: (storeId: string | null, osmPlaceId: string | null) =>
     ["store", storeId, osmPlaceId, "page"] as const,
+  storeShop: (storeOwnerId: string) =>
+    ["commerce", "shop", storeOwnerId] as const,
+  storeProducts: (storeOwnerId: string, query: string) =>
+    ["commerce", "products", storeOwnerId, query] as const,
+  storeProduct: (storeOwnerId: string, productId: string) =>
+    ["commerce", "product", storeOwnerId, productId] as const,
+  myStorefront: (profileId: string) =>
+    ["commerce", "myStorefront", profileId] as const,
+  cart: (profileId: string) =>
+    ["commerce", "cart", profileId] as const,
   storeBilling: (profileId: string) =>
     ["storeAccount", profileId, "billing"] as const,
   myStorePage: (profileId: string) =>

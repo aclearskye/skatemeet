@@ -11,6 +11,7 @@ import { StoreAccountError, type MyStorePage, type UpdateStorePagePayload } from
 import { C } from "@/lib/theme";
 import { StoreBillingPanel } from "@/components/storeAccount/StoreBillingPanel";
 import { StoreImagePicker } from "@/components/storeAccount/StoreImagePicker";
+import { StorefrontConnectCard } from "@/components/storeAccount/StorefrontConnectCard";
 import { StorePrimaryButton } from "@/components/storeAccount/StorePrimaryButton";
 import { StoreTextField } from "@/components/storeAccount/StoreTextField";
 import { styles } from "./StorePageEditor.styles";
@@ -116,6 +117,7 @@ function EditorForm({ page, bottomInset }: { page: MyStorePage; bottomInset: num
       <Text style={styles.hint}>Edit opening hours and facilities from your public page.</Text>
 
       <StoreBillingPanel />
+      <StorefrontConnectCard canEdit={page.canEdit} />
       {!page.canEdit ? (
         <Text style={styles.error}>Page editing is paused until your subscription is paid. You can still change opening hours.</Text>
       ) : null}
