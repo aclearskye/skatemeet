@@ -19,6 +19,7 @@ import { queryKeys } from "@/utils/queryKeys";
 import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
 import { NotificationRow } from "@/components/notifications/NotificationRow";
 import { NotificationTabs, type NotificationTab } from "@/components/notifications/NotificationTabs";
+import { BackButton } from "@/components/common/BackButton";
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
@@ -128,6 +129,7 @@ export default function NotificationsScreen() {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <BackButton />
         <View style={styles.headerTextCol}>
           <Text style={styles.heading}>NOTIFICATIONS</Text>
           <Text style={styles.subheading} numberOfLines={1}>

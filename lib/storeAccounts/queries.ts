@@ -1,10 +1,13 @@
 import { supabase } from "@/lib/supabaseClient";
+import { parseStorePageStyle } from "./pageStyle";
 import {
   STORE_IMAGES_BUCKET,
   toStoreAccountError,
   type ClaimableStore,
   type MyStorePage,
   type NearbyStore,
+  type StoreListItem,
+  type VisitedStore,
   type StorePage,
   type StoreRef,
   type StoreClaim,
@@ -128,6 +131,7 @@ type StorePageRow = {
   public_email: string | null;
   logo_path: string | null;
   cover_path: string | null;
+  style: unknown;
   follower_count: number;
   is_owner: boolean;
   is_following: boolean;
@@ -149,6 +153,7 @@ export async function fetchStorePage(storeId: string | null, osmPlaceId: string 
     publicEmail: row.public_email,
     logoPath: row.logo_path,
     coverPath: row.cover_path,
+    style: parseStorePageStyle(row.style),
     followerCount: row.follower_count,
     isOwner: row.is_owner,
     isFollowing: row.is_following,
@@ -167,6 +172,7 @@ type MyStorePageRow = {
   public_email: string | null;
   logo_path: string | null;
   cover_path: string | null;
+  style: unknown;
   follower_count: number;
   can_edit: boolean;
 };
@@ -187,6 +193,7 @@ export async function fetchMyStorePage(): Promise<MyStorePage | null> {
     publicEmail: row.public_email,
     logoPath: row.logo_path,
     coverPath: row.cover_path,
+    style: parseStorePageStyle(row.style),
     followerCount: row.follower_count,
     canEdit: row.can_edit,
   };
@@ -200,24 +207,52 @@ export async function fetchStoreForProfile(profileId: string): Promise<StoreRef 
   return row ? { storeId: row.store_id, osmPlaceId: row.osm_place_id } : null;
 }
 
-type NearbyStoreRow = {
-  profile_id: string;
+type StoreListRow = {
+  profile_id: string | null;
   name: string;
+  address: string | null;
   logo_path: string | null;
   store_id: string | null;
   osm_place_id: string | null;
-  meters: number;
 };
+
+type NearbyStoreRow = StoreListRow & { profile_id: string; meters: number };
+
+function toStoreListItem(row: StoreListRow): StoreListItem {
+  return {
+    profileId: row.profile_id,
+    name: row.name,
+    address: row.address,
+    logoPath: row.logo_path,
+    storeId: row.store_id,
+    osmPlaceId: row.osm_place_id,
+  };
+}
 
 export async function searchNearbyStores(lat: number, lng: number): Promise<NearbyStore[]> {
   const { data, error } = await supabase.rpc("search_nearby_stores", { p_lat: lat, p_lng: lng });
   if (error) throw toStoreAccountError(error);
   return (data as NearbyStoreRow[]).map((row) => ({
+    ...toStoreListItem(row),
     profileId: row.profile_id,
-    name: row.name,
-    logoPath: row.logo_path,
-    storeId: row.store_id,
-    osmPlaceId: row.osm_place_id,
     meters: row.meters,
   }));
+}
+
+type VisitedStoreRow = StoreListRow & { last_visited_at: string; visit_count: number };
+
+export async function fetchVisitedStores(): Promise<VisitedStore[]> {
+  const { data, error } = await supabase.rpc("get_visited_stores");
+  if (error) throw toStoreAccountError(error);
+  return (data as VisitedStoreRow[]).map((row) => ({
+    ...toStoreListItem(row),
+    lastVisitedAt: row.last_visited_at,
+    visitCount: row.visit_count,
+  }));
+}
+
+export async function fetchFollowedStores(): Promise<StoreListItem[]> {
+  const { data, error } = await supabase.rpc("get_followed_stores");
+  if (error) throw toStoreAccountError(error);
+  return (data as StoreListRow[]).map(toStoreListItem);
 }

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isAllowedReturnUrl } from "../_shared/returnUrl.ts";
 import { stripe, subscriptionColumns } from "../_shared/stripe.ts";
 
 // Store account billing (docs/ACCOUNT_TYPES.md, "Store", Billing). Called by
@@ -41,16 +42,8 @@ class BillingError extends Error {
   }
 }
 
-// Return URLs come from the client, so only known app and site prefixes are
-// accepted (otherwise this would be an open redirect via Stripe).
 function checkReturnUrl(url: unknown): string {
-  const prefixes = (Deno.env.get("BILLING_RETURN_PREFIXES") ?? "skatemeet://")
-    .split(",")
-    .map((p) => p.trim())
-    .filter(Boolean);
-  if (typeof url !== "string" || !prefixes.some((p) => url.startsWith(p))) {
-    throw new BillingError("INVALID_RETURN_URL");
-  }
+  if (!isAllowedReturnUrl(url)) throw new BillingError("INVALID_RETURN_URL");
   return url;
 }
 

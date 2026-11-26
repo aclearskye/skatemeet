@@ -13,6 +13,9 @@ import { PhotoUploadButton } from "@/components/common/PhotoUploadButton";
 import { RatingBar } from "@/components/common/RatingBar";
 import { StoreInfoBlock } from "@/components/store-detail/StoreInfoBlock";
 import { StoreOwnerBar } from "@/components/store-detail/StoreOwnerBar";
+import { StoreAnnouncement } from "@/components/store-detail/StoreAnnouncement";
+import { StoreShopSection } from "@/components/store-detail/StoreShopSection";
+import { StoreTicketsSection } from "@/components/store-detail/StoreTicketsSection";
 import { StoreReviews } from "@/components/store-detail/StoreReviews";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { useCheckInSync } from "@/lib/shared/hooks/useCheckInSync";
@@ -25,6 +28,7 @@ import { useReviewableEntity } from "@/lib/shared/useReviewableEntity";
 import { OsmStore } from "@/lib/spots/types";
 import { deleteStore } from "@/lib/stores/mutations";
 import { useStorePage } from "@/lib/storeAccounts/hooks/useStorePage";
+import { accentColors, DEFAULT_STORE_PAGE_STYLE, STORE_KIND_LABEL } from "@/lib/storeAccounts/pageStyle";
 import { storeImageUrl } from "@/lib/storeAccounts/queries";
 import { storeMetadataAdapter } from "@/lib/stores/storeMetadataAdapter";
 import { storePhotosAdapter } from "@/lib/stores/storePhotosAdapter";
@@ -95,6 +99,10 @@ export default function StoreDetailScreen() {
   const phone = page ? page.publicPhone : listedPhone;
   const website = page ? page.website : listedWebsite;
   const description = page ? page.description : listedDescription;
+  // Only a claimed store's owner can change how the page looks; a community
+  // listing keeps the default.
+  const style = page?.style ?? DEFAULT_STORE_PAGE_STYLE;
+  const accent = accentColors(style.accent);
 
   const [showAddReview, setShowAddReview] = useState(false);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
@@ -207,7 +215,7 @@ export default function StoreDetailScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <DetailHeader
         title="STORE DETAILS"
-        accent={C.secondary}
+        accent={accent.bg}
         isFavorited={isFavorited}
         isTogglingFavorite={isTogglingFav}
         onBack={() => router.back()}
@@ -221,27 +229,33 @@ export default function StoreDetailScreen() {
           onPhotoPress={() => setShowPhotoViewer(true)}
           name={name}
           badges={
-            <EntityTapeLabels size={HERO_LABEL_SIZE} typeLabel="SKATE STORE" typeColors={{ bg: C.secondary, fg: C.onSecondary }} />
+            <EntityTapeLabels
+              size={HERO_LABEL_SIZE}
+              typeLabel={STORE_KIND_LABEL[style.storeKind]}
+              typeColors={accent}
+              labels={style.tapeLabels}
+            />
           }
           action={
             <PhotoUploadButton
               onPick={addPhoto}
               isLoading={isAddingPhoto}
               disabled={!hasCheckedIn}
-              accent={C.secondary}
-              onAccent={C.onSecondary}
+              accent={accent.bg}
+              onAccent={accent.fg}
             />
           }
           actionHint={hasCheckedIn ? null : "CHECK IN TO ADD A PHOTO"}
         />
 
         <View style={styles.body}>
-          {page ? <StoreOwnerBar page={page} viewerIsStore={viewerIsStore} /> : null}
+          {style.announcement ? <StoreAnnouncement text={style.announcement} accent={accent} /> : null}
+          {page ? <StoreOwnerBar page={page} viewerIsStore={viewerIsStore} accent={accent.bg} /> : null}
 
           <EntityActionBar
             entityRef={{ spotId: null, osmSpotPlaceId: null, storeId, osmStorePlaceId: osmPlaceId }}
-            accent={C.secondary}
-            onAccent={C.onSecondary}
+            accent={accent.bg}
+            onAccent={accent.fg}
             onDirections={handleDirections}
             vote={{
               count: localVoteCount,
@@ -258,12 +272,28 @@ export default function StoreDetailScreen() {
             phone={phone}
             website={website}
             description={description}
+            socials={style}
+            accent={accent.bg}
           />
+
+          {page ? (
+            style.featuredSection === "shop" ? (
+              <>
+                <StoreShopSection storeOwnerId={page.ownerId} />
+                <StoreTicketsSection storeOwnerId={page.ownerId} accent={accent} />
+              </>
+            ) : (
+              <>
+                <StoreTicketsSection storeOwnerId={page.ownerId} accent={accent} />
+                <StoreShopSection storeOwnerId={page.ownerId} />
+              </>
+            )
+          ) : null}
 
           <EntityMetadataSection
             metadata={metadata}
             isLoading={isLoadingMetadata}
-            accent={C.secondary}
+            accent={accent.bg}
             canEdit={canEditMetadata}
             onEdit={() => setShowEditMetadata(true)}
           />
@@ -273,7 +303,7 @@ export default function StoreDetailScreen() {
             label="COMMUNITY RATING"
             value={avgRating.average}
             count={avgRating.count}
-            accent={C.secondary}
+            accent={accent.bg}
           />
 
           <StoreReviews
@@ -298,8 +328,8 @@ export default function StoreDetailScreen() {
       <AddReviewSheet
         visible={showAddReview}
         onClose={() => setShowAddReview(false)}
-        accent={C.secondary}
-        onAccent={C.onSecondary}
+        accent={accent.bg}
+        onAccent={accent.fg}
         onSubmit={handleReviewSubmit}
       />
 
@@ -309,15 +339,15 @@ export default function StoreDetailScreen() {
         reviews={reviews}
         isLoading={isLoadingReviews}
         interactions={reviewInteractions}
-        accent={C.secondary}
+        accent={accent.bg}
       />
 
       <EditMetadataSheet
         visible={showEditMetadata}
         onClose={() => setShowEditMetadata(false)}
         initialValue={metadata}
-        accent={C.secondary}
-        onAccent={C.onSecondary}
+        accent={accent.bg}
+        onAccent={accent.fg}
         onSubmit={async (payload) => {
           await upsertMetadata(payload);
         }}
@@ -336,7 +366,7 @@ export default function StoreDetailScreen() {
         isReporting={isReportingPhoto}
         onDelete={deletePhoto}
         isDeleting={isDeletingPhoto}
-        accent={C.secondary}
+        accent={accent.bg}
       />
     </View>
   );

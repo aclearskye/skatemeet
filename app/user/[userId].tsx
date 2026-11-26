@@ -5,12 +5,22 @@ import { useUserProfile } from "@/lib/profiles/hooks/useUserProfile";
 import { C, F } from "@/lib/theme";
 import { useStoreForProfile } from "@/lib/storeAccounts/hooks/useStoreForProfile";
 import { useOpenStorePage } from "@/lib/storeAccounts/hooks/useOpenStorePage";
+import { BackButton } from "@/components/common/BackButton";
 import { useLocalSearchParams } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
+  const insets = useSafeAreaInsets();
+  // Loading and "not available" have no ProfileView header, so they get
+  // their own back arrow.
+  const back = (
+    <View style={[styles.back, { top: insets.top + 12 }]}>
+      <BackButton />
+    </View>
+  );
   const { data: profile, isLoading, isError } = useUserProfile(userId ?? null);
 
   // RLS hides a private non-friend's or a blocked pair's full row; the card
@@ -31,6 +41,7 @@ export default function UserProfileScreen() {
   if (isStore) {
     return (
       <View style={styles.center}>
+        {back}
         {storeLoading || storeRef ? (
           <ActivityIndicator color={C.primary} />
         ) : (
@@ -43,6 +54,7 @@ export default function UserProfileScreen() {
   if (isLoading || (isHidden && cardLoading)) {
     return (
       <View style={styles.center}>
+        {back}
         <ActivityIndicator color={C.primary} />
       </View>
     );
@@ -54,12 +66,14 @@ export default function UserProfileScreen() {
 
   return (
     <View style={styles.center}>
+        {back}
       <Text style={styles.errorText}>{isError ? "Something went wrong." : "This skater isn't available."}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  back: { position: "absolute", left: 16 },
   center: {
     flex: 1,
     backgroundColor: C.bg,

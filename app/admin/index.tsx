@@ -14,6 +14,7 @@ import { useSpotChatReportsQueue } from "@/lib/admin/hooks/useSpotChatReportsQue
 import { useStoreClaimsQueue } from "@/lib/admin/hooks/useStoreClaimsQueue";
 import { useVerificationQueue } from "@/lib/admin/hooks/useVerificationQueue";
 import { C, F } from "@/lib/theme";
+import { BackButton } from "@/components/common/BackButton";
 
 export default function AdminDashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -48,6 +49,7 @@ export default function AdminDashboardScreen() {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <BackButton />
         <Text style={styles.heading}>ADMIN PANEL</Text>
         <Text style={styles.subheading} numberOfLines={1}>
           {"// moderation queues"}
@@ -145,7 +147,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   header: {
     flexDirection: "row",
-    alignItems: "baseline",
+    alignItems: "center",
     gap: 10,
     paddingHorizontal: 16,
     paddingBottom: 12,

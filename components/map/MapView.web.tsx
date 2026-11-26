@@ -45,7 +45,9 @@ function regionToInitialCamera(region: Region) {
 // button that expands into a tilt/rotate/pan cluster — `rotateControl` alone
 // doesn't cover it, `cameraControl` is its own distinct MapOptions field.
 // `gestureHandling: "greedy"` lets a plain scroll zoom the map instead of
-// requiring Ctrl/Cmd.
+// requiring Ctrl/Cmd. `clickableIcons` is forced off so tapping one of
+// Google's own place or area labels (which can sit right under an app pin)
+// doesn't open Google's place card over the map.
 export const MapView = forwardRef<MapViewNative, Props>(({ initialCamera, options, ...props }, ref) => (
   <WebMapView
     {...props}
@@ -62,6 +64,7 @@ export const MapView = forwardRef<MapViewNative, Props>(({ initialCamera, option
       rotateControl: false,
       cameraControl: false,
       gestureHandling: "greedy",
+      clickableIcons: false,
     }}
   />
 ));

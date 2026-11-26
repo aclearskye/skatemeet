@@ -3,17 +3,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNearbyStores } from "@/lib/storeAccounts/hooks/useNearbyStores";
 import { useOpenStorePage } from "@/lib/storeAccounts/hooks/useOpenStorePage";
 import { storeImageUrl } from "@/lib/storeAccounts/queries";
-import type { NearbyStore } from "@/lib/storeAccounts/types";
+import { distanceLabel, type NearbyStore } from "@/lib/storeAccounts/types";
 import { C } from "@/lib/theme";
 import { styles } from "./NearbyStoresRow.styles";
 
 type Props = {
   coords: { lat: number; lng: number } | null;
 };
-
-function distanceLabel(meters: number): string {
-  return meters < 1000 ? `${Math.round(meters / 10) * 10} M` : `${(meters / 1000).toFixed(meters < 10000 ? 1 : 0)} KM`;
-}
 
 // Claimed stores near the search point, at their fixed addresses. Renders
 // nothing when there are none.

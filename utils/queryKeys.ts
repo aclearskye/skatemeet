@@ -62,12 +62,38 @@ export const queryKeys = {
   // Under "store" so invalidating a store's detail also refreshes its page layer.
   storePage: (storeId: string | null, osmPlaceId: string | null) =>
     ["store", storeId, osmPlaceId, "page"] as const,
+  storeShop: (storeOwnerId: string) =>
+    ["commerce", "shop", storeOwnerId] as const,
+  storeProducts: (storeOwnerId: string, query: string) =>
+    ["commerce", "products", storeOwnerId, query] as const,
+  storeProduct: (storeOwnerId: string, productId: string) =>
+    ["commerce", "product", storeOwnerId, productId] as const,
+  myStorefront: (profileId: string) =>
+    ["commerce", "myStorefront", profileId] as const,
+  cart: (profileId: string) =>
+    ["commerce", "cart", profileId] as const,
+  // The store's Stripe account for tickets, and its ticket types.
+  myTicketing: (profileId: string) =>
+    ["tickets", "myTicketing", profileId] as const,
+  myTicketTypes: (profileId: string) =>
+    ["tickets", "myTicketTypes", profileId] as const,
+  // A store page's tickets on sale, per viewer (who can buy differs).
+  storeTickets: (storeOwnerId: string) =>
+    ["tickets", "store", storeOwnerId] as const,
+  // The skater's bought tickets.
+  myTickets: (profileId: string) =>
+    ["tickets", "mine", profileId] as const,
   storeBilling: (profileId: string) =>
     ["storeAccount", profileId, "billing"] as const,
   myStorePage: (profileId: string) =>
     ["storeAccount", profileId, "page"] as const,
   storeForProfile: (profileId: string) =>
     ["storeAccount", "forProfile", profileId] as const,
+  // Prefix-invalidated when the viewer follows or unfollows anyone.
+  followedStores: (profileId: string) =>
+    ["storeAccount", "followed", profileId] as const,
+  visitedStores: (profileId: string) =>
+    ["storeAccount", "visited", profileId] as const,
   nearbyStores: (lat: number, lng: number) =>
     ["storeAccount", "nearby", lat, lng] as const,
   adminPhotoReports: () =>
