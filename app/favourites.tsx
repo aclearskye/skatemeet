@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BackButton } from "@/components/common/BackButton";
 
 export default function FavouritesScreen() {
   const insets = useSafeAreaInsets();
@@ -26,6 +27,7 @@ export default function FavouritesScreen() {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <BackButton />
         <Text style={styles.heading}>FAVOURITES</Text>
         <Text style={styles.subheading} numberOfLines={1}>
           {"// these are your favourite places"}
@@ -61,7 +63,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   header: {
     flexDirection: "row",
-    alignItems: "baseline",
+    alignItems: "center",
     gap: 10,
     paddingHorizontal: 16,
     paddingBottom: 12,

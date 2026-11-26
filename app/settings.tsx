@@ -6,6 +6,7 @@ import { useExportMyData } from "@/lib/profiles/hooks/useExportMyData";
 import { useProfilePrivacy } from "@/lib/profiles/hooks/useProfilePrivacy";
 import { C, F } from "@/lib/theme";
 import { DeactivateAccountButton } from "@/components/common/DeactivateAccountButton";
+import { BackButton } from "@/components/common/BackButton";
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -16,6 +17,7 @@ export default function SettingsScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <BackButton />
         <Text style={styles.heading}>SETTINGS</Text>
       </View>
 
@@ -93,6 +95,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   scrollContent: { flexGrow: 1 },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
     paddingHorizontal: 16,
     paddingBottom: 12,
     borderBottomWidth: 2,
