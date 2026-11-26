@@ -59,6 +59,7 @@ app-example
 
 #docs
 /md
+docs
 
 # supabase CLI local link/session state
 supabase/.temp/
