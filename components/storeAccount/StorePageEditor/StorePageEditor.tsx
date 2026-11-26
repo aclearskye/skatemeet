@@ -1,8 +1,6 @@
-import { useState } from "react";
-import { ActivityIndicator, Image, Text, TouchableOpacity, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { StoreMoneyPanel } from "@/components/storeAccount/StoreMoneyPanel";
+import { StorePageForm } from "@/components/storeAccount/StorePageForm";
+import { StorePrimaryButton } from "@/components/storeAccount/StorePrimaryButton";
 import { useDrawer } from "@/lib/context/drawer-context";
 import { useMyStorePage } from "@/lib/storeAccounts/hooks/useMyStorePage";
 import { useOpenStorePage } from "@/lib/storeAccounts/hooks/useOpenStorePage";
@@ -10,9 +8,11 @@ import { useStoreMoneyAttention } from "@/lib/storeAccounts/hooks/useStoreMoneyA
 import { storeImageUrl } from "@/lib/storeAccounts/queries";
 import type { MyStorePage } from "@/lib/storeAccounts/types";
 import { C } from "@/lib/theme";
-import { StoreMoneyPanel } from "@/components/storeAccount/StoreMoneyPanel";
-import { StorePageForm } from "@/components/storeAccount/StorePageForm";
-import { StorePrimaryButton } from "@/components/storeAccount/StorePrimaryButton";
+import { Ionicons } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
+import { ActivityIndicator, Image, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { styles } from "./StorePageEditor.styles";
 
 type EditorTab = "page" | "money";
@@ -51,7 +51,7 @@ export function StorePageEditor() {
         </View>
       ) : isError || !page ? (
         <View style={styles.centered}>
-          <Text style={styles.muted}>COULDN&apos;T LOAD YOUR STORE PAGE</Text>
+          <Text style={styles.muted}>{"COULDN'T LOAD YOUR STORE PAGE"}</Text>
           <StorePrimaryButton label="TRY AGAIN" variant="secondary" onPress={() => refetch()} />
         </View>
       ) : (
@@ -61,7 +61,7 @@ export function StorePageEditor() {
           {/* Both stay mounted so switching tabs never loses unsaved page edits. */}
           <View style={[styles.pane, tab !== "page" && styles.hidden]}>
             {/* Keyed so a refetch after saving resets the form to the saved page. */}
-            <StorePageForm key={JSON.stringify(page)} page={page} bottomInset={insets.bottom} />
+            <StorePageForm key={JSON.stringify(page)} page={page} />
           </View>
           <View style={[styles.pane, tab !== "money" && styles.hidden]}>
             <StoreMoneyPanel canEdit={page.canEdit} bottomInset={insets.bottom} />
@@ -78,7 +78,6 @@ function EditorHeader({ topInset }: { topInset: number }) {
     <View style={[styles.header, { paddingTop: topInset + 12 }]}>
       <View style={styles.headerText}>
         <Text style={styles.heading}>YOUR STORE</Text>
-        <Text style={styles.subheading}>{"// your page and your money"}</Text>
       </View>
       <TouchableOpacity onPress={openDrawer} hitSlop={12} accessibilityLabel="Open menu">
         <Ionicons name="menu" size={24} color={C.text} />
