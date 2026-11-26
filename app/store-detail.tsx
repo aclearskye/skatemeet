@@ -280,11 +280,11 @@ export default function StoreDetailScreen() {
             style.featuredSection === "shop" ? (
               <>
                 <StoreShopSection storeOwnerId={page.ownerId} />
-                <StoreTicketsSection storeOwnerId={page.ownerId} accent={accent} />
+                <StoreTicketsSection storeOwnerId={page.ownerId} storeName={name} accent={accent} />
               </>
             ) : (
               <>
-                <StoreTicketsSection storeOwnerId={page.ownerId} accent={accent} />
+                <StoreTicketsSection storeOwnerId={page.ownerId} storeName={name} accent={accent} />
                 <StoreShopSection storeOwnerId={page.ownerId} />
               </>
             )

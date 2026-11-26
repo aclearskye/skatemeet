@@ -79,6 +79,7 @@ export function TicketTypeForm({ ticketType, onDone }: Props) {
         endTime: isSession && endTime.trim() ? endTime.trim() : null,
         validFrom: isSession ? null : validFrom.trim(),
         validTo: isSession ? null : validTo.trim(),
+        passDays: null,
       },
       {
         onSuccess: onDone,

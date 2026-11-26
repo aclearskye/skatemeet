@@ -1,0 +1,46 @@
+import { StyleSheet } from "react-native";
+import { C, F, R } from "@/lib/theme";
+
+export const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: C.bg },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: C.border,
+  },
+  headerText: { flex: 1, gap: 2 },
+  heading: { fontFamily: F.heading, fontSize: 20, color: C.text, letterSpacing: 2 },
+  subheading: { fontFamily: F.monoRegular, fontSize: 13, color: C.muted, letterSpacing: 0.5 },
+  content: { padding: 16, gap: 16 },
+  intro: { fontFamily: F.body, fontSize: 14, lineHeight: 20, color: C.textVariant },
+  waiverBox: {
+    gap: 8,
+    padding: 14,
+    borderRadius: R,
+    borderWidth: 1,
+    borderColor: C.borderVariant,
+    backgroundColor: C.surfaceLow,
+  },
+  waiverScroll: { maxHeight: 300 },
+  waiverVersion: { fontFamily: F.mono, fontSize: 10, letterSpacing: 1.5, color: C.muted },
+  waiverText: { fontFamily: F.body, fontSize: 14, lineHeight: 21, color: C.text },
+  section: { fontFamily: F.mono, fontSize: 11, letterSpacing: 1.5, color: C.muted, marginTop: 8 },
+  agree: { flexDirection: "row", alignItems: "center", gap: 12 },
+  box: {
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: C.borderVariant,
+    borderRadius: 4,
+  },
+  prefilled: { fontFamily: F.body, fontSize: 13, color: C.primary },
+  saveText: { flex: 1, fontFamily: F.body, fontSize: 13, lineHeight: 18, color: C.textVariant },
+  agreeText: { flex: 1, fontFamily: F.bodyBold, fontSize: 14, color: C.text },
+  error: { fontFamily: F.body, fontSize: 13, color: C.error },
+});

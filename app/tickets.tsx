@@ -5,6 +5,7 @@ import { useMyTickets } from "@/lib/tickets/hooks/useMyTickets";
 import { C, F } from "@/lib/theme";
 import { BackButton } from "@/components/common/BackButton";
 import { TicketCard } from "@/components/tickets/TicketCard";
+import { TicketRequestPanel } from "@/components/tickets/TicketRequestPanel";
 
 // The skater's bought entry tickets, each with the QR code staff scan at
 // the till. Reached from the Stores page, or from a store page after buying.
@@ -47,7 +48,10 @@ export default function TicketsScreen() {
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={C.primary} />}
         >
           {tickets.map((ticket) => (
-            <TicketCard key={ticket.ticketId} ticket={ticket} />
+            <View key={ticket.ticketId}>
+              <TicketCard ticket={ticket} />
+              <TicketRequestPanel ticket={ticket} />
+            </View>
           ))}
         </ScrollView>
       )}
