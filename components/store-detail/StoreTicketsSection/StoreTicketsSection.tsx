@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import type { TapeColors } from "@/lib/shared/tapeLabels";
 import { useBuyTicket } from "@/lib/tickets/hooks/useBuyTicket";
 import { useMyTickets } from "@/lib/tickets/hooks/useMyTickets";
 import { useStoreTickets } from "@/lib/tickets/hooks/useStoreTickets";
 import { useTicketWaiverForm } from "@/lib/tickets/hooks/useTicketWaiverForm";
-import { isTicketUsable, TicketsError, type MyTicket, type StoreTicketType } from "@/lib/tickets/types";
+import { DAY_ORDER, dayShortLabel, startingDay, ticketSectionLabel, type TicketTab } from "@/lib/tickets/browse";
+import { isTicketUsable, TicketsError, WEEKDAYS, type MyTicket, type StoreTicketType } from "@/lib/tickets/types";
 import type { WaiverSignature } from "@/lib/tickets/waiverTypes";
 import { StoreTicketRow } from "@/components/store-detail/StoreTicketRow";
 import { TicketQrModal } from "@/components/tickets/TicketQrModal";
@@ -25,8 +26,10 @@ const BLOCKED_MESSAGES = {
   account: "Your account can't buy tickets here.",
 };
 
-// A store's entry tickets on its page. Paid on a Stripe page run on the
-// store's own account. Renders nothing when the store sells no tickets.
+// A store's entry tickets on its page: sessions picked by day of the week,
+// and passes, under Tickets / Passes tabs when it sells both. Paid on a
+// Stripe page run on the store's own account. Renders nothing when the
+// store sells no tickets.
 export function StoreTicketsSection({ storeOwnerId, storeName, accent }: Props) {
   const { data: tickets } = useStoreTickets(storeOwnerId);
   const { data: myTickets = [] } = useMyTickets();
@@ -36,6 +39,10 @@ export function StoreTicketsSection({ storeOwnerId, storeName, accent }: Props) 
   const [shownTicket, setShownTicket] = useState<MyTicket | null>(null);
   // The ticket being signed for, while the waiver sheet is open.
   const [signingFor, setSigningFor] = useState<StoreTicketType | null>(null);
+  // Tickets or passes, and the day picked (null: today, or the next day
+  // with a session).
+  const [tab, setTab] = useState<TicketTab>("tickets");
+  const [day, setDay] = useState<number | null>(null);
   const waiverForm = useTicketWaiverForm(storeOwnerId, tickets != null);
 
   if (!tickets) return null;
@@ -85,12 +92,67 @@ export function StoreTicketsSection({ storeOwnerId, storeName, accent }: Props) 
     else checkout(ticket.ticketTypeId, null);
   };
 
+  const sessions = tickets.ticketTypes.filter((t) => t.kind === "session");
+  const passes = tickets.ticketTypes.filter((t) => t.kind === "pass");
+  const hasBoth = sessions.length > 0 && passes.length > 0;
+  const activeTab: TicketTab = hasBoth ? tab : sessions.length > 0 ? "tickets" : "passes";
+  const activeDay = day ?? startingDay(sessions);
+  const sessionDays = new Set(sessions.map((t) => t.weekday));
+  const shown = activeTab === "passes" ? passes : sessions.filter((t) => t.weekday === activeDay);
+
   return (
     <View style={styles.section}>
-      <Text style={styles.label}>TICKETS</Text>
+      <Text style={styles.label}>{ticketSectionLabel(sessions.length > 0, passes.length > 0)}</Text>
       {tickets.blockedReason ? <Text style={styles.notice}>{BLOCKED_MESSAGES[tickets.blockedReason]}</Text> : null}
 
-      {tickets.ticketTypes.map((ticket) => (
+      {hasBoth ? (
+        <View style={styles.tabs} accessibilityRole="tablist">
+          {(["tickets", "passes"] as const).map((key) => {
+            const selected = activeTab === key;
+            return (
+              <TouchableOpacity
+                key={key}
+                style={[styles.tab, selected && { backgroundColor: accent.bg, borderColor: accent.bg }]}
+                onPress={() => setTab(key)}
+                activeOpacity={0.8}
+                accessibilityRole="tab"
+                accessibilityState={{ selected }}
+              >
+                <Text style={[styles.tabText, selected && { color: accent.fg }]}>{key.toUpperCase()}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      ) : null}
+
+      {activeTab === "tickets" ? (
+        <View style={styles.days} accessibilityRole="tablist">
+          {DAY_ORDER.map((weekday) => {
+            const has = sessionDays.has(weekday);
+            const selected = activeDay === weekday;
+            return (
+              <TouchableOpacity
+                key={weekday}
+                style={[
+                  styles.day,
+                  selected && { backgroundColor: accent.bg, borderColor: accent.bg },
+                  !has && styles.dayEmpty,
+                ]}
+                onPress={() => setDay(weekday)}
+                disabled={!has}
+                activeOpacity={0.8}
+                accessibilityRole="tab"
+                accessibilityState={{ selected, disabled: !has }}
+                accessibilityLabel={has ? WEEKDAYS[weekday] : `${WEEKDAYS[weekday]}, no sessions`}
+              >
+                <Text style={[styles.dayText, selected && { color: accent.fg }]}>{dayShortLabel(weekday)}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      ) : null}
+
+      {shown.map((ticket) => (
         <StoreTicketRow
           key={ticket.ticketTypeId}
           ticket={ticket}
