@@ -12,6 +12,7 @@ import { C, F } from "@/lib/theme";
 import BurgerButton from "@/components/ui/BurgerButton";
 import { DuctTapeLabel } from "@/components/common/DuctTapeLabel";
 import { CartButton } from "@/components/stores/CartButton";
+import { TicketsButton } from "@/components/stores/TicketsButton";
 import { StoreListRow } from "@/components/stores/StoreListRow";
 import { BackButton } from "@/components/common/BackButton";
 
@@ -37,7 +38,7 @@ function visitedDetail(store: VisitedStore): string {
 // Claimed stores (drawer, Stores). Nearest: within 50 km of the search
 // location (the same one the Search tab uses). Following: stores you follow.
 // Visited: stores you've checked in at, claimed or not.
-// The cart is a button here rather than its own drawer entry.
+// The cart and My tickets are buttons here rather than their own drawer entries.
 export default function StoresScreen() {
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<StoresTab>("nearest");
@@ -65,6 +66,7 @@ export default function StoresScreen() {
         <BackButton />
         <Text style={styles.heading}>STORES</Text>
         <View style={styles.actions}>
+          <TicketsButton />
           <CartButton />
           <BurgerButton />
         </View>

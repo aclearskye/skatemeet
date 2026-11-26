@@ -14,6 +14,7 @@ import { RatingBar } from "@/components/common/RatingBar";
 import { StoreInfoBlock } from "@/components/store-detail/StoreInfoBlock";
 import { StoreOwnerBar } from "@/components/store-detail/StoreOwnerBar";
 import { StoreShopSection } from "@/components/store-detail/StoreShopSection";
+import { StoreTicketsSection } from "@/components/store-detail/StoreTicketsSection";
 import { StoreReviews } from "@/components/store-detail/StoreReviews";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { useCheckInSync } from "@/lib/shared/hooks/useCheckInSync";
@@ -261,6 +262,9 @@ export default function StoreDetailScreen() {
             description={description}
           />
 
+          {page ? (
+            <StoreTicketsSection storeOwnerId={page.ownerId} accent={{ bg: C.secondary, fg: C.onSecondary }} />
+          ) : null}
           {page ? <StoreShopSection storeOwnerId={page.ownerId} /> : null}
 
           <EntityMetadataSection

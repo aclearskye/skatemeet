@@ -1,0 +1,1 @@
+export { TicketQrModal } from "./TicketQrModal";

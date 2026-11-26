@@ -13,6 +13,7 @@ import { StoreBillingPanel } from "@/components/storeAccount/StoreBillingPanel";
 import { StoreImagePicker } from "@/components/storeAccount/StoreImagePicker";
 import { StorefrontConnectCard } from "@/components/storeAccount/StorefrontConnectCard";
 import { StorePrimaryButton } from "@/components/storeAccount/StorePrimaryButton";
+import { StoreTicketingCard } from "@/components/storeAccount/StoreTicketingCard";
 import { StoreTextField } from "@/components/storeAccount/StoreTextField";
 import { styles } from "./StorePageEditor.styles";
 
@@ -118,6 +119,7 @@ function EditorForm({ page, bottomInset }: { page: MyStorePage; bottomInset: num
 
       <StoreBillingPanel />
       <StorefrontConnectCard canEdit={page.canEdit} />
+      <StoreTicketingCard canEdit={page.canEdit} />
       {!page.canEdit ? (
         <Text style={styles.error}>Page editing is paused until your subscription is paid. You can still change opening hours.</Text>
       ) : null}

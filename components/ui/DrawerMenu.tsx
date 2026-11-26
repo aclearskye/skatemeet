@@ -47,7 +47,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "FAVOURITES", icon: "heart-outline",  path: "/favourites", match: "/favourites" },
   { label: "SEARCH",     icon: "search-outline", path: "/search",     match: "/search"     },
   { label: "CHATS",      icon: "chatbubbles-outline", path: "/chats", match: "/chats", matchPrefix: "/chat/" },
-  // The cart is a button on the Stores page.
+  // The cart and My tickets are buttons on the Stores page.
   { label: "STORES",     icon: "storefront-outline", path: "/stores", match: "/stores", matchPrefix: "/cart" },
   { label: "PROFILE",    icon: "person-outline", path: "/profile",    match: "/profile"    },
 ];

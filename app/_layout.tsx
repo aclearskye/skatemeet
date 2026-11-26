@@ -151,6 +151,8 @@ const RootNavigation = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
         <Stack.Screen name="favourites" />
         <Stack.Screen name="stores" />
         <Stack.Screen name="cart" />
+        <Stack.Screen name="tickets" />
+        <Stack.Screen name="store-tickets" />
         <Stack.Screen name="friends" />
         <Stack.Screen name="chats" />
         <Stack.Screen name="chat/[conversationId]" />

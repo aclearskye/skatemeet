@@ -72,6 +72,17 @@ export const queryKeys = {
     ["commerce", "myStorefront", profileId] as const,
   cart: (profileId: string) =>
     ["commerce", "cart", profileId] as const,
+  // The store's Stripe account for tickets, and its ticket types.
+  myTicketing: (profileId: string) =>
+    ["tickets", "myTicketing", profileId] as const,
+  myTicketTypes: (profileId: string) =>
+    ["tickets", "myTicketTypes", profileId] as const,
+  // A store page's tickets on sale, per viewer (who can buy differs).
+  storeTickets: (storeOwnerId: string) =>
+    ["tickets", "store", storeOwnerId] as const,
+  // The skater's bought tickets.
+  myTickets: (profileId: string) =>
+    ["tickets", "mine", profileId] as const,
   storeBilling: (profileId: string) =>
     ["storeAccount", profileId, "billing"] as const,
   myStorePage: (profileId: string) =>
