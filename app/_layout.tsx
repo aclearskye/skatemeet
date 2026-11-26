@@ -18,6 +18,7 @@ import { ToastHost } from "@/components/ui/ToastHost";
 import WebAccountSidebar from "@/components/ui/WebAccountSidebar";
 import WebSidebar from "@/components/ui/WebSidebar";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
+import { DevAccountSwitcher } from "@/components/devTools/DevAccountSwitcher";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
@@ -218,6 +219,7 @@ function AppLayout() {
             )}
             {fontsLoaded && <UploadProgressBar />}
             <ToastHost />
+            {__DEV__ && fontsLoaded && <DevAccountSwitcher />}
             </VideoSoundProvider>
             </UploadQueueProvider>
           </ToastProvider>

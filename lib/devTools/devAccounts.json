@@ -1,0 +1,56 @@
+[
+  {
+    "key": "adult",
+    "email": "dev-adult@example.com",
+    "label": "Adult",
+    "blurb": "Onboarded, age confirmed. Can buy, DM, use nearby and spot chats."
+  },
+  {
+    "key": "adult2",
+    "email": "dev-adult2@example.com",
+    "label": "Adult (second)",
+    "blurb": "A second Adult, for testing follows, DMs and tags between two accounts."
+  },
+  {
+    "key": "admin",
+    "email": "dev-admin@example.com",
+    "label": "Admin",
+    "blurb": "An Adult with is_admin. Can review store claims and reports."
+  },
+  {
+    "key": "new",
+    "email": "dev-new@example.com",
+    "label": "New skater",
+    "blurb": "Signed up but not onboarded. Lands on skater onboarding."
+  },
+  {
+    "key": "agecheck",
+    "email": "dev-agecheck@example.com",
+    "label": "Needs age check",
+    "blurb": "Onboarded with no age_confirmed_at. Lands on the 18+ check."
+  },
+  {
+    "key": "banned",
+    "email": "dev-banned@example.com",
+    "label": "Banned Adult",
+    "blurb": "An onboarded Adult with an open ban. Confined to the banned screen."
+  },
+  {
+    "key": "store-pending",
+    "email": "dev-store-pending@example.com",
+    "label": "Store (pending claim)",
+    "blurb": "Card saved, claim submitted. Sees only the claim-pending dashboard."
+  },
+  {
+    "key": "store-approved",
+    "email": "dev-store-approved@example.com",
+    "label": "Store (approved, paid)",
+    "blurb": "Approved claim, active subscription. Normal app with the store page editor."
+  },
+  {
+    "key": "store-unpaid",
+    "email": "dev-store-unpaid@example.com",
+    "label": "Store (approved, unpaid)",
+    "blurb": "Approved claim, subscription unpaid. Hours-only editing, purchasing blocked."
+  }
+]
