@@ -16,5 +16,7 @@ export const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
   rowText: { flex: 1, gap: 2 },
   rowTitle: { fontFamily: F.bodyBold, fontSize: 14, color: C.text },
+  buttonRow: { flexDirection: "row", gap: 10 },
+  buttonHalf: { flex: 1 },
   error: { fontFamily: F.body, fontSize: 13, color: C.error },
 });

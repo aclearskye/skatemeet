@@ -1,13 +1,16 @@
 import { useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "@/lib/shared/keyboard";
 import { useMyStorePage } from "@/lib/storeAccounts/hooks/useMyStorePage";
 import { useMyTicketTypes } from "@/lib/tickets/hooks/useMyTicketTypes";
+import { useMyStoreWaiver } from "@/lib/tickets/hooks/useMyStoreWaiver";
 import { useMyTicketing } from "@/lib/tickets/hooks/useMyTicketing";
 import { useSetTicketTypeActive } from "@/lib/tickets/hooks/useSetTicketTypeActive";
 import type { OwnTicketType } from "@/lib/tickets/types";
-import { C, F } from "@/lib/theme";
+import { C, F, R } from "@/lib/theme";
 import { BackButton } from "@/components/common/BackButton";
 import { StorePrimaryButton } from "@/components/storeAccount/StorePrimaryButton";
 import { TicketTypeForm } from "@/components/tickets/TicketTypeForm";
@@ -25,6 +28,8 @@ export default function StoreTicketsScreen() {
   const { data: types = [], isLoading, isError, refetch } = useMyTicketTypes();
   const setActive = useSetTicketTypeActive();
   const [editing, setEditing] = useState<Editing>(null);
+  const router = useRouter();
+  const { data: waiver, isLoading: waiverLoading } = useMyStoreWaiver();
 
   const canEdit = (page?.canEdit ?? false) && (ticketing?.chargesEnabled ?? false);
 
@@ -49,6 +54,25 @@ export default function StoreTicketsScreen() {
               : "Finish setting up Stripe on your store page before adding tickets."}
           </Text>
         ) : null}
+
+        <TouchableOpacity
+          style={[styles.waiverCard, !waiver && !waiverLoading && styles.waiverMissing]}
+          onPress={() => router.push("/store-waiver" as never)}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+        >
+          <View style={styles.waiverText}>
+            <Text style={styles.waiverTitle}>WAIVER</Text>
+            <Text style={styles.hint}>
+              {waiverLoading
+                ? "Loading…"
+                : waiver
+                  ? `Version ${waiver.version}. Skaters sign it before paying.`
+                  : "No waiver yet. Add one so every skater signs before paying."}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={C.muted} />
+        </TouchableOpacity>
 
         {editing ? (
           <TicketTypeForm
@@ -106,4 +130,17 @@ const styles = StyleSheet.create({
   muted: { fontFamily: F.mono, fontSize: 11, color: C.muted, letterSpacing: 2, textAlign: "center" },
   hint: { fontFamily: F.body, fontSize: 13, color: C.muted },
   error: { fontFamily: F.body, fontSize: 13, color: C.error },
+  waiverCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 14,
+    borderRadius: R,
+    borderWidth: 1,
+    borderColor: C.borderVariant,
+    backgroundColor: C.surfaceLow,
+  },
+  waiverMissing: { borderColor: C.errorBorder, backgroundColor: C.errorDim },
+  waiverText: { flex: 1, gap: 4 },
+  waiverTitle: { fontFamily: F.mono, fontSize: 11, letterSpacing: 1.5, color: C.text },
 });

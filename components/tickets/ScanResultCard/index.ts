@@ -1,0 +1,1 @@
+export { ScanResultCard } from "./ScanResultCard";

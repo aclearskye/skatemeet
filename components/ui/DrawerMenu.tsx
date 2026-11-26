@@ -1,6 +1,7 @@
 import { onSignOutButtonPress } from "@/lib/auth/onSignOutButtonPress";
 import { useDrawer } from "@/lib/context/drawer-context";
 import { useAuthContext } from "@/lib/context/use-auth-context";
+import { isApprovedStoreProfile } from "@/lib/storeAccounts/types";
 import { useUnreadChatCount } from "@/lib/messages/hooks/useUnreadChatCount";
 import { fetchUnreadNotificationCount } from "@/lib/notifications/queries";
 import { avatarColor, C, F } from "@/lib/theme";
@@ -34,7 +35,14 @@ type NavItem = {
   matchPrefix?: string;
   // Web sidebar only -- native has this in the bottom tab bar instead.
   webOnly?: boolean;
+  // Approved Store accounts only (staff tools such as the ticket scanner).
+  storeOnly?: boolean;
 };
+
+// Which nav items an account sees: store tools only for approved stores.
+export function navItemVisible(item: NavItem, isApprovedStore: boolean): boolean {
+  return !item.storeOnly || isApprovedStore;
+}
 
 export function isNavItemActive(item: NavItem, pathname: string): boolean {
   return pathname === item.match || (item.matchPrefix != null && pathname.startsWith(item.matchPrefix));
@@ -50,6 +58,8 @@ export const NAV_ITEMS: NavItem[] = [
   // The cart and My tickets are buttons on the Stores page.
   { label: "STORES",     icon: "storefront-outline", path: "/stores", match: "/stores", matchPrefix: "/cart" },
   { label: "PROFILE",    icon: "person-outline", path: "/profile",    match: "/profile"    },
+  // Staff at the till: the ticket scanner (and its check-in list).
+  { label: "SCAN",       icon: "qr-code-outline", path: "/store-scan", match: "/store-scan", matchPrefix: "/store-checkins", storeOnly: true },
 ];
 
 export default function DrawerMenu() {
@@ -170,7 +180,7 @@ export default function DrawerMenu() {
 
         <View style={styles.divider} />
         <View style={styles.navSection}>
-          {NAV_ITEMS.filter((item) => !item.webOnly).map((item) => {
+          {NAV_ITEMS.filter((item) => !item.webOnly && navItemVisible(item, isApprovedStoreProfile(profile))).map((item) => {
             const { label, icon, path } = item;
             const active = isNavItemActive(item, pathname);
             return (

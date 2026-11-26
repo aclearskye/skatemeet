@@ -2,6 +2,8 @@
 // entry through its own Stripe account (Connect). A SESSION is one entry on
 // a weekday; a PASS is valid from one date to another.
 
+import type { MyTicketRequest } from "./requestTypes";
+
 export type TicketKind = "session" | "pass";
 
 export type TicketType = {
@@ -16,9 +18,12 @@ export type TicketType = {
   // "HH:MM", session only, both or neither.
   startTime: string | null;
   endTime: string | null;
-  // "YYYY-MM-DD", pass only.
+  // "YYYY-MM-DD", pass only: set dates.
   validFrom: string | null;
   validTo: string | null;
+  // Pass only, instead of set dates: valid this many days from purchase
+  // (the day it's bought is day 1).
+  passDays: number | null;
   isActive: boolean;
 };
 
@@ -43,13 +48,22 @@ export type MyTicketing = {
   currency: string;
   allowUnder18: boolean;
   canSell: boolean;
+  // Refund and swap requests waiting for the store.
+  pendingRequests: number;
+  // Swaps go through the moment the skater asks.
+  autoApproveSwaps: boolean;
+  // Refunds for tickets at or under this price go through straight away;
+  // null: every refund waits for the store.
+  autoRefundMaxMinor: number | null;
 };
 
 export type MyTicket = {
   ticketId: string;
   // Null until the get_my_tickets migration that adds it is applied.
   ticketTypeId: string | null;
-  status: "paid" | "refunded";
+  // used: a session ticket that's been scanned in. swapped: exchanged for
+  // another ticket at the store.
+  status: "paid" | "refunded" | "used" | "swapped";
   name: string;
   kind: TicketKind;
   weekday: number | null;
@@ -62,6 +76,12 @@ export type MyTicket = {
   // What the QR code shows. Null once refunded.
   qrToken: string | null;
   paidAt: string;
+  usedAt: string | null;
+  // Unused 30 days after purchase: can be put up for a refund or swap.
+  canRequest: boolean;
+  request: MyTicketRequest | null;
+  // The latest scan in (a pass checks in once a day).
+  lastCheckedInAt: string | null;
   storeOwnerId: string;
   storeName: string;
   logoPath: string | null;
@@ -78,6 +98,7 @@ export type SaveTicketTypePayload = {
   endTime: string | null;
   validFrom: string | null;
   validTo: string | null;
+  passDays: number | null;
 };
 
 export const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -102,11 +123,17 @@ function formatDay(isoDate: string): string {
   });
 }
 
-type Validity = Pick<TicketType, "kind" | "weekday" | "startTime" | "endTime" | "validFrom" | "validTo">;
+type Validity = Pick<TicketType, "kind" | "weekday" | "startTime" | "endTime" | "validFrom" | "validTo"> & {
+  // A ticket type sold as days from purchase. Bought tickets have real
+  // dates instead.
+  passDays?: number | null;
+};
 
-// "Saturday, 14:00–21:00" or "1 Dec 2026 – 31 Dec 2026".
+// "Saturday, 14:00–21:00", "1 Dec 2026 – 31 Dec 2026" or "30 days from
+// purchase".
 export function ticketValidityLabel(ticket: Validity): string {
   if (ticket.kind === "pass") {
+    if (ticket.passDays) return `${ticket.passDays} ${ticket.passDays === 1 ? "day" : "days"} from purchase`;
     return ticket.validFrom && ticket.validTo ? `${formatDay(ticket.validFrom)} – ${formatDay(ticket.validTo)}` : "";
   }
   const day = ticket.weekday != null ? WEEKDAYS[ticket.weekday] : "";
@@ -144,6 +171,17 @@ const ERROR_MESSAGES: Record<string, string> = {
   TICKET_NOT_ON_SALE: "That ticket isn't on sale any more.",
   STORE_NOT_SELLING: "This store isn't selling tickets through SkateMeet right now.",
   CANNOT_BUY_TICKET: "Your account can't buy this ticket.",
+  WAIVER_REQUIRED: "Sign this store's waiver before paying.",
+  WAIVER_CHANGED: "The store just updated its waiver. Read it again and sign the new version.",
+  INVALID_WAIVER: "Check the waiver details: names, date of birth, emergency phone, and tick to agree.",
+  INVALID_WAIVER_TEXT: "Write a waiver between 20 and 20,000 characters.",
+  STORE_UNPAID: "Your subscription is unpaid. Pay it to change your waiver.",
+  NOT_AUTHENTICATED: "Your session has ended. Sign out and back in, then try again.",
+  INVALID_RULE: "Enter an amount between 0 and 1,000.",
+  NOT_ELIGIBLE: "This ticket can't be refunded or swapped. Only tickets unused 30 days after purchase can.",
+  SWAP_NOT_AVAILABLE: "That ticket isn't available to swap to any more.",
+  REQUEST_OPEN: "You've already asked about this ticket. Wait for the store to reply.",
+  REQUEST_NOT_FOUND: "That request has already been dealt with.",
   ALREADY_HAS_TICKET: "You already have this ticket. Find it under Show QR code or My tickets.",
   TOO_MANY_PENDING: "You have several checkouts open. Finish or close one, then try again.",
   INVALID_RETURN_URL: "Something went wrong opening the payment page.",

@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
+import type { TicketRequestKind, TicketRequestStatus } from "./requestTypes";
 import {
   toTicketsError,
   type MyTicket,
@@ -9,7 +10,7 @@ import {
   type TicketType,
 } from "./types";
 
-type TicketTypeRow = {
+export type TicketTypeRow = {
   ticket_type_id: string;
   kind: TicketKind;
   name: string;
@@ -21,10 +22,11 @@ type TicketTypeRow = {
   end_time: string | null;
   valid_from: string | null;
   valid_to: string | null;
+  pass_days?: number | null;
   is_active: boolean;
 };
 
-function toTicketType(row: TicketTypeRow): TicketType {
+export function toTicketType(row: TicketTypeRow): TicketType {
   return {
     ticketTypeId: row.ticket_type_id,
     kind: row.kind,
@@ -37,6 +39,7 @@ function toTicketType(row: TicketTypeRow): TicketType {
     endTime: row.end_time,
     validFrom: row.valid_from,
     validTo: row.valid_to,
+    passDays: row.pass_days ?? null,
     isActive: row.is_active,
   };
 }
@@ -47,6 +50,9 @@ type MyTicketingRow = {
   currency: string;
   allow_under_18: boolean;
   can_sell: boolean;
+  pending_requests?: number;
+  auto_approve_swaps?: boolean;
+  auto_refund_max_minor?: number | null;
 };
 
 // Null: the store hasn't started Stripe onboarding.
@@ -61,6 +67,9 @@ export async function fetchMyTicketing(): Promise<MyTicketing | null> {
     currency: row.currency,
     allowUnder18: row.allow_under_18,
     canSell: row.can_sell,
+    pendingRequests: row.pending_requests ?? 0,
+    autoApproveSwaps: row.auto_approve_swaps ?? false,
+    autoRefundMaxMinor: row.auto_refund_max_minor ?? null,
   };
 }
 
@@ -92,12 +101,16 @@ export async function fetchStoreTickets(storeOwnerId: string): Promise<StoreTick
   };
 }
 
-type MyTicketRow = Omit<TicketTypeRow, "ticket_type_id" | "description" | "is_active"> & {
+type MyTicketRow = Omit<TicketTypeRow, "ticket_type_id" | "description" | "is_active" | "pass_days"> & {
   ticket_id: string;
   ticket_type_id?: string;
-  status: "paid" | "refunded";
+  status: "paid" | "refunded" | "used" | "swapped";
   qr_token: string | null;
   paid_at: string;
+  used_at?: string | null;
+  can_request?: boolean;
+  request?: { request_id: string; kind: TicketRequestKind; status: TicketRequestStatus; swap_name: string | null; created_at: string } | null;
+  last_checked_in_at?: string | null;
   store_owner_id: string;
   store_name: string;
   logo_path: string | null;
@@ -121,6 +134,18 @@ export async function fetchMyTickets(): Promise<MyTicket[]> {
     currency: row.currency,
     qrToken: row.qr_token,
     paidAt: row.paid_at,
+    usedAt: row.used_at ?? null,
+    canRequest: row.can_request ?? false,
+    request: row.request
+      ? {
+          requestId: row.request.request_id,
+          kind: row.request.kind,
+          status: row.request.status,
+          swapName: row.request.swap_name,
+          createdAt: row.request.created_at,
+        }
+      : null,
+    lastCheckedInAt: row.last_checked_in_at ?? null,
     storeOwnerId: row.store_owner_id,
     storeName: row.store_name,
     logoPath: row.logo_path,

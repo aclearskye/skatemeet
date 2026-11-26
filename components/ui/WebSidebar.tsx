@@ -1,6 +1,7 @@
-import { isNavItemActive, NAV_ITEMS } from "@/components/ui/DrawerMenu";
+import { isNavItemActive, NAV_ITEMS, navItemVisible } from "@/components/ui/DrawerMenu";
 import { useAuthContext } from "@/lib/context/use-auth-context";
 import { useUnreadChatCount } from "@/lib/messages/hooks/useUnreadChatCount";
+import { isApprovedStoreProfile } from "@/lib/storeAccounts/types";
 import { C, F } from "@/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
@@ -24,7 +25,7 @@ export default function WebSidebar() {
       <View style={styles.divider} />
 
       <View style={styles.nav}>
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.filter((item) => navItemVisible(item, isApprovedStoreProfile(profile))).map((item) => {
           const { label, icon, path } = item;
           const active = isNavItemActive(item, pathname);
           return (

@@ -17,10 +17,16 @@ const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const PRICE_REGEX = /^\d+(\.\d{1,2})?$/;
 
 const KIND_LABEL: Record<TicketKind, string> = { session: "SESSION", pass: "PASS" };
+
+type PassMode = "dates" | "rolling";
+const PASS_MODES: { mode: PassMode; label: string }[] = [
+  { mode: "dates", label: "SET DATES" },
+  { mode: "rolling", label: "DAYS FROM PURCHASE" },
+];
 const KIND_HINT: Record<TicketKind, string> = {
   session:
     "One entry on a day of the week, e.g. \"Free Skate 2–9pm\" on Saturday. If it isn't used, it's good for a later session on the same day.",
-  pass: "Unlimited entry (once a day) between two dates, e.g. a monthly pass.",
+  pass: "Entry once a day for a stretch of time: between two set dates, or for a number of days from when it's bought.",
 };
 
 function isRealDate(value: string): boolean {
@@ -40,6 +46,9 @@ export function TicketTypeForm({ ticketType, onDone }: Props) {
   const [endTime, setEndTime] = useState(ticketType?.endTime ?? "");
   const [validFrom, setValidFrom] = useState(ticketType?.validFrom ?? "");
   const [validTo, setValidTo] = useState(ticketType?.validTo ?? "");
+  // A pass runs between set dates, or for a number of days from purchase.
+  const [passMode, setPassMode] = useState<PassMode>(ticketType?.passDays ? "rolling" : "dates");
+  const [passDays, setPassDays] = useState(ticketType?.passDays ? String(ticketType.passDays) : "30");
   const [error, setError] = useState<string | null>(null);
 
   const validate = (): string | null => {
@@ -52,6 +61,9 @@ export function TicketTypeForm({ ticketType, onDone }: Props) {
         if (!TIME_REGEX.test(start) || !TIME_REGEX.test(end)) return "Enter times as HH:MM, e.g. 14:00, or leave both empty.";
         if (end <= start) return "The session has to end after it starts.";
       }
+    } else if (passMode === "rolling") {
+      const days = Number(passDays.trim());
+      if (!/^\d+$/.test(passDays.trim()) || days < 1 || days > 366) return "Enter a number of days from 1 to 366.";
     } else {
       if (!isRealDate(validFrom.trim()) || !isRealDate(validTo.trim())) return "Enter dates as YYYY-MM-DD.";
       if (validTo.trim() < validFrom.trim()) return "The last day has to be on or after the first day.";
@@ -67,6 +79,7 @@ export function TicketTypeForm({ ticketType, onDone }: Props) {
     }
     setError(null);
     const isSession = kind === "session";
+    const rolling = !isSession && passMode === "rolling";
     save.mutate(
       {
         ticketTypeId: ticketType?.ticketTypeId ?? null,
@@ -77,8 +90,9 @@ export function TicketTypeForm({ ticketType, onDone }: Props) {
         weekday: isSession ? weekday : null,
         startTime: isSession && startTime.trim() ? startTime.trim() : null,
         endTime: isSession && endTime.trim() ? endTime.trim() : null,
-        validFrom: isSession ? null : validFrom.trim(),
-        validTo: isSession ? null : validTo.trim(),
+        validFrom: isSession || rolling ? null : validFrom.trim(),
+        validTo: isSession || rolling ? null : validTo.trim(),
+        passDays: rolling ? Number(passDays.trim()) : null,
       },
       {
         onSuccess: onDone,
@@ -148,14 +162,40 @@ export function TicketTypeForm({ ticketType, onDone }: Props) {
           </View>
         </>
       ) : (
-        <View style={styles.pair}>
-          <View style={styles.pairItem}>
-            <StoreTextField label="FIRST DAY" hint="YYYY-MM-DD" value={validFrom} onChangeText={setValidFrom} maxLength={10} />
+        <>
+          <Text style={styles.label}>VALID</Text>
+          <View style={styles.tabs}>
+            {PASS_MODES.map(({ mode, label }) => (
+              <TouchableOpacity
+                key={mode}
+                style={[styles.tab, passMode === mode && styles.tabSelected]}
+                onPress={() => setPassMode(mode)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.tabText, passMode === mode && styles.tabTextSelected]}>{label}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
-          <View style={styles.pairItem}>
-            <StoreTextField label="LAST DAY" hint="YYYY-MM-DD" value={validTo} onChangeText={setValidTo} maxLength={10} />
-          </View>
-        </View>
+          {passMode === "rolling" ? (
+            <StoreTextField
+              label="DAYS"
+              hint="Counted from the day it's bought (day 1), so a 30-day pass covers 30 days in a row."
+              value={passDays}
+              onChangeText={setPassDays}
+              keyboardType="number-pad"
+              maxLength={3}
+            />
+          ) : (
+            <View style={styles.pair}>
+              <View style={styles.pairItem}>
+                <StoreTextField label="FIRST DAY" hint="YYYY-MM-DD" value={validFrom} onChangeText={setValidFrom} maxLength={10} />
+              </View>
+              <View style={styles.pairItem}>
+                <StoreTextField label="LAST DAY" hint="YYYY-MM-DD" value={validTo} onChangeText={setValidTo} maxLength={10} />
+              </View>
+            </View>
+          )}
+        </>
       )}
 
       {error ? <Text style={styles.error}>{error}</Text> : null}

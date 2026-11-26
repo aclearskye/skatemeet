@@ -83,6 +83,28 @@ export const queryKeys = {
   // The skater's bought tickets.
   myTickets: (profileId: string) =>
     ["tickets", "mine", profileId] as const,
+  // The store's own waiver text.
+  myStoreWaiver: (profileId: string) =>
+    ["tickets", "myStoreWaiver", profileId] as const,
+  // The waiver a buyer signs at a store, with their own prefill.
+  ticketWaiverForm: (storeOwnerId: string) =>
+    ["tickets", "waiverForm", storeOwnerId] as const,
+  // What an unused ticket could be swapped for.
+  ticketSwapOptions: (ticketId: string) =>
+    ["tickets", "swapOptions", ticketId] as const,
+  // The store's open refund and swap requests.
+  storeTicketRequests: (profileId: string) =>
+    ["tickets", "requests", profileId] as const,
+  // The store's signed waivers list, and its search.
+  storeWaiversBase: (profileId: string) =>
+    ["tickets", "storeWaivers", profileId] as const,
+  storeWaivers: (profileId: string, search: string) =>
+    ["tickets", "storeWaivers", profileId, search] as const,
+  // A store's check-in list; invalidated by prefix after every scan.
+  storeCheckinsBase: (profileId: string) =>
+    ["tickets", "checkins", profileId] as const,
+  storeCheckins: (profileId: string, search: string, todayOnly: boolean) =>
+    ["tickets", "checkins", profileId, search, todayOnly] as const,
   storeBilling: (profileId: string) =>
     ["storeAccount", profileId, "billing"] as const,
   myStorePage: (profileId: string) =>
@@ -212,6 +234,9 @@ export const queryKeys = {
     ["posts", "entity", entityKey] as const,
   entityTagLabel: (focusKey: string) =>
     ["posts", "entityTagLabel", focusKey] as const,
+  // The bottom bar's picked tabs, saved on this device.
+  tabShortcuts: (profileId: string) =>
+    ["navigation", "tabShortcuts", profileId] as const,
   cachedLocation: () =>
     ["location", "cached"] as const,
   nearbyEntityTags: (location: { lat: number; lng: number }) =>

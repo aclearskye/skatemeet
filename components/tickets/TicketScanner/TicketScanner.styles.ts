@@ -1,0 +1,61 @@
+import { StyleSheet } from "react-native";
+import { C, F, R } from "@/lib/theme";
+
+const FRAME_SIZE = 240;
+
+export const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: C.bg },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: C.border,
+  },
+  headerText: { flex: 1, gap: 2 },
+  heading: { fontFamily: F.heading, fontSize: 20, color: C.text, letterSpacing: 2 },
+  subheading: { fontFamily: F.monoRegular, fontSize: 13, color: C.muted, letterSpacing: 0.5 },
+  headerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    height: 34,
+    paddingHorizontal: 10,
+    borderWidth: 2,
+    borderColor: C.borderVariant,
+    borderRadius: R,
+  },
+  headerButtonText: { fontFamily: F.mono, fontSize: 11, letterSpacing: 1.5, color: C.text },
+  centered: { flex: 1, justifyContent: "center", alignItems: "center", gap: 14, paddingHorizontal: 24 },
+  muted: { fontFamily: F.mono, fontSize: 11, color: C.muted, letterSpacing: 2, textAlign: "center" },
+  prompt: { fontFamily: F.body, fontSize: 15, color: C.text, textAlign: "center" },
+  promptButton: { alignSelf: "stretch" },
+  cameraWrap: { flex: 1, backgroundColor: C.bgLowest },
+  frame: {
+    position: "absolute",
+    top: 48,
+    alignSelf: "center",
+    width: FRAME_SIZE,
+    height: FRAME_SIZE,
+    borderWidth: 3,
+    borderColor: C.primary,
+    borderRadius: R,
+  },
+  sheet: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    gap: 12,
+    padding: 16,
+    borderTopWidth: 2,
+    borderTopColor: C.border,
+    backgroundColor: C.bg,
+  },
+  checking: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8 },
+  checkingText: { fontFamily: F.bodyBold, fontSize: 15, color: C.text },
+  hint: { fontFamily: F.body, fontSize: 14, color: C.muted, textAlign: "center", paddingVertical: 8 },
+  error: { fontFamily: F.bodyBold, fontSize: 14, color: C.error },
+});

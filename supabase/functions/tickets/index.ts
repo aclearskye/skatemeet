@@ -16,7 +16,12 @@ import { stripeV2 } from "../_shared/stripeV2.ts";
 //                    link.
 //   connect_refresh  Store: re-reads its Stripe account after onboarding, in
 //                    case the account.updated webhook hasn't landed yet.
-//   checkout         Skater: one ticket, on a Stripe Checkout page run on
+//   refund_request   Store: approves a skater's refund request (a ticket
+//                    unused 30 days after purchase) and refunds it in Stripe.
+//   auto_refund      Skater: right after asking, when the store
+//                    auto-refunds tickets at that price.
+//   checkout         Skater: one ticket (with the store's waiver signed,
+//                    when it has one), on a Stripe Checkout page run on
 //                    the store's account. The ticket turns paid in
 //                    stripe-connect-webhook.
 //
@@ -55,6 +60,11 @@ const RPC_ERRORS = [
   "CANNOT_BUY_TICKET",
   "TOO_MANY_PENDING",
   "ALREADY_HAS_TICKET",
+  "WAIVER_REQUIRED",
+  "WAIVER_CHANGED",
+  "INVALID_WAIVER",
+  "REQUEST_NOT_FOUND",
+  "NOT_ELIGIBLE",
 ];
 
 function rpcError(error: { message?: string }): Error {
@@ -106,6 +116,26 @@ async function closeOpenCheckouts(admin: SupabaseClient, buyerId: string, ticket
     }
     await admin.rpc("_expire_ticket_purchase", { p_session_id: row.stripe_checkout_session_id });
   }
+}
+
+// Refunds a refund request's payment on the store's own Stripe account
+// (Stripe keeps its fee), then closes the ticket and the request. The
+// idempotency key makes a retried call safe.
+async function refundRequest(admin: SupabaseClient, requestId: string, storeId: string) {
+  const { data: rows, error } = await admin.rpc("_begin_request_refund", {
+    p_request_id: requestId,
+    p_store: storeId,
+  });
+  if (error) throw rpcError(error);
+  const refund = (rows as { payment_intent_id: string; stripe_account_id: string }[])[0];
+  if (!refund?.stripe_account_id) throw new TicketError("REQUEST_NOT_FOUND");
+
+  await stripe.refunds.create(
+    { payment_intent: refund.payment_intent_id, reason: "requested_by_customer" },
+    { stripeAccount: refund.stripe_account_id, idempotencyKey: `ticket-request-refund-${requestId}` }
+  );
+  const { error: finishError } = await admin.rpc("_finish_request_refund", { p_request_id: requestId });
+  if (finishError) throw finishError;
 }
 
 serve(async (req) => {
@@ -189,6 +219,37 @@ serve(async (req) => {
       return json({ url: link.url });
     }
 
+    if (action === "auto_refund") {
+      // A skater's refund request at a store that auto-refunds tickets at
+      // this price: refund it now, without waiting for the store.
+      if (typeof body.requestId !== "string") throw new TicketError("REQUEST_NOT_FOUND");
+      const { data: storeId, error: ruleError } = await admin.rpc("_auto_refund_store", {
+        p_request_id: body.requestId,
+        p_buyer: user.id,
+      });
+      if (ruleError) throw ruleError;
+      // Not covered by the store's rule: it stays waiting for the store.
+      if (!storeId) return json({ ok: true, refunded: false });
+      await refundRequest(admin, body.requestId, storeId as string);
+      return json({ ok: true, refunded: true });
+    }
+
+    if (action === "refund_request") {
+      // The store approves a skater's refund request: refund the payment on
+      // the store's own Stripe account (Stripe keeps its fee), then close
+      // the ticket and the request.
+      if (typeof body.requestId !== "string") throw new TicketError("REQUEST_NOT_FOUND");
+      const { data: profile } = await admin
+        .from("profiles")
+        .select("account_type")
+        .eq("profile_id", user.id)
+        .maybeSingle();
+      if (profile?.account_type !== "store") throw new TicketError("NOT_STORE_ACCOUNT", 403);
+
+      await refundRequest(admin, body.requestId, user.id);
+      return json({ ok: true });
+    }
+
     if (action === "checkout") {
       const returnUrl = checkReturnUrl(body.returnUrl);
       if (typeof body.ticketTypeId !== "string") throw new TicketError("TICKET_NOT_ON_SALE");
@@ -212,6 +273,15 @@ serve(async (req) => {
       }[])[0];
 
       try {
+        // The store's waiver, signed in the app before paying. Required
+        // when the store has one; ignored when it doesn't.
+        const { error: waiverError } = await admin.rpc("_attach_ticket_waiver", {
+          p_ticket_id: ticket.ticket_id,
+          p_buyer: user.id,
+          p_waiver: body.waiver ?? null,
+        });
+        if (waiverError) throw rpcError(waiverError);
+
         const session = await stripe.checkout.sessions.create(
           {
             mode: "payment",

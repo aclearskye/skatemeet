@@ -1,4 +1,4 @@
-import { ActivityIndicator, ScrollView, Switch, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Platform, ScrollView, Switch, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,6 +7,7 @@ import { useProfilePrivacy } from "@/lib/profiles/hooks/useProfilePrivacy";
 import { C, F } from "@/lib/theme";
 import { DeactivateAccountButton } from "@/components/common/DeactivateAccountButton";
 import { BackButton } from "@/components/common/BackButton";
+import { NavigationShortcuts } from "@/components/settings/NavigationShortcuts";
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -54,6 +55,13 @@ export default function SettingsScreen() {
           <Ionicons name="chevron-forward" size={18} color={C.muted} />
         </TouchableOpacity>
       </View>
+
+      {/* The bottom bar only exists on iOS and Android; web has its sidebar. */}
+      {Platform.OS !== "web" ? (
+        <View style={styles.section}>
+          <NavigationShortcuts />
+        </View>
+      ) : null}
 
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>YOUR DATA</Text>

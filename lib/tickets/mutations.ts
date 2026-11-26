@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
 import { invokeTickets } from "./ticketsClient";
 import { TicketsError, toTicketsError, type SaveTicketTypePayload } from "./types";
+import type { WaiverSignature } from "./waiverTypes";
 
 // Stripe's hosted onboarding for the store's own Stripe account.
 export async function createTicketingOnboardingLink(returnUrl: string): Promise<string> {
@@ -30,6 +31,7 @@ export async function saveTicketType(payload: SaveTicketTypePayload): Promise<st
     p_end_time: payload.endTime,
     p_valid_from: payload.validFrom,
     p_valid_to: payload.validTo,
+    p_pass_days: payload.passDays,
   });
   if (error) throw toTicketsError(error);
   return data as string;
@@ -41,8 +43,13 @@ export async function setTicketTypeActive(ticketTypeId: string, active: boolean)
 }
 
 // A Stripe Checkout page for one ticket, run on the store's own account.
-export async function createTicketCheckout(ticketTypeId: string, returnUrl: string): Promise<string> {
-  const { url } = await invokeTickets<{ url: string | null }>({ action: "checkout", ticketTypeId, returnUrl });
+// waiver: the store's waiver, signed in the app (required when it has one).
+export async function createTicketCheckout(
+  ticketTypeId: string,
+  returnUrl: string,
+  waiver: WaiverSignature | null
+): Promise<string> {
+  const { url } = await invokeTickets<{ url: string | null }>({ action: "checkout", ticketTypeId, returnUrl, waiver });
   if (!url) throw new TicketsError("TICKETS_UNAVAILABLE", "Tickets aren't available right now. Try again in a minute.");
   return url;
 }

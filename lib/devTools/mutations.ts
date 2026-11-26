@@ -16,7 +16,10 @@ export async function switchToAccount(email: string, password: string): Promise<
   const { data } = await supabase.auth.getSession();
   if (data.session) {
     await unregisterPushToken().catch(() => {});
-    await supabase.auth.signOut();
+    // Local: only this device. The default (global) ends the account's
+    // sessions everywhere, so switching here would sign a test account
+    // out on your other devices too.
+    await supabase.auth.signOut({ scope: "local" });
   }
   if (router.canDismiss()) router.dismissAll();
   router.replace("/Login");

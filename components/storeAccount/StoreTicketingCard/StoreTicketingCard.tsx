@@ -7,6 +7,7 @@ import { useTicketingOnboarding } from "@/lib/tickets/hooks/useTicketingOnboardi
 import { TicketsError } from "@/lib/tickets/types";
 import { C } from "@/lib/theme";
 import { StorePrimaryButton } from "@/components/storeAccount/StorePrimaryButton";
+import { StoreRequestRules } from "@/components/storeAccount/StoreRequestRules";
 import { styles } from "./StoreTicketingCard.styles";
 
 type Props = {
@@ -88,8 +89,38 @@ export function StoreTicketingCard({ canEdit }: Props) {
         />
       </View>
 
+      <StoreRequestRules ticketing={ticketing} canEdit={canEdit} />
+
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <StorePrimaryButton label="MANAGE TICKETS" onPress={() => router.push("/store-tickets" as never)} />
+      <StorePrimaryButton label="SCAN TICKETS" onPress={() => router.push("/store-scan" as never)} />
+      <View style={styles.buttonRow}>
+        <View style={styles.buttonHalf}>
+          <StorePrimaryButton
+            label="MANAGE TICKETS"
+            variant="secondary"
+            onPress={() => router.push("/store-tickets" as never)}
+          />
+        </View>
+        <View style={styles.buttonHalf}>
+          <StorePrimaryButton label="CHECK-INS" variant="secondary" onPress={() => router.push("/store-checkins" as never)} />
+        </View>
+      </View>
+      <View style={styles.buttonRow}>
+        <View style={styles.buttonHalf}>
+          <StorePrimaryButton
+            label="SIGNED WAIVERS"
+            variant="secondary"
+            onPress={() => router.push("/store-waivers" as never)}
+          />
+        </View>
+        <View style={styles.buttonHalf}>
+          <StorePrimaryButton
+            label={ticketing.pendingRequests > 0 ? `REQUESTS (${ticketing.pendingRequests})` : "REQUESTS"}
+            variant={ticketing.pendingRequests > 0 ? "primary" : "secondary"}
+            onPress={() => router.push("/store-requests" as never)}
+          />
+        </View>
+      </View>
     </View>
   );
 }
