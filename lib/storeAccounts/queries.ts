@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
+import { parseStorePageStyle } from "./pageStyle";
 import {
   STORE_IMAGES_BUCKET,
   toStoreAccountError,
@@ -130,6 +131,7 @@ type StorePageRow = {
   public_email: string | null;
   logo_path: string | null;
   cover_path: string | null;
+  style: unknown;
   follower_count: number;
   is_owner: boolean;
   is_following: boolean;
@@ -151,6 +153,7 @@ export async function fetchStorePage(storeId: string | null, osmPlaceId: string 
     publicEmail: row.public_email,
     logoPath: row.logo_path,
     coverPath: row.cover_path,
+    style: parseStorePageStyle(row.style),
     followerCount: row.follower_count,
     isOwner: row.is_owner,
     isFollowing: row.is_following,
@@ -169,6 +172,7 @@ type MyStorePageRow = {
   public_email: string | null;
   logo_path: string | null;
   cover_path: string | null;
+  style: unknown;
   follower_count: number;
   can_edit: boolean;
 };
@@ -189,6 +193,7 @@ export async function fetchMyStorePage(): Promise<MyStorePage | null> {
     publicEmail: row.public_email,
     logoPath: row.logo_path,
     coverPath: row.cover_path,
+    style: parseStorePageStyle(row.style),
     followerCount: row.follower_count,
     canEdit: row.can_edit,
   };

@@ -3,6 +3,7 @@
 // becomes its owner once an admin approves the claim.
 
 import type { Profile } from "@/lib/context/use-auth-context";
+import type { StorePageStyle } from "./pageStyle";
 
 export const STORE_CLAIM_EVIDENCE_BUCKET = "store-claim-evidence";
 export const STORE_IMAGES_BUCKET = "store-images";
@@ -90,6 +91,7 @@ export type StorePage = {
   publicEmail: string | null;
   logoPath: string | null;
   coverPath: string | null;
+  style: StorePageStyle;
   followerCount: number;
   isOwner: boolean;
   isFollowing: boolean;
@@ -108,6 +110,7 @@ export type MyStorePage = {
   publicEmail: string | null;
   logoPath: string | null;
   coverPath: string | null;
+  style: StorePageStyle;
   followerCount: number;
   canEdit: boolean;
 };
@@ -120,6 +123,7 @@ export type UpdateStorePagePayload = {
   publicEmail: string;
   logoPath: string | null;
   coverPath: string | null;
+  style: StorePageStyle;
 };
 
 export type StoreRef = { storeId: string | null; osmPlaceId: string | null };
@@ -245,6 +249,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   INVALID_RETURN_URL: "Billing couldn't open from here.",
   SUBSCRIPTION_ACTIVE: "Your subscription is already active.",
   INVALID_WEBSITE: "Enter the full website address, starting with https://",
+  INVALID_LABELS: "Tape labels are one word each (letters, numbers, hyphens), up to 5.",
+  INVALID_STYLE: "Check your notice (up to 140 characters) and social handles.",
 };
 
 export function toStoreAccountError(error: { message?: string; code?: string }): StoreAccountError {

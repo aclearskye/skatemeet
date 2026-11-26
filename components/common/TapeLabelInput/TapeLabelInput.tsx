@@ -37,7 +37,7 @@ export function TapeLabelInput({ value, onChange }: Props) {
       return;
     }
     if (value.some((l) => l.text === text)) {
-      setError("That label's already on this spot.");
+      setError("You've already added that label.");
       return;
     }
     if (isFull) return;

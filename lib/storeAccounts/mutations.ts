@@ -91,8 +91,9 @@ export async function restartStoreClaim(): Promise<void> {
   if (error) throw toStoreAccountError(error);
 }
 
-// The owner's page editor. The logo also becomes the account's avatar, so
-// post headers and follower lists show it.
+// The owner's page editor: the page fields, then its look (kind, tape
+// labels, accent, notice, socials, layout). The logo also becomes the
+// account's avatar, so post headers and follower lists show it.
 export async function updateStorePage(payload: UpdateStorePagePayload): Promise<void> {
   const { error } = await supabase.rpc("update_store_page", {
     p_name: payload.name,
@@ -105,4 +106,17 @@ export async function updateStorePage(payload: UpdateStorePagePayload): Promise<
     p_logo_url: payload.logoPath ? storeImageUrl(payload.logoPath) : null,
   });
   if (error) throw toStoreAccountError(error);
+
+  const { style } = payload;
+  const { error: styleError } = await supabase.rpc("update_store_page_style", {
+    p_store_kind: style.storeKind,
+    p_tape_labels: style.tapeLabels,
+    p_accent: style.accent,
+    p_announcement: style.announcement ?? "",
+    p_instagram: style.instagram ?? "",
+    p_tiktok: style.tiktok ?? "",
+    p_youtube: style.youtube ?? "",
+    p_featured_section: style.featuredSection,
+  });
+  if (styleError) throw toStoreAccountError(styleError);
 }

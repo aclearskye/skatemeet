@@ -12,11 +12,13 @@ type Props = {
   page: StorePage;
   // A Store account viewing someone else's store can't follow or message it.
   viewerIsStore: boolean;
+  // The page's accent colour.
+  accent: string;
 };
 
 // Shown on a claimed store's page: the owner's logo, an "official" badge,
 // and Follow / Message for skaters, or Edit page for the owner.
-export function StoreOwnerBar({ page, viewerIsStore }: Props) {
+export function StoreOwnerBar({ page, viewerIsStore, accent }: Props) {
   const router = useRouter();
   const { openChat, isOpening } = useOpenConversation();
   const followerLabel = `${page.followerCount} ${page.followerCount === 1 ? "FOLLOWER" : "FOLLOWERS"}`;
@@ -32,7 +34,7 @@ export function StoreOwnerBar({ page, viewerIsStore }: Props) {
       )}
       <View style={styles.text}>
         <View style={styles.badge}>
-          <Ionicons name="checkmark-circle" size={13} color={C.secondary} />
+          <Ionicons name="checkmark-circle" size={13} color={accent} />
           <Text style={styles.badgeText}>OFFICIAL STORE</Text>
         </View>
         <Text style={styles.followers}>{followerLabel}</Text>

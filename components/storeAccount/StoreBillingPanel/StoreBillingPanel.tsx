@@ -66,7 +66,6 @@ export function StoreBillingPanel() {
 
   return (
     <View style={[styles.card, warn && styles.cardWarning]}>
-      <Text style={styles.label}>SUBSCRIPTION</Text>
       <Text style={[styles.status, warn && styles.statusWarning]}>
         {needsCard
           ? "Add a payment card to keep your store page active after your free trial."
