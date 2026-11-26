@@ -1,11 +1,19 @@
 import { C, F } from "@/lib/theme";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { router, Tabs } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useRef } from "react";
+import { router, Tabs, usePathname } from "expo-router";
 import { Platform } from "react-native";
 import { useMapPrefetch } from "@/lib/map/useMapPrefetch";
+import { useUnreadChatCount } from "@/lib/messages/hooks/useUnreadChatCount";
+import { useTabShortcuts } from "@/lib/navigation/hooks/useTabShortcuts";
+import { startTab, TAB_SHORTCUTS, tabPath } from "@/lib/navigation/types";
 
-// The bar reads Map, Feed, Upload, Search, Profile, but the app opens on
-// Feed -- by default a tab navigator opens on whichever tab is listed first.
+// The bar shows the tabs picked in Settings (Customise navigation), in a
+// fixed order: by default Map, Feed, Upload, Search, Profile (a store that
+// sells tickets first gets Scan instead of Upload). Unpicked tabs are
+// hidden with href: null. The app launches on Feed (a tab navigator
+// otherwise opens on the first tab), then moves to the user's start tab
+// when Feed isn't in their bar (startTab).
 export const unstable_settings = {
   initialRouteName: "index",
 };
@@ -13,6 +21,20 @@ export const unstable_settings = {
 export default function TabsLayout() {
   // Gets the map's location and nearby spots ready while you're on Feed.
   useMapPrefetch();
+  const { keys, isLoaded } = useTabShortcuts();
+  const unreadChatCount = useUnreadChatCount();
+  const pathname = usePathname();
+  const openedOnStartTab = useRef(false);
+
+  // The app launches on Feed (the "/" URL). Once the saved bar is read,
+  // move to the user's start tab if Feed isn't in it. Only at launch, so
+  // picking Feed from the drawer later still works.
+  useEffect(() => {
+    if (!isLoaded || openedOnStartTab.current) return;
+    openedOnStartTab.current = true;
+    const start = startTab(keys);
+    if (pathname === "/" && start.key !== "feed") router.replace(tabPath(start) as never);
+  }, [isLoaded, keys, pathname]);
 
   return (
     <Tabs
@@ -39,59 +61,33 @@ export default function TabsLayout() {
         },
       }}
     >
-      <Tabs.Screen
-        name="map"
-        options={{
-          title: "Map",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="map-outline" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Feed",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="upload"
-        options={{
-          title: "Upload",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="plus-box-outline" color={color} size={size} />
-          ),
-        }}
-        listeners={{
-          // Opens the composer as a modal instead of switching tabs, so
-          // closing it returns to the tab you were on.
-          tabPress: (e) => {
-            e.preventDefault();
-            router.push("/post/new" as never);
-          },
-        }}
-      />
-      <Tabs.Screen
-        name="search"
-        options={{
-          title: "Search",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search-outline" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" color={color} size={size} />
-          ),
-        }}
-      />
+      {TAB_SHORTCUTS.map((item) => (
+        <Tabs.Screen
+          key={item.key}
+          name={item.tabName}
+          options={{
+            title: item.label,
+            href: keys.includes(item.key) ? undefined : null,
+            tabBarIcon: ({ color, size }) => <Ionicons name={item.icon} color={color} size={size} />,
+            // A dot, like the drawer's, when there are unread chats.
+            ...(item.key === "chats" && unreadChatCount > 0
+              ? { tabBarBadge: "", tabBarBadgeStyle: { minWidth: 10, maxHeight: 10, backgroundColor: C.primary } }
+              : {}),
+          }}
+          listeners={
+            item.opens
+              ? {
+                  // Opens the screen on top instead of switching tabs, so
+                  // closing it returns to the tab you were on.
+                  tabPress: (e) => {
+                    e.preventDefault();
+                    router.push(item.opens as never);
+                  },
+                }
+              : undefined
+          }
+        />
+      ))}
     </Tabs>
   );
 }
